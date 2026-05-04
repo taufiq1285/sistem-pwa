@@ -11,6 +11,7 @@ import { DashboardPage } from "@/pages/laboran/DashboardPage";
 const {
   mockUseAuth,
   mockCacheAPI,
+  mockGetCachedData,
   mockInvalidateCache,
   mockNetworkDetector,
   mockProcessApproval,
@@ -18,6 +19,7 @@ const {
 } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockCacheAPI: vi.fn(),
+  mockGetCachedData: vi.fn(),
   mockInvalidateCache: vi.fn(),
   mockNetworkDetector: { isOnline: vi.fn(() => true) },
   mockProcessApproval: vi.fn(),
@@ -30,7 +32,7 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
-  getCachedData: vi.fn().mockResolvedValue(null),
+  getCachedData: (...args: unknown[]) => mockGetCachedData(...args),
   invalidateCache: (...args: unknown[]) => mockInvalidateCache(...args),
 }));
 
@@ -128,6 +130,8 @@ describe("Laboran DashboardPage", () => {
       .mockResolvedValueOnce(mockApprovals)
       .mockResolvedValueOnce(mockInventoryAlerts)
       .mockResolvedValueOnce(mockSchedule);
+    mockGetCachedData.mockResolvedValue(null);
+    navigator.onLine = true;
   });
 
   describe("loading state", () => {
@@ -140,10 +144,13 @@ describe("Laboran DashboardPage", () => {
   });
 
   describe("loaded state dengan data", () => {
-    it("menampilkan judul Dashboard Laboran", async () => {
+    it("menampilkan judul dashboard operasional laboratorium", async () => {
       renderWithRouter(<DashboardPage />);
       await waitFor(() => {
-        expect(screen.getByText(/Dashboard Laboran/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Dashboard Operasional Laboratorium/i),
+        ).toBeInTheDocument();
+        expect(screen.getByText(/Pusat kendali laboran/i)).toBeInTheDocument();
       });
     });
 
@@ -250,6 +257,31 @@ describe("Laboran DashboardPage", () => {
       renderWithRouter(<DashboardPage />);
       await waitFor(() => {
         expect(screen.getByText(/API Error|gagal|error/i)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("offline indicator", () => {
+    it("menampilkan Mode Offline dan Snapshot lokal saat data offline dipakai", async () => {
+      navigator.onLine = false;
+      mockNetworkDetector.isOnline.mockReturnValue(false);
+      mockGetCachedData
+        .mockResolvedValueOnce({ data: mockStats, timestamp: Date.now() })
+        .mockResolvedValueOnce({ data: mockApprovals, timestamp: Date.now() })
+        .mockResolvedValueOnce({
+          data: mockInventoryAlerts,
+          timestamp: Date.now(),
+        })
+        .mockResolvedValueOnce({ data: mockSchedule, timestamp: Date.now() });
+      mockCacheAPI.mockReset().mockRejectedValue(new Error("offline"));
+
+      renderWithRouter(<DashboardPage />);
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/Mode Offline/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Snapshot lokal/i).length).toBeGreaterThan(
+          0,
+        );
       });
     });
   });

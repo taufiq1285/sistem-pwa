@@ -177,14 +177,8 @@ describe("Kehadiran API", () => {
 
       await getKehadiranByKelas("kelas-1", "2025-01-01", "2025-01-31");
 
-      expect(gteMock).toHaveBeenCalledWith(
-        "jadwal.tanggal_praktikum",
-        "2025-01-01",
-      );
-      expect(lteMock).toHaveBeenCalledWith(
-        "jadwal.tanggal_praktikum",
-        "2025-01-31",
-      );
+      expect(gteMock).toHaveBeenCalledWith("tanggal", "2025-01-01");
+      expect(lteMock).toHaveBeenCalledWith("tanggal", "2025-01-31");
     });
 
     it("should work without date filters", async () => {

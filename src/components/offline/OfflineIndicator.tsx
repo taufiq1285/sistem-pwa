@@ -26,19 +26,19 @@ export function OfflineIndicator({
       text: "Online",
       description: quality
         ? `${quality.effectiveType.toUpperCase()} • ${Math.round(quality.latency)}ms`
-        : "Connected",
+        : "Koneksi aktif",
     },
     offline: {
       icon: WifiOff,
       bg: "bg-red-500",
-      text: "Offline",
-      description: "No internet connection",
+      text: "Mode Offline",
+      description: "Snapshot lokal aktif di perangkat ini",
     },
     unstable: {
       icon: AlertTriangle,
       bg: "bg-yellow-500",
-      text: "Unstable",
-      description: "Poor connection",
+      text: "Koneksi Tidak Stabil",
+      description: "Beberapa sinkronisasi mungkin tertunda",
     },
   };
 

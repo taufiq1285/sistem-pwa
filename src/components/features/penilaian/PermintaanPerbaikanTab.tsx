@@ -162,10 +162,12 @@ export function PermintaanPerbaikanTab({
       setProcessing(true);
 
       if (reviewAction === "approve") {
+        const approvedBentukPerbaikan = bentukPerbaikan as BentukPerbaikanNilai;
+
         await approvePermintaan({
           permintaan_id: selectedPermintaan.id,
           nilai_baru: null,
-          bentuk_perbaikan: bentukPerbaikan,
+          bentuk_perbaikan: approvedBentukPerbaikan,
           instruksi_perbaikan: instruksiPerbaikan.trim(),
           response_dosen: instruksiPerbaikan.trim(),
           reviewed_by: dosenId,

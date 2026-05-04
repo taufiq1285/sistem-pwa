@@ -71,6 +71,132 @@ export interface RecentActivity {
   timestamp: string;
 }
 
+export interface ReportPeriodFilter {
+  startDate?: string;
+  endDate?: string;
+}
+
+type BorrowingLikeRow = {
+  id?: string | null;
+  status?: string | null;
+  jumlah_pinjam?: number | null;
+  created_at?: string | null;
+  tanggal_pinjam?: string | null;
+  approved_at?: string | null;
+  tanggal_kembali_aktual?: string | null;
+  inventaris_id?: string | null;
+  dosen_id?: string | null;
+  inventaris?: Record<string, unknown> | null;
+};
+
+type DetailLikeRow = {
+  peminjaman_id?: string | null;
+  inventaris_id?: string | null;
+  jumlah_pinjam?: number | null;
+  inventaris?: Record<string, unknown> | null;
+};
+
+type JadwalLikeRow = {
+  status?: string | null;
+  tanggal_praktikum?: string | null;
+  created_at?: string | null;
+  laboratorium_id?: string | null;
+  jam_mulai?: string | null;
+  jam_selesai?: string | null;
+  laboratorium?: Record<string, unknown> | null;
+};
+
+const ACTIVE_LAB_STATUSES = ["approved", "scheduled", "published"];
+const REPORTABLE_JADWAL_STATUSES = [
+  "pending",
+  "approved",
+  "scheduled",
+  "published",
+  "rejected",
+  "cancelled",
+] as const;
+
+function normalizeDateOnly(value?: string | null): string | null {
+  if (!value) return null;
+  return String(value).split("T")[0] || null;
+}
+
+function isWithinPeriod(
+  value: string | null | undefined,
+  filter?: ReportPeriodFilter,
+): boolean {
+  if (!filter?.startDate && !filter?.endDate) return true;
+
+  const normalized = normalizeDateOnly(value);
+  if (!normalized) return false;
+
+  if (filter.startDate && normalized < filter.startDate) return false;
+  if (filter.endDate && normalized > filter.endDate) return false;
+  return true;
+}
+
+function getBorrowingReportDate(row: BorrowingLikeRow): string | null {
+  if (row.status === "returned") {
+    return (
+      row.tanggal_kembali_aktual ||
+      row.approved_at ||
+      row.tanggal_pinjam ||
+      row.created_at ||
+      null
+    );
+  }
+
+  if (row.status === "approved" || row.status === "return_requested") {
+    return row.approved_at || row.tanggal_pinjam || row.created_at || null;
+  }
+
+  return row.tanggal_pinjam || row.created_at || null;
+}
+
+function getJadwalReportDate(row: JadwalLikeRow): string | null {
+  return row.tanggal_praktikum || row.created_at || null;
+}
+
+function getStatusGroup(
+  status?: string | null,
+): "pending" | "approved" | "other" {
+  if (status === "pending") return "pending";
+  if (status && ACTIVE_LAB_STATUSES.includes(status)) return "approved";
+  return "other";
+}
+
+async function getBorrowingDetailItems(
+  peminjamanIds: string[],
+): Promise<DetailLikeRow[]> {
+  if (peminjamanIds.length === 0) return [];
+
+  const detailResult = await supabase
+    .from("peminjaman_detail" as never)
+    .select(
+      `
+      peminjaman_id,
+      inventaris_id,
+      jumlah_pinjam,
+      inventaris:inventaris_id(
+        kode_barang,
+        nama_barang,
+        kategori
+      )
+    `,
+    )
+    .in("peminjaman_id", peminjamanIds);
+
+  if (detailResult?.error) {
+    logger.error("Failed to fetch borrowing detail items", {
+      peminjamanIds,
+      error: detailResult.error,
+    });
+    return [];
+  }
+
+  return (detailResult?.data as DetailLikeRow[] | null) || [];
+}
+
 // ============================================================================
 // STATISTICS FUNCTIONS
 // ============================================================================
@@ -78,23 +204,52 @@ export interface RecentActivity {
 /**
  * Get borrowing statistics
  */
-export async function getBorrowingStats(): Promise<BorrowingStats> {
+export async function getBorrowingStats(
+  filter?: ReportPeriodFilter,
+): Promise<BorrowingStats> {
   try {
     const { data, error } = await supabase
       .from("peminjaman")
-      .select("status, jumlah_pinjam");
+      .select(
+        "id, status, jumlah_pinjam, created_at, tanggal_pinjam, approved_at, tanggal_kembali_aktual",
+      );
 
     if (error) throw error;
 
+    const borrowingRows = ((data as BorrowingLikeRow[] | null) || []).filter(
+      (row) => isWithinPeriod(getBorrowingReportDate(row), filter),
+    );
+    const borrowingIds = borrowingRows
+      .map((row) => row.id)
+      .filter((id): id is string => Boolean(id));
+    const detailRows = await getBorrowingDetailItems(borrowingIds);
+
+    const detailTotals = detailRows.reduce((acc, item) => {
+      const peminjamanId = item.peminjaman_id;
+      if (!peminjamanId) return acc;
+      acc.set(
+        peminjamanId,
+        (acc.get(peminjamanId) || 0) + (item.jumlah_pinjam || 0),
+      );
+      return acc;
+    }, new Map<string, number>());
+
     const stats: BorrowingStats = {
-      total_borrowings: data?.length || 0,
-      pending: data?.filter((p) => p.status === "pending").length || 0,
-      approved: data?.filter((p) => p.status === "approved").length || 0,
-      rejected: data?.filter((p) => p.status === "rejected").length || 0,
-      returned: data?.filter((p) => p.status === "returned").length || 0,
-      overdue: data?.filter((p) => p.status === "overdue").length || 0,
-      total_equipment_borrowed:
-        data?.reduce((sum, p) => sum + (p.jumlah_pinjam || 0), 0) || 0,
+      total_borrowings: borrowingRows.length,
+      pending: borrowingRows.filter((p) => p.status === "pending").length || 0,
+      approved:
+        borrowingRows.filter((p) => p.status === "approved").length || 0,
+      rejected:
+        borrowingRows.filter((p) => p.status === "rejected").length || 0,
+      returned:
+        borrowingRows.filter((p) => p.status === "returned").length || 0,
+      overdue: borrowingRows.filter((p) => p.status === "overdue").length || 0,
+      total_equipment_borrowed: borrowingRows.reduce((sum, row) => {
+        if (row.id && detailTotals.has(row.id)) {
+          return sum + (detailTotals.get(row.id) || 0);
+        }
+        return sum + (row.jumlah_pinjam || 0);
+      }, 0),
     };
 
     return stats;
@@ -138,19 +293,36 @@ export async function getEquipmentStats(): Promise<EquipmentStats> {
 /**
  * Get lab usage statistics
  */
-export async function getLabUsageStats(): Promise<LabUsageStats> {
+export async function getLabUsageStats(
+  filter?: ReportPeriodFilter,
+): Promise<LabUsageStats> {
   try {
-    const [labsResult, schedulesResult, bookingsResult] = await Promise.all([
+    const [labsResult, jadwalResult] = await Promise.all([
       supabase.from("laboratorium").select("kapasitas").eq("is_active", true),
-      supabase.from("jadwal_praktikum").select("id").eq("is_active", true),
-      supabase.from("jadwal_praktikum").select("id").eq("is_active", false),
+      supabase
+        .from("jadwal_praktikum" as never)
+        .select("status, tanggal_praktikum, created_at")
+        .in("status", [...REPORTABLE_JADWAL_STATUSES] as never),
     ]);
+
+    if (labsResult.error) throw labsResult.error;
+    if (jadwalResult.error) throw jadwalResult.error;
+
+    const jadwalRows = (
+      (jadwalResult.data as JadwalLikeRow[] | null) || []
+    ).filter((row) => isWithinPeriod(getJadwalReportDate(row), filter));
 
     const stats: LabUsageStats = {
       total_labs: labsResult.data?.length || 0,
-      active_schedules: schedulesResult.data?.length || 0,
-      pending_bookings: bookingsResult.data?.length || 0,
-      approved_bookings: schedulesResult.data?.length || 0,
+      active_schedules:
+        jadwalRows.filter((row) => getStatusGroup(row.status) === "approved")
+          .length || 0,
+      pending_bookings:
+        jadwalRows.filter((row) => getStatusGroup(row.status) === "pending")
+          .length || 0,
+      approved_bookings:
+        jadwalRows.filter((row) => getStatusGroup(row.status) === "approved")
+          .length || 0,
       total_capacity:
         labsResult.data?.reduce((sum, lab) => sum + (lab.kapasitas || 0), 0) ||
         0,
@@ -168,12 +340,18 @@ export async function getLabUsageStats(): Promise<LabUsageStats> {
  */
 export async function getTopBorrowedItems(
   limit: number = 10,
+  filter?: ReportPeriodFilter,
 ): Promise<TopBorrowedItem[]> {
   try {
     const { data, error } = await supabase
       .from("peminjaman")
       .select(
         `
+        id,
+        status,
+        created_at,
+        approved_at,
+        tanggal_pinjam,
         inventaris_id,
         jumlah_pinjam,
         inventaris:inventaris!peminjaman_inventaris_id_fkey(
@@ -183,15 +361,60 @@ export async function getTopBorrowedItems(
         )
       `,
       )
-      .in("status", ["approved", "returned"]);
+      .in("status", ["approved", "return_requested", "returned"]);
 
     if (error) throw error;
 
-    // Aggregate by inventaris_id
-    const aggregated = (data || []).reduce(
-      (acc: Record<string, TopBorrowedItem>, item: Record<string, unknown>) => {
+    const borrowingRows = ((data as BorrowingLikeRow[] | null) || []).filter(
+      (row) => isWithinPeriod(getBorrowingReportDate(row), filter),
+    );
+    const borrowingIds = borrowingRows
+      .map((row) => row.id)
+      .filter((id): id is string => Boolean(id));
+    const detailRows = await getBorrowingDetailItems(borrowingIds);
+
+    const detailRowsByBorrowingId = detailRows.reduce((acc, item) => {
+      const peminjamanId = item.peminjaman_id;
+      if (!peminjamanId) return acc;
+      const current = acc.get(peminjamanId) || [];
+      current.push(item);
+      acc.set(peminjamanId, current);
+      return acc;
+    }, new Map<string, DetailLikeRow[]>());
+
+    const aggregated = borrowingRows.reduce(
+      (acc: Record<string, TopBorrowedItem>, item) => {
+        const detailItems =
+          (item.id && detailRowsByBorrowingId.get(item.id)) || [];
+
+        if (detailItems.length > 0) {
+          for (const detail of detailItems) {
+            const invId = detail.inventaris_id as string;
+            if (!invId) continue;
+            const inv = detail.inventaris as Record<string, unknown>;
+
+            if (!acc[invId]) {
+              acc[invId] = {
+                inventaris_id: invId,
+                kode_barang: (inv?.kode_barang as string) || "-",
+                nama_barang: (inv?.nama_barang as string) || "Unknown",
+                kategori: (inv?.kategori as string) || "Uncategorized",
+                total_borrowed: 0,
+                times_borrowed: 0,
+              };
+            }
+
+            acc[invId].total_borrowed += detail.jumlah_pinjam || 0;
+            acc[invId].times_borrowed += 1;
+          }
+
+          return acc;
+        }
+
         const invId = item.inventaris_id as string;
         const inv = item.inventaris as Record<string, unknown>;
+
+        if (!invId) return acc;
 
         if (!acc[invId]) {
           acc[invId] = {
@@ -204,7 +427,7 @@ export async function getTopBorrowedItems(
           };
         }
 
-        acc[invId].total_borrowed += (item.jumlah_pinjam as number) || 0;
+        acc[invId].total_borrowed += item.jumlah_pinjam || 0;
         acc[invId].times_borrowed += 1;
 
         return acc;
@@ -275,27 +498,34 @@ export async function getBorrowingTrends(
 /**
  * Get lab utilization
  */
-export async function getLabUtilization(): Promise<LabUtilization[]> {
+export async function getLabUtilization(
+  filter?: ReportPeriodFilter,
+): Promise<LabUtilization[]> {
   try {
     const { data, error } = await supabase
-      .from("jadwal_praktikum")
+      .from("jadwal_praktikum" as never)
       .select(
         `
         laboratorium_id,
         jam_mulai,
         jam_selesai,
+        tanggal_praktikum,
+        status,
         laboratorium:laboratorium!jadwal_praktikum_laboratorium_id_fkey(
           kode_lab,
           nama_lab
         )
       `,
       )
-      .eq("is_active", true);
+      .in("status", [...ACTIVE_LAB_STATUSES] as never);
 
     if (error) throw error;
 
-    // Aggregate by laboratorium_id
-    const aggregated = (data || []).reduce(
+    const filteredRows = ((data as JadwalLikeRow[] | null) || []).filter(
+      (item) => isWithinPeriod(getJadwalReportDate(item), filter),
+    );
+
+    const aggregated = filteredRows.reduce(
       (acc: Record<string, LabUtilization>, item: Record<string, unknown>) => {
         const labId = item.laboratorium_id as string;
         const lab = item.laboratorium as Record<string, unknown>;
@@ -345,10 +575,9 @@ export async function getLabUtilization(): Promise<LabUtilization[]> {
  */
 export async function getRecentActivities(
   limit: number = 20,
+  filter?: ReportPeriodFilter,
 ): Promise<RecentActivity[]> {
   try {
-    // FIX: peminjam_id references dosen table (NOT mahasiswa)
-    // Business rule: Only dosen can borrow equipment
     const { data, error } = await supabase
       .from("peminjaman")
       .select(
@@ -359,23 +588,52 @@ export async function getRecentActivities(
         tanggal_kembali_aktual,
         approved_at,
         dosen_id,
+        inventaris_id,
+        jumlah_pinjam,
         inventaris:inventaris!peminjaman_inventaris_id_fkey(
           nama_barang
         )
       `,
       )
       .order("created_at", { ascending: false })
-      .limit(limit);
+      .limit(filter?.startDate || filter?.endDate ? limit * 5 : limit);
 
     if (error) throw error;
 
-    // Get user names for peminjam (dosen only)
-    const activities = await Promise.all(
-      ((data as any) || []).map(async (item: Record<string, unknown>) => {
-        const inventaris = item.inventaris as Record<string, unknown>;
-        const equipmentName = (inventaris?.nama_barang as string) || "Unknown";
+    const borrowingRows = ((data as BorrowingLikeRow[] | null) || []).filter(
+      (item) =>
+        ["pending", "approved", "rejected", "returned"].includes(
+          item.status || "",
+        ) && isWithinPeriod(getBorrowingReportDate(item), filter),
+    );
+    const borrowingIds = borrowingRows
+      .map((row) => row.id)
+      .filter((id): id is string => Boolean(id));
+    const detailRows = await getBorrowingDetailItems(borrowingIds);
 
-        // Get dosen name (peminjam is always dosen)
+    const detailRowsByBorrowingId = detailRows.reduce((acc, item) => {
+      const peminjamanId = item.peminjaman_id;
+      if (!peminjamanId) return acc;
+      const current = acc.get(peminjamanId) || [];
+      current.push(item);
+      acc.set(peminjamanId, current);
+      return acc;
+    }, new Map<string, DetailLikeRow[]>());
+
+    const activities = await Promise.all(
+      borrowingRows.map(async (item: BorrowingLikeRow) => {
+        const inventaris = item.inventaris as Record<string, unknown>;
+        const detailItems =
+          (item.id && detailRowsByBorrowingId.get(item.id)) || [];
+        const detailCount = detailItems.length;
+        const itemLabel =
+          detailCount > 1
+            ? `${detailCount} alat`
+            : detailCount === 1
+              ? ((detailItems[0].inventaris as Record<string, unknown> | null)
+                  ?.nama_barang as string) || "alat"
+              : (inventaris?.nama_barang as string) || "alat";
+
         let userName = "Unknown";
 
         if (item.dosen_id) {
@@ -393,20 +651,20 @@ export async function getRecentActivities(
 
         let type: "borrowing" | "return" | "approval" | "rejection" =
           "borrowing";
-        let description = `${userName} requested to borrow ${equipmentName}`;
+        let description = `${userName} mengajukan peminjaman ${itemLabel}`;
         let timestamp = item.created_at as string;
 
         if (item.status === "returned" && item.tanggal_kembali_aktual) {
           type = "return";
-          description = `${userName} returned ${equipmentName}`;
+          description = `${userName} mengembalikan ${itemLabel}`;
           timestamp = item.tanggal_kembali_aktual as string;
         } else if (item.status === "approved" && item.approved_at) {
           type = "approval";
-          description = `Borrowing of ${equipmentName} by ${userName} was approved`;
+          description = `Peminjaman ${itemLabel} oleh ${userName} disetujui`;
           timestamp = item.approved_at as string;
         } else if (item.status === "rejected" && item.approved_at) {
           type = "rejection";
-          description = `Borrowing of ${equipmentName} by ${userName} was rejected`;
+          description = `Peminjaman ${itemLabel} oleh ${userName} ditolak`;
           timestamp = item.approved_at as string;
         }
 
@@ -420,7 +678,12 @@ export async function getRecentActivities(
       }),
     );
 
-    return activities;
+    return activities
+      .sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+      )
+      .slice(0, limit);
   } catch (error) {
     logger.error("Failed to fetch recent activities", { limit, error });
     throw handleSupabaseError(error);

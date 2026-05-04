@@ -230,7 +230,17 @@ export default function KuisListPage() {
       loadQuizzes(true);
     };
 
+    const handleOfflineSyncCompleted = () => {
+      if (navigator.onLine) {
+        loadQuizzes(true);
+      }
+    };
+
     window.addEventListener("kuis:changed", handleKuisChanged);
+    window.addEventListener(
+      "kuis:offline-sync-completed",
+      handleOfflineSyncCompleted,
+    );
 
     // Cleanup subscription on unmount
     return () => {
@@ -238,6 +248,10 @@ export default function KuisListPage() {
         subscription.unsubscribe();
       }
       window.removeEventListener("kuis:changed", handleKuisChanged);
+      window.removeEventListener(
+        "kuis:offline-sync-completed",
+        handleOfflineSyncCompleted,
+      );
     };
   }, [user?.mahasiswa?.id]);
 
@@ -573,7 +587,9 @@ export default function KuisListPage() {
           typeConfig.cardClass,
         )}
       >
-        <div className={cn("absolute inset-x-0 top-0 h-[3px]", typeConfig.strip)} />
+        <div
+          className={cn("absolute inset-x-0 top-0 h-[3px]", typeConfig.strip)}
+        />
         <CardHeader className="pb-0 pt-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -581,7 +597,10 @@ export default function KuisListPage() {
                 {getStatusBadge(quiz.status)}
                 <Badge
                   variant="outline"
-                  className={cn("border px-2.5 py-1 font-semibold", typeConfig.chip)}
+                  className={cn(
+                    "border px-2.5 py-1 font-semibold",
+                    typeConfig.chip,
+                  )}
                 >
                   {getTypeLabel()}
                 </Badge>
@@ -620,22 +639,56 @@ export default function KuisListPage() {
 
         <CardContent className="space-y-4 pt-4">
           <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-            <div className={cn("rounded-xl border px-3 py-2.5", typeConfig.surface)}>
-              <div className={cn("flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider", typeConfig.meta)}>
+            <div
+              className={cn(
+                "rounded-xl border px-3 py-2.5",
+                typeConfig.surface,
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider",
+                  typeConfig.meta,
+                )}
+              >
                 <Timer className="h-3.5 w-3.5" />
                 {isLaporan ? "Rentang tugas" : "Durasi CBT"}
               </div>
-              <p className="mt-1 font-semibold text-white">{formatDuration()}</p>
+              <p className="mt-1 font-semibold text-white">
+                {formatDuration()}
+              </p>
             </div>
-            <div className={cn("rounded-xl border px-3 py-2.5", typeConfig.surface)}>
-              <div className={cn("flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider", typeConfig.meta)}>
+            <div
+              className={cn(
+                "rounded-xl border px-3 py-2.5",
+                typeConfig.surface,
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider",
+                  typeConfig.meta,
+                )}
+              >
                 <FileQuestion className="h-3.5 w-3.5" />
                 Soal
               </div>
-              <p className="mt-1 font-semibold text-white">{quiz.total_soal} soal</p>
+              <p className="mt-1 font-semibold text-white">
+                {quiz.total_soal} soal
+              </p>
             </div>
-            <div className={cn("rounded-xl border px-3 py-2.5", typeConfig.surface)}>
-              <div className={cn("flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider", typeConfig.meta)}>
+            <div
+              className={cn(
+                "rounded-xl border px-3 py-2.5",
+                typeConfig.surface,
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider",
+                  typeConfig.meta,
+                )}
+              >
                 <Calendar className="h-3.5 w-3.5" />
                 Mulai
               </div>
@@ -643,7 +696,12 @@ export default function KuisListPage() {
                 {formatDate(quiz.tanggal_mulai)}
               </p>
             </div>
-            <div className={cn("rounded-xl border px-3 py-2.5", typeConfig.surface)}>
+            <div
+              className={cn(
+                "rounded-xl border px-3 py-2.5",
+                typeConfig.surface,
+              )}
+            >
               <div
                 className={cn(
                   "flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider",
@@ -728,7 +786,10 @@ export default function KuisListPage() {
                 <Button
                   variant="outline"
                   onClick={() => handleViewResults(quiz.id)}
-                  className={cn("min-h-10 flex-1 gap-2", typeConfig.ghostButton)}
+                  className={cn(
+                    "min-h-10 flex-1 gap-2",
+                    typeConfig.ghostButton,
+                  )}
                 >
                   <Eye className="h-4 w-4" />
                   Lihat Hasil
@@ -758,7 +819,10 @@ export default function KuisListPage() {
                   <Button
                     variant="outline"
                     onClick={() => handleViewResults(quiz.id)}
-                    className={cn("min-h-10 flex-1 gap-2", typeConfig.ghostButton)}
+                    className={cn(
+                      "min-h-10 flex-1 gap-2",
+                      typeConfig.ghostButton,
+                    )}
                   >
                     <Eye className="h-4 w-4" />
                     Lihat Hasil

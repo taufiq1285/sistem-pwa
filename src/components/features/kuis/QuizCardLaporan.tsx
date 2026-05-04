@@ -96,9 +96,9 @@ export function QuizCardLaporan({
         ? `${gradedCount} laporan sudah dinilai`
         : totalAttempts > 0
           ? `${totalAttempts} pengumpulan masuk`
-      : isPublished
-        ? "Belum ada laporan dikumpulkan"
-        : "Siap dilengkapi sebelum dipublikasikan";
+          : isPublished
+            ? "Belum ada laporan dikumpulkan"
+            : "Siap dilengkapi sebelum dipublikasikan";
 
   const formatShortDate = (date?: string | null) => {
     if (!date) return "Fleksibel";
@@ -269,7 +269,11 @@ export function QuizCardLaporan({
                           : "bg-muted-foreground",
                     )}
                   />
-                  {isPublished ? "Aktif" : quizStatus === "draft" ? "Draft" : statusLabel}
+                  {isPublished
+                    ? "Aktif"
+                    : quizStatus === "draft"
+                      ? "Draft"
+                      : statusLabel}
                 </span>
 
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-medium text-amber-800">
@@ -306,11 +310,17 @@ export function QuizCardLaporan({
                       <code className="rounded-md border border-blue-300/40 bg-blue-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-blue-800">
                         {quizMataKuliah.kode_mk}
                       </code>
-                      <span className="text-muted-foreground/60" aria-hidden="true">
+                      <span
+                        className="text-muted-foreground/60"
+                        aria-hidden="true"
+                      >
                         -
                       </span>
                       <span>{quizMataKuliah.nama_mk}</span>
-                      <span className="text-muted-foreground/40" aria-hidden="true">
+                      <span
+                        className="text-muted-foreground/40"
+                        aria-hidden="true"
+                      >
                         &bull;
                       </span>
                     </>
@@ -332,7 +342,9 @@ export function QuizCardLaporan({
                     {" | "}
                     {totalAttempts} pengumpulan
                   </p>
-                  <p className="mt-0.5 text-xs text-amber-700/75">{reportStatusText}</p>
+                  <p className="mt-0.5 text-xs text-amber-700/75">
+                    {reportStatusText}
+                  </p>
                 </div>
               )}
             </div>
@@ -429,8 +441,9 @@ export function QuizCardLaporan({
               Apakah Anda yakin ingin menghapus tugas "{quiz.judul}"?
               <br />
               <br />
-              <strong>Perhatian:</strong> Semua data termasuk soal, percobaan mahasiswa, dan jawaban
-              akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+              <strong>Perhatian:</strong> Semua data termasuk soal, percobaan
+              mahasiswa, dan jawaban akan dihapus permanen. Tindakan ini tidak
+              dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -283,14 +283,44 @@ export function DashboardPage() {
                     {isOfflineData && (
                       <span className="inline-flex items-center gap-1 font-medium text-warning">
                         <WifiOff className="h-4 w-4" />
-                        Menampilkan ringkasan dashboard tersimpan lokal
+                        Mode Offline
                       </span>
                     )}
                     {lastUpdatedLabel && (
-                      <span>Update terakhir: {lastUpdatedLabel}</span>
+                      <span>Pembaruan terakhir: {lastUpdatedLabel}</span>
                     )}
                   </div>
                 )}
+                <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide">
+                      Status dashboard
+                    </p>
+                    <p className="font-semibold text-foreground">
+                      {isOfflineData || !navigator.onLine
+                        ? "Mode Offline"
+                        : "Online"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide">
+                      Sumber data
+                    </p>
+                    <p className="font-semibold text-foreground">
+                      {isOfflineData || !navigator.onLine
+                        ? "Snapshot lokal"
+                        : "Data live"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide">
+                      Pembaruan terakhir
+                    </p>
+                    <p className="font-semibold text-foreground">
+                      {lastUpdatedLabel || "-"}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </GlassCard>
@@ -298,9 +328,12 @@ export function DashboardPage() {
           {isOfflineData && (
             <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
               <AlertDescription>
-                Dashboard tetap bisa dibuka dari cache lokal saat offline.
-                Statistik, daftar kelas, dan jadwal yang tampil adalah snapshot
-                terakhir yang berhasil disimpan.
+                Mode Offline aktif. Dashboard mahasiswa sedang memakai Snapshot
+                lokal dari perangkat.
+                {lastUpdatedLabel
+                  ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                  : ""}{" "}
+                Beberapa aksi tetap memerlukan koneksi internet.
               </AlertDescription>
             </Alert>
           )}

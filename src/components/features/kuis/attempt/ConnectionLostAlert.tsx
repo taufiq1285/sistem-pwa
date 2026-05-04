@@ -85,7 +85,9 @@ export function ConnectionLostAlert({
         <AlertDescription className="space-y-2">
           <p>
             Anda sedang bekerja dalam mode offline. Jawaban akan disimpan secara
-            lokal dan akan disinkronkan saat koneksi kembali tersedia.
+            lokal. Jika tugas dikumpulkan saat offline, sistem akan
+            menyinkronkan jawaban dan submit secara otomatis saat koneksi
+            kembali tersedia.
           </p>
 
           {showSyncStatus && stats && stats.pending > 0 && (
@@ -111,7 +113,8 @@ export function ConnectionLostAlert({
         <AlertTitle>Koneksi Tidak Stabil</AlertTitle>
         <AlertDescription>
           Koneksi internet Anda tidak stabil. Jawaban akan disimpan secara lokal
-          untuk mencegah kehilangan data.
+          untuk mencegah kehilangan data, lalu disinkronkan otomatis ketika
+          koneksi membaik.
         </AlertDescription>
       </Alert>
     );
@@ -138,11 +141,11 @@ export function ConnectionLostAlert({
               {isProcessing ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Menyinkronkan {stats.pending} jawaban...</span>
+                  <span>Menyinkronkan {stats.pending} jawaban offline...</span>
                 </>
               ) : (
                 <Badge variant="outline" className="bg-background">
-                  {stats.pending} jawaban akan segera disinkronkan
+                  {stats.pending} jawaban lokal akan segera disinkronkan
                 </Badge>
               )}
             </div>

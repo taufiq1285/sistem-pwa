@@ -6,11 +6,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { DashboardPage } from "@/pages/mahasiswa/DashboardPage";
 
-const { mockUseAuth, mockCacheAPI, mockNetworkDetector } = vi.hoisted(() => ({
-  mockUseAuth: vi.fn(),
-  mockCacheAPI: vi.fn(),
-  mockNetworkDetector: { isOnline: vi.fn(() => true) },
-}));
+const { mockUseAuth, mockCacheAPI, mockGetCachedData, mockNetworkDetector } =
+  vi.hoisted(() => ({
+    mockUseAuth: vi.fn(),
+    mockCacheAPI: vi.fn(),
+    mockGetCachedData: vi.fn(),
+    mockNetworkDetector: { isOnline: vi.fn(() => true) },
+  }));
 
 vi.mock("@/lib/hooks/useAuth", () => ({
   useAuth: () => mockUseAuth(),
@@ -18,7 +20,7 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
-  getCachedData: vi.fn().mockResolvedValue(null),
+  getCachedData: (...args: unknown[]) => mockGetCachedData(...args),
 }));
 
 vi.mock("@/lib/offline/network-detector", () => ({
@@ -82,6 +84,8 @@ describe("Mahasiswa DashboardPage", () => {
       if (key.includes("jadwal")) return Promise.resolve(mockJadwal);
       return Promise.resolve({});
     });
+    mockGetCachedData.mockResolvedValue(null);
+    navigator.onLine = true;
   });
 
   describe("loading state", () => {
@@ -172,6 +176,27 @@ describe("Mahasiswa DashboardPage", () => {
       mockCacheAPI.mockReset().mockRejectedValue(new Error("Network Error"));
       expect(() => render(<DashboardPage />)).not.toThrow();
       await new Promise((r) => setTimeout(r, 100));
+    });
+  });
+
+  describe("offline indicator", () => {
+    it("menampilkan Mode Offline dan Snapshot lokal saat data cache dipakai", async () => {
+      navigator.onLine = false;
+      mockNetworkDetector.isOnline.mockReturnValue(false);
+      mockGetCachedData
+        .mockResolvedValueOnce({ data: mockStats, timestamp: Date.now() })
+        .mockResolvedValueOnce({ data: mockKelas, timestamp: Date.now() })
+        .mockResolvedValueOnce({ data: mockJadwal, timestamp: Date.now() });
+      mockCacheAPI.mockReset().mockRejectedValue(new Error("offline"));
+
+      render(<DashboardPage />);
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/Mode Offline/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Snapshot lokal/i).length).toBeGreaterThan(
+          0,
+        );
+      });
     });
   });
 });

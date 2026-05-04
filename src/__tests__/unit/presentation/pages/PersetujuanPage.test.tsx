@@ -63,6 +63,11 @@ describe("Laboran PersetujuanPage", () => {
       expect(
         screen.getByRole("heading", { name: /Persetujuan Peminjaman Alat/i }),
       ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Tahap awal alur peminjaman alat untuk meninjau permintaan baru/i,
+        ),
+      ).toBeInTheDocument();
       expect(screen.getByText("Andi")).toBeInTheDocument();
       expect(screen.getByText("Mikroskop")).toBeInTheDocument();
     });

@@ -182,141 +182,141 @@ export function AnswerReview({
       )}
 
       {isExpanded && (
-      <CardContent className="space-y-3">
-        {/* Points Earned */}
-        <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2.5">
-          <span className="text-sm font-medium">Poin Diperoleh</span>
-          <span
-            className={cn(
-              "text-lg font-bold",
-              isCorrect ? "text-green-600" : "text-red-600",
-            )}
-          >
-            {poinDiperoleh} / {soal.poin}
-          </span>
-        </div>
-
-        {/* Student's Answer */}
-        <div>
-          <p className="text-sm font-medium text-muted-foreground mb-2">
-            Jawaban Anda:
-          </p>
-          {!isAnswered ? (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>Tidak dijawab</AlertDescription>
-            </Alert>
-          ) : soal.tipe_soal === TIPE_SOAL.FILE_UPLOAD ? (
-            // FILE_UPLOAD: Show file link or typed text
-            <div className="p-3 rounded-lg border-2 border-blue-300 bg-blue-50 dark:bg-blue-950">
-              {(jawaban.jawaban || jawaban.jawaban_mahasiswa)?.startsWith(
-                "http",
-              ) ? (
-                // File upload - show link
-                <a
-                  href={jawaban.jawaban || jawaban.jawaban_mahasiswa}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400"
-                >
-                  <FileText className="h-5 w-5" />
-                  <span className="underline">Lihat File Laporan</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              ) : (
-                // Typed text - show content
-                <p className="whitespace-pre-wrap">
-                  {jawaban.jawaban || jawaban.jawaban_mahasiswa}
-                </p>
-              )}
-            </div>
-          ) : (
-            // Other types - show answer with coloring
-            <div
+        <CardContent className="space-y-3">
+          {/* Points Earned */}
+          <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2.5">
+            <span className="text-sm font-medium">Poin Diperoleh</span>
+            <span
               className={cn(
-                "p-3 rounded-lg border-2",
-                isCorrect
-                  ? "border-green-300 bg-green-50 dark:bg-green-950"
-                  : "border-red-300 bg-red-50 dark:bg-red-950",
+                "text-lg font-bold",
+                isCorrect ? "text-green-600" : "text-red-600",
               )}
             >
-              <p className="whitespace-pre-wrap">
-                {getAnswerLabel(
-                  soal,
-                  jawaban.jawaban || jawaban.jawaban_mahasiswa || "",
-                )}
-              </p>
-            </div>
-          )}
-        </div>
+              {poinDiperoleh} / {soal.poin}
+            </span>
+          </div>
 
-        {/* Correct Answer (only for auto-graded questions) */}
-        {showCorrectAnswer &&
-          !needsManualGrading &&
-          !isCorrect &&
-          isAnswered && (
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">
-                Jawaban yang Benar:
-              </p>
-              <div className="p-3 rounded-lg border-2 border-green-300 bg-green-50 dark:bg-green-950">
-                <p className="font-medium text-green-900 dark:text-green-100">
-                  {getCorrectAnswerLabel(soal)}
+          {/* Student's Answer */}
+          <div>
+            <p className="text-sm font-medium text-muted-foreground mb-2">
+              Jawaban Anda:
+            </p>
+            {!isAnswered ? (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>Tidak dijawab</AlertDescription>
+              </Alert>
+            ) : soal.tipe_soal === TIPE_SOAL.FILE_UPLOAD ? (
+              // FILE_UPLOAD: Show file link or typed text
+              <div className="p-3 rounded-lg border-2 border-blue-300 bg-blue-50 dark:bg-blue-950">
+                {(jawaban.jawaban || jawaban.jawaban_mahasiswa)?.startsWith(
+                  "http",
+                ) ? (
+                  // File upload - show link
+                  <a
+                    href={jawaban.jawaban || jawaban.jawaban_mahasiswa}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                  >
+                    <FileText className="h-5 w-5" />
+                    <span className="underline">Lihat File Laporan</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                ) : (
+                  // Typed text - show content
+                  <p className="whitespace-pre-wrap">
+                    {jawaban.jawaban || jawaban.jawaban_mahasiswa}
+                  </p>
+                )}
+              </div>
+            ) : (
+              // Other types - show answer with coloring
+              <div
+                className={cn(
+                  "p-3 rounded-lg border-2",
+                  isCorrect
+                    ? "border-green-300 bg-green-50 dark:bg-green-950"
+                    : "border-red-300 bg-red-50 dark:bg-red-950",
+                )}
+              >
+                <p className="whitespace-pre-wrap">
+                  {getAnswerLabel(
+                    soal,
+                    jawaban.jawaban || jawaban.jawaban_mahasiswa || "",
+                  )}
                 </p>
               </div>
+            )}
+          </div>
+
+          {/* Correct Answer (only for auto-graded questions) */}
+          {showCorrectAnswer &&
+            !needsManualGrading &&
+            !isCorrect &&
+            isAnswered && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  Jawaban yang Benar:
+                </p>
+                <div className="p-3 rounded-lg border-2 border-green-300 bg-green-50 dark:bg-green-950">
+                  <p className="font-medium text-green-900 dark:text-green-100">
+                    {getCorrectAnswerLabel(soal)}
+                  </p>
+                </div>
+              </div>
+            )}
+
+          {/* Explanation/Feedback */}
+          {!needsManualGrading && explanation.trim() && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                Keterangan Jawaban:
+              </p>
+              <Alert className="bg-blue-50 border-blue-200 text-blue-900 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-100">
+                <AlertDescription className="whitespace-pre-wrap">
+                  {explanation}
+                </AlertDescription>
+              </Alert>
             </div>
           )}
 
-        {/* Explanation/Feedback */}
-        {!needsManualGrading && explanation.trim() && (
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-2">
-              Keterangan Jawaban:
-            </p>
-            <Alert className="bg-blue-50 border-blue-200 text-blue-900 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-100">
-              <AlertDescription className="whitespace-pre-wrap">
-                {explanation}
+          {/* Manual Grading Feedback */}
+          {shouldShowManualFeedback && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                Feedback dari Dosen:
+              </p>
+              <Alert className="bg-purple-50 border-purple-200 text-purple-900 dark:bg-purple-950 dark:border-purple-800 dark:text-purple-100">
+                <AlertDescription className="whitespace-pre-wrap">
+                  {jawaban.feedback}
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          {/* Needs Manual Grading Notice */}
+          {needsManualGrading && !isManuallyGraded && isAnswered && (
+            <Alert className="bg-yellow-50 border-yellow-300 text-yellow-900 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-100">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Jawaban Anda sedang menunggu penilaian dari dosen.
               </AlertDescription>
             </Alert>
-          </div>
-        )}
+          )}
 
-        {/* Manual Grading Feedback */}
-        {shouldShowManualFeedback && (
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-2">
-              Feedback dari Dosen:
-            </p>
-            <Alert className="bg-purple-50 border-purple-200 text-purple-900 dark:bg-purple-950 dark:border-purple-800 dark:text-purple-100">
-              <AlertDescription className="whitespace-pre-wrap">
-                {jawaban.feedback}
+          {/* Auto-graded Success */}
+          {!needsManualGrading && isCorrect && (
+            <Alert className="bg-green-50 border-green-300 text-green-900 dark:bg-green-950 dark:border-green-800 dark:text-green-100">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Benar!</strong> Jawaban Anda tepat.
+                {!explanation.trim() &&
+                  " Dosen belum menambahkan keterangan untuk soal ini."}
               </AlertDescription>
             </Alert>
-          </div>
-        )}
-
-        {/* Needs Manual Grading Notice */}
-        {needsManualGrading && !isManuallyGraded && isAnswered && (
-          <Alert className="bg-yellow-50 border-yellow-300 text-yellow-900 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-100">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Jawaban Anda sedang menunggu penilaian dari dosen.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Auto-graded Success */}
-        {!needsManualGrading && isCorrect && (
-          <Alert className="bg-green-50 border-green-300 text-green-900 dark:bg-green-950 dark:border-green-800 dark:text-green-100">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Benar!</strong> Jawaban Anda tepat.
-              {!explanation.trim() &&
-                " Dosen belum menambahkan keterangan untuk soal ini."}
-            </AlertDescription>
-          </Alert>
-        )}
-      </CardContent>
+          )}
+        </CardContent>
       )}
     </Card>
   );

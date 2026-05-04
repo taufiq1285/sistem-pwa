@@ -439,6 +439,24 @@ export function DashboardPage() {
                   pemantauan kesehatan sistem.
                   {(isOfflineData || !navigator.onLine) &&
                     " Saat offline, ringkasan terakhir dari perangkat tetap ditampilkan."}
+                  <div className="mt-3 space-y-1 border-t border-primary/10 pt-3 text-xs">
+                    <div className="flex items-center justify-between gap-3">
+                      <span>Status dashboard</span>
+                      <span className="font-semibold text-foreground">
+                        {isOfflineData || !navigator.onLine
+                          ? "Mode Offline"
+                          : "Online"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>Sumber data</span>
+                      <span className="font-semibold text-foreground">
+                        {isOfflineData || !navigator.onLine
+                          ? "Snapshot lokal"
+                          : "Data live"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <Button
                   variant="outline"
@@ -461,10 +479,12 @@ export function DashboardPage() {
             <Alert className="border-warning/40 bg-warning/10">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Dashboard admin sedang memakai snapshot lokal dari perangkat.
+                Mode Offline aktif. Dashboard admin sedang memakai Snapshot
+                lokal dari perangkat.
                 {lastUpdatedLabel
                   ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
-                  : ""}
+                  : ""}{" "}
+                Beberapa aksi tetap memerlukan koneksi internet.
               </AlertDescription>
             </Alert>
           )}
@@ -1056,21 +1076,46 @@ export function DashboardPage() {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <div className="relative">
-                      <div className="h-3 w-3 rounded-full bg-success animate-pulse" />
-                      <div className="absolute inset-0 h-3 w-3 rounded-full bg-success animate-ping opacity-75" />
+                      <div
+                        className={`h-3 w-3 rounded-full animate-pulse ${
+                          isOfflineData || !navigator.onLine
+                            ? "bg-warning"
+                            : "bg-success"
+                        }`}
+                      />
+                      <div
+                        className={`absolute inset-0 h-3 w-3 rounded-full animate-ping opacity-75 ${
+                          isOfflineData || !navigator.onLine
+                            ? "bg-warning"
+                            : "bg-success"
+                        }`}
+                      />
                     </div>
                     <span className="text-sm font-medium text-foreground">
-                      Status Sistem: Online
+                      Status Dashboard:{" "}
+                      {isOfflineData || !navigator.onLine
+                        ? "Mode Offline"
+                        : "Online"}
                     </span>
                   </div>
                   <div className="flex items-center space-x-6 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Database className="h-4 w-4" />
-                      <span>Database: Aktif</span>
+                      <span>
+                        Database:{" "}
+                        {isOfflineData || !navigator.onLine
+                          ? "Snapshot lokal"
+                          : "Aktif"}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Zap className="h-4 w-4" />
-                      <span>API: Normal</span>
+                      <span>
+                        API:{" "}
+                        {isOfflineData || !navigator.onLine
+                          ? "Menunggu koneksi"
+                          : "Normal"}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Shield className="h-4 w-4" />
@@ -1080,8 +1125,9 @@ export function DashboardPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-xs text-muted-foreground">
-                    Terakhir diperbarui:{" "}
-                    {currentTime.toLocaleTimeString("id-ID")}
+                    {isOfflineData || !navigator.onLine
+                      ? `Pembaruan terakhir: ${lastUpdatedLabel || "-"}`
+                      : `Pembaruan terakhir: ${currentTime.toLocaleTimeString("id-ID")}`}
                   </span>
                   <Button
                     variant="outline"

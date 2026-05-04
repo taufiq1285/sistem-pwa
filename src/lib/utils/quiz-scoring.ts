@@ -92,11 +92,7 @@ function getStoredStudentAnswer(jawaban?: Jawaban | null): string {
 }
 
 function getQuestionOptions(soal: Soal) {
-  return (
-    soal.opsi_jawaban ||
-    ((soal as any).pilihan_jawaban as any[]) ||
-    []
-  );
+  return soal.opsi_jawaban || ((soal as any).pilihan_jawaban as any[]) || [];
 }
 
 // ============================================================================

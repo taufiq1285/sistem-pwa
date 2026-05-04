@@ -77,6 +77,24 @@ export default function OfflineSyncPage() {
     };
 
     loadOfflineTasks();
+
+    const handleOfflineSyncCompleted = () => {
+      loadOfflineTasks().catch((error) => {
+        console.error("Failed to refresh offline sync items:", error);
+      });
+    };
+
+    window.addEventListener(
+      "kuis:offline-sync-completed",
+      handleOfflineSyncCompleted,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "kuis:offline-sync-completed",
+        handleOfflineSyncCompleted,
+      );
+    };
   }, [user?.mahasiswa?.id]);
 
   const handleSync = async () => {
@@ -131,7 +149,7 @@ export default function OfflineSyncPage() {
           badgeStatus: "offline" as const,
           label: "Submit menunggu sinkron",
           description:
-            "Tugas sudah dikumpulkan offline dan akan dikirim ke server saat sinkronisasi berhasil.",
+            "Tugas sudah dikumpulkan offline. Sistem akan mengirim jawaban dan submit ke server saat sinkronisasi berhasil.",
           icon: <Send className="mr-1 h-3.5 w-3.5" />,
         };
       default:
@@ -179,7 +197,7 @@ export default function OfflineSyncPage() {
           <CloudOff className="h-4 w-4" />
           <AlertDescription>
             Koneksi internet tidak tersedia. Data tetap tersimpan lokal dan akan
-            bisa disinkronkan saat online.
+            disinkronkan otomatis saat online kembali.
           </AlertDescription>
         </Alert>
       )}
@@ -255,7 +273,8 @@ export default function OfflineSyncPage() {
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle2 className="mt-0.5 h-4 w-4 text-success" />
-              Sinkronisasi otomatis dilanjutkan saat online.
+              Jawaban dan submit offline akan dilanjutkan sinkron otomatis saat
+              online.
             </div>
           </CardContent>
         </Card>

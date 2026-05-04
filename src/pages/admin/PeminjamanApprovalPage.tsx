@@ -48,6 +48,7 @@ const invalidatePeminjamanCaches = async () => {
   await Promise.all([
     invalidateCache("laboran_pending_approvals"),
     invalidateCache("laboran_active_borrowings"),
+    invalidateCache("laboran_return_requested_borrowings"),
     invalidateCache("laboran_returned_borrowings"),
     invalidateCache("dosen_my_borrowings"),
     invalidateCache("dosen_available_equipment"),
@@ -218,6 +219,16 @@ export default function PeminjamanApprovalPage() {
     });
   };
 
+  const formatBorrowingContext = (request: PendingApproval) => {
+    if (request.keperluan?.trim()) {
+      return request.keperluan.replace(/\s-\s/g, " • ");
+    }
+
+    return [request.laboratorium_nama, formatDate(request.tanggal_pinjam)]
+      .filter(Boolean)
+      .join(" • ");
+  };
+
   const formatDateTime = (date: string) => {
     return new Date(date).toLocaleString("id-ID", {
       year: "numeric",
@@ -362,7 +373,9 @@ export default function PeminjamanApprovalPage() {
                           Dosen Peminjam
                         </TableHead>
                         <TableHead className="font-semibold">Alat</TableHead>
-                        <TableHead className="font-semibold">Lab</TableHead>
+                        <TableHead className="font-semibold">
+                          Lab Tujuan
+                        </TableHead>
                         <TableHead className="font-semibold">Jumlah</TableHead>
                         <TableHead className="font-semibold">
                           Tanggal Pinjam
@@ -371,7 +384,7 @@ export default function PeminjamanApprovalPage() {
                           Tanggal Kembali
                         </TableHead>
                         <TableHead className="font-semibold">
-                          Keperluan
+                          Konteks Praktikum
                         </TableHead>
                         <TableHead className="font-semibold">Aksi</TableHead>
                       </TableRow>
@@ -407,8 +420,11 @@ export default function PeminjamanApprovalPage() {
                           <TableCell className="text-sm">
                             {formatDate(request.tanggal_kembali_rencana)}
                           </TableCell>
-                          <TableCell className="text-sm max-w-xs truncate">
-                            {request.keperluan}
+                          <TableCell
+                            className="text-sm max-w-xs truncate"
+                            title={formatBorrowingContext(request)}
+                          >
+                            {formatBorrowingContext(request)}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">

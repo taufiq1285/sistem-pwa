@@ -71,7 +71,7 @@ describe("KehadiranHistory", () => {
       render(<KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />);
       await waitFor(() => {
         expect(screen.getByText(/Kelas A/)).toBeInTheDocument();
-        expect(screen.getByText(/1 pertemuan/)).toBeInTheDocument();
+        expect(screen.getAllByText(/1 pertemuan/).length).toBeGreaterThan(0);
       });
     });
 
@@ -95,6 +95,9 @@ describe("KehadiranHistory", () => {
 
       await waitFor(() => {
         expect(screen.getByText("Askeb Kehamilan (AK)")).toBeInTheDocument();
+        expect(
+          screen.getAllByText(/1 pertemuan tercatat/i).length,
+        ).toBeGreaterThan(0);
       });
     });
 

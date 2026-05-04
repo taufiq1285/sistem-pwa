@@ -76,14 +76,19 @@ describe("Laboran JadwalApprovalPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /Kelola Jadwal Praktikum/i }),
+        screen.getByRole("heading", { name: /Persetujuan Jadwal Praktikum/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Tinjau dan putuskan jadwal praktikum dosen beserta pemakaian laboratorium/i,
+        ),
       ).toBeInTheDocument();
     });
 
     expect(screen.getAllByText(/Menunggu Persetujuan/i).length).toBeGreaterThan(
       0,
     );
-    expect(screen.getAllByText(/Jadwal Disetujui/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Disetujui/i).length).toBeGreaterThan(0);
   });
 
   it("menampilkan data jadwal pending pada tab default", async () => {

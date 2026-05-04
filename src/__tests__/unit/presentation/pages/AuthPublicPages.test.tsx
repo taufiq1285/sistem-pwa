@@ -4,16 +4,17 @@ import userEvent from "@testing-library/user-event";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
 import { NotFoundPage } from "@/pages/public/NotFoundPage";
 import { UnauthorizedPage } from "@/pages/public/UnauthorizedPage";
 
-const { mockNavigate, mockUseAuth, mockResetPasswordForEmail } = vi.hoisted(
-  () => ({
+const { mockNavigate, mockUseAuth, mockResetPassword, mockUpdatePassword } =
+  vi.hoisted(() => ({
     mockNavigate: vi.fn(),
     mockUseAuth: vi.fn(),
-    mockResetPasswordForEmail: vi.fn(),
-  }),
-);
+    mockResetPassword: vi.fn(),
+    mockUpdatePassword: vi.fn(),
+  }));
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
@@ -42,21 +43,27 @@ vi.mock("@/components/forms/RegisterForm", () => ({
   ),
 }));
 
-vi.mock("@/lib/supabase/client", () => ({
-  supabase: {
-    auth: {
-      resetPasswordForEmail: (...args: unknown[]) =>
-        mockResetPasswordForEmail(...args),
-    },
-  },
+vi.mock("@/components/forms/PasswordForm", () => ({
+  PasswordForm: ({ onSuccess }: any) => (
+    <div>
+      <p>Mock Password Form</p>
+      <button onClick={onSuccess}>mock-password-update-success</button>
+    </div>
+  ),
 }));
 
 describe("Auth/Public Pages", () => {
   beforeEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
-    mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null });
-    mockResetPasswordForEmail.mockResolvedValue({ error: null });
+    mockResetPassword.mockResolvedValue(undefined);
+    mockUpdatePassword.mockResolvedValue(undefined);
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+      user: null,
+      resetPassword: mockResetPassword,
+      updatePassword: mockUpdatePassword,
+    });
   });
 
   it("LoginPage render normal ketika belum login", () => {
@@ -104,6 +111,25 @@ describe("Auth/Public Pages", () => {
 
     const sendBtn = screen.getByRole("button", { name: /Kirim Link Reset/i });
     expect(sendBtn).toBeInTheDocument();
+  });
+
+  it("ForgotPasswordPage mengirim reset password lewat auth context", async () => {
+    const user = userEvent.setup();
+    render(<ForgotPasswordPage />);
+
+    await user.type(screen.getByLabelText(/Alamat Email/i), "user@test.com");
+    await user.click(screen.getByRole("button", { name: /Kirim Link Reset/i }));
+
+    await waitFor(() => {
+      expect(mockResetPassword).toHaveBeenCalledWith("user@test.com");
+    });
+  });
+
+  it("ResetPasswordPage merender form update password", () => {
+    render(<ResetPasswordPage />);
+
+    expect(screen.getByText(/Atur Ulang Password/i)).toBeInTheDocument();
+    expect(screen.getByText("Mock Password Form")).toBeInTheDocument();
   });
 
   it("NotFoundPage menampilkan aksi menuju home dan login", () => {

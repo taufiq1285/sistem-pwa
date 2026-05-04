@@ -353,13 +353,13 @@ export async function submitQuizSafe(
           throw new Error(fallbackDetailError.message);
         }
 
-        const fallbackSoal = (((fallbackDetails as any)?.kuis?.soal || []) as Soal[]).map(
-          (soal: any) => ({
-            ...soal,
-            tipe_soal: soal.tipe_soal || soal.tipe,
-            opsi_jawaban: soal.opsi_jawaban || soal.pilihan_jawaban || null,
-          }),
-        );
+        const fallbackSoal = (
+          ((fallbackDetails as any)?.kuis?.soal || []) as Soal[]
+        ).map((soal: any) => ({
+          ...soal,
+          tipe_soal: soal.tipe_soal || soal.tipe,
+          opsi_jawaban: soal.opsi_jawaban || soal.pilihan_jawaban || null,
+        }));
         const fallbackJawaban =
           (((fallbackDetails as any)?.jawaban || []) as Array<{
             poin_diperoleh?: number | null;
@@ -464,21 +464,21 @@ export async function submitQuizSafe(
           data.attempt_id,
           attempt.kuis_id,
         );
-        console.log(
-          "[NOTIFICATION] Submit tugas notification result:",
+        console.log("[NOTIFICATION] Submit tugas notification result:", {
+          attemptId: data.attempt_id,
+          kuisId: attempt.kuis_id,
+          dosenUserId,
+          created: Boolean(notification),
+        });
+      } else {
+        console.warn(
+          "[NOTIFICATION] Missing dosen user target for submitted tugas",
           {
             attemptId: data.attempt_id,
-            kuisId: attempt.kuis_id,
-            dosenUserId,
-            created: Boolean(notification),
+            kuisId: attempt?.kuis_id,
+            dosenId: attempt?.kuis?.dosen_id,
           },
         );
-      } else {
-        console.warn("[NOTIFICATION] Missing dosen user target for submitted tugas", {
-          attemptId: data.attempt_id,
-          kuisId: attempt?.kuis_id,
-          dosenId: attempt?.kuis?.dosen_id,
-        });
       }
     } catch (notifError) {
       // Don't fail the submission if notification fails

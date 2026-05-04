@@ -71,7 +71,13 @@ describe("Laboran InventarisPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /Inventaris Lab/i }),
+        screen.getByRole("heading", { name: /Data Inventaris Laboratorium/i }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Data inventaris aktif/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Kelola peralatan laboratorium, stok tersedia, kategori, dan kondisi inventaris/i,
+        ),
       ).toBeInTheDocument();
     });
   });

@@ -1,4 +1,5 @@
 import type { Notification } from "@/types/notification.types";
+import { getRoleNotificationPath, ROUTES } from "@/config/routes.config";
 
 type NotificationRole = "mahasiswa" | "dosen" | "laboran" | "admin";
 
@@ -11,7 +12,7 @@ export function getNotificationNavigationTarget(
       notification.type === "kuis_published") &&
     notification.data?.kuis_id
   ) {
-    return "/mahasiswa/kuis";
+    return ROUTES.MAHASISWA.KUIS.LIST;
   }
 
   if (
@@ -31,19 +32,19 @@ export function getNotificationNavigationTarget(
   }
 
   if (notification.type === "perbaikan_nilai_request") {
-    return "/dosen/penilaian";
+    return ROUTES.DOSEN.PENILAIAN;
   }
 
   if (notification.type === "perbaikan_nilai_response") {
-    return "/mahasiswa/nilai";
+    return ROUTES.MAHASISWA.NILAI;
   }
 
   if (notification.type === "materi_baru") {
-    return "/mahasiswa/materi";
+    return ROUTES.MAHASISWA.MATERI;
   }
 
   if (notification.type === "logbook_submitted") {
-    return "/dosen/logbook-review";
+    return ROUTES.DOSEN.LOGBOOK_REVIEW;
   }
 
   if (
@@ -51,37 +52,46 @@ export function getNotificationNavigationTarget(
     notification.type === "logbook_rejected" ||
     notification.type === "logbook_revision"
   ) {
-    return "/mahasiswa/logbook";
+    return ROUTES.MAHASISWA.LOGBOOK;
   }
 
   if (notification.type === "peminjaman_baru") {
-    return "/laboran/peminjaman";
+    return ROUTES.LABORAN.PEMINJAMAN;
   }
 
   if (
     notification.type === "peminjaman_disetujui" ||
     notification.type === "peminjaman_ditolak"
   ) {
-    return "/dosen/peminjaman";
+    return ROUTES.DOSEN.PEMINJAMAN;
   }
 
   if (notification.type === "jadwal_pending_approval") {
-    return "/laboran/jadwal";
+    return ROUTES.LABORAN.JADWAL;
   }
 
   if (notification.type.startsWith("jadwal_") && role) {
-    return `/${role}/jadwal`;
+    switch (role) {
+      case "dosen":
+        return ROUTES.DOSEN.JADWAL;
+      case "mahasiswa":
+        return ROUTES.MAHASISWA.JADWAL;
+      case "laboran":
+        return ROUTES.LABORAN.JADWAL;
+      default:
+        return null;
+    }
   }
 
   if (
     (notification.type === "pengumuman" || notification.type === "sistem") &&
     role
   ) {
-    return `/${role}/notifikasi`;
+    return getRoleNotificationPath(role);
   }
 
   if (role) {
-    return `/${role}/notifikasi`;
+    return getRoleNotificationPath(role);
   }
 
   return null;

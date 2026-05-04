@@ -13,6 +13,7 @@ import {
   SyncProvider,
   useSyncContext,
 } from "../../../../providers/SyncProvider";
+import { syncPendingOfflineQuizSubmissions } from "../../../../lib/api/kuis.api";
 
 // ✅ FIX: Import mocked hooks to avoid dynamic require() errors
 import { useSync } from "../../../../lib/hooks/useSync";
@@ -65,6 +66,10 @@ vi.mock("@/lib/hooks/useNetworkStatus", () => ({
   useNetworkStatus: vi.fn(() => mockNetworkStatus),
 }));
 
+vi.mock("@/lib/api/kuis.api", () => ({
+  syncPendingOfflineQuizSubmissions: vi.fn().mockResolvedValue(0),
+}));
+
 // ============================================================================
 // TEST COMPONENTS
 // ============================================================================
@@ -107,6 +112,7 @@ describe("SyncProvider", () => {
     mockSyncReturnValue.stats = mockStats;
     mockSyncReturnValue.isProcessing = false;
     mockSyncReturnValue.isReady = true;
+    vi.mocked(syncPendingOfflineQuizSubmissions).mockResolvedValue(0);
   });
 
   afterEach(() => {
@@ -171,6 +177,7 @@ describe("SyncProvider", () => {
       await waitFor(() => {
         expect(mockProcessQueue).toHaveBeenCalled();
       });
+      expect(syncPendingOfflineQuizSubmissions).toHaveBeenCalled();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining("Auto-syncing 5 pending items"),
@@ -262,6 +269,7 @@ describe("SyncProvider", () => {
       });
 
       expect(mockProcessQueue).not.toHaveBeenCalled();
+      expect(syncPendingOfflineQuizSubmissions).toHaveBeenCalled();
 
       // Reset
       mockSyncReturnValue.stats = mockStats;
@@ -355,6 +363,30 @@ describe("SyncProvider", () => {
         },
         { timeout: 2000 },
       );
+      expect(syncPendingOfflineQuizSubmissions).toHaveBeenCalled();
+    });
+
+    it("should dispatch refresh event after syncing pending offline submissions", async () => {
+      vi.mocked(syncPendingOfflineQuizSubmissions).mockResolvedValue(2);
+      const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+
+      render(
+        <SyncProvider autoSync={true}>
+          <TestConsumer />
+        </SyncProvider>,
+      );
+
+      await waitFor(() => {
+        expect(syncPendingOfflineQuizSubmissions).toHaveBeenCalled();
+      });
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "kuis:offline-sync-completed",
+        }),
+      );
+
+      dispatchSpy.mockRestore();
     });
   });
 

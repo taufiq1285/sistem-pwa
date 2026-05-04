@@ -33,6 +33,10 @@ const routeModuleImporters = {
     import("@/pages/auth/ForgotPasswordPage").then((m) => ({
       default: m.ForgotPasswordPage,
     })),
+  resetPassword: () =>
+    import("@/pages/auth/ResetPasswordPage").then((m) => ({
+      default: m.ResetPasswordPage,
+    })),
   home: () =>
     import("@/pages/public/HomePage").then((m) => ({ default: m.HomePage })),
   notFound: () =>
@@ -97,7 +101,7 @@ const routeModuleImporters = {
       default: m.DashboardPage,
     })),
   laboranInventaris: () => import("@/pages/laboran/InventarisPage"),
-  laboranPersetujuan: () => import("@/pages/laboran/PeminjamanAktifPage"),
+  laboranPersetujuan: () => import("@/pages/laboran/PersetujuanPage"),
   laboranPeminjamanAktif: () => import("@/pages/laboran/PeminjamanAktifPage"),
   laboranLaboratorium: () => import("@/pages/laboran/LaboratoriumPage"),
   laboranJadwalApproval: () => import("@/pages/laboran/JadwalApprovalPage"),
@@ -110,6 +114,7 @@ const publicRouteWarmup = [
   routeModuleImporters.login,
   routeModuleImporters.register,
   routeModuleImporters.forgotPassword,
+  routeModuleImporters.resetPassword,
   routeModuleImporters.home,
   routeModuleImporters.unauthorized,
   routeModuleImporters.notFound,
@@ -229,6 +234,7 @@ function warmRouteModules(importers: readonly (() => Promise<unknown>)[]) {
 const LoginPage = lazy(routeModuleImporters.login);
 const RegisterPage = lazy(routeModuleImporters.register);
 const ForgotPasswordPage = lazy(routeModuleImporters.forgotPassword);
+const ResetPasswordPage = lazy(routeModuleImporters.resetPassword);
 
 // Public Pages
 const HomePage = lazy(routeModuleImporters.home);
@@ -354,6 +360,9 @@ const LaboranDashboard = lazy(() =>
 const LaboranInventarisPage = lazy(
   () => import("@/pages/laboran/InventarisPage"),
 );
+const LaboranPersetujuanPage = lazy(
+  () => import("@/pages/laboran/PersetujuanPage"),
+);
 const LaboranPeminjamanAktifPage = lazy(
   () => import("@/pages/laboran/PeminjamanAktifPage"),
 );
@@ -405,6 +414,7 @@ export function AppRouter() {
             path={ROUTES.FORGOT_PASSWORD}
             element={<ForgotPasswordPage />}
           />
+          <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
           <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
           <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
 
@@ -634,7 +644,7 @@ export function AppRouter() {
 
           {/* Jadwal Praktikum */}
           <Route
-            path="/dosen/jadwal"
+            path={ROUTES.DOSEN.JADWAL}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -652,7 +662,7 @@ export function AppRouter() {
 
           {/* Kuis List */}
           <Route
-            path="/dosen/kuis"
+            path={ROUTES.DOSEN.KUIS.LIST}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -722,7 +732,7 @@ export function AppRouter() {
 
           {/* Bank Soal */}
           <Route
-            path="/dosen/bank-soal"
+            path={ROUTES.DOSEN.BANK_SOAL}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -736,7 +746,7 @@ export function AppRouter() {
 
           {/* Materi */}
           <Route
-            path="/dosen/materi"
+            path={ROUTES.DOSEN.MATERI}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -750,7 +760,7 @@ export function AppRouter() {
 
           {/* Penilaian */}
           <Route
-            path="/dosen/penilaian"
+            path={ROUTES.DOSEN.PENILAIAN}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -764,7 +774,7 @@ export function AppRouter() {
 
           {/* Logbook Review */}
           <Route
-            path="/dosen/logbook-review"
+            path={ROUTES.DOSEN.LOGBOOK_REVIEW}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -778,7 +788,7 @@ export function AppRouter() {
 
           {/* Dosen - Peminjaman */}
           <Route
-            path="/dosen/peminjaman"
+            path={ROUTES.DOSEN.PEMINJAMAN}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -792,7 +802,7 @@ export function AppRouter() {
 
           {/* Dosen - Kehadiran */}
           <Route
-            path="/dosen/kehadiran"
+            path={ROUTES.DOSEN.KEHADIRAN}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -806,7 +816,7 @@ export function AppRouter() {
 
           {/* Dosen - Notifikasi */}
           <Route
-            path="/dosen/notifikasi"
+            path={ROUTES.DOSEN.NOTIFIKASI}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -820,7 +830,7 @@ export function AppRouter() {
 
           {/* Dosen - Profil */}
           <Route
-            path="/dosen/profil"
+            path={ROUTES.DOSEN.PROFILE}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -834,7 +844,7 @@ export function AppRouter() {
 
           {/* Dosen - Pengumuman */}
           <Route
-            path="/dosen/pengumuman"
+            path={ROUTES.DOSEN.PENGUMUMAN}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -848,7 +858,7 @@ export function AppRouter() {
 
           {/* Dosen - Offline Sync */}
           <Route
-            path="/dosen/offline-sync"
+            path={ROUTES.DOSEN.OFFLINE_SYNC}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
@@ -1076,7 +1086,7 @@ export function AppRouter() {
 
           {/* Laboran - Inventaris */}
           <Route
-            path="/laboran/inventaris"
+            path={ROUTES.LABORAN.INVENTARIS}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>
@@ -1090,7 +1100,7 @@ export function AppRouter() {
 
           {/* Laboran - Peminjaman Alat */}
           <Route
-            path="/laboran/peminjaman"
+            path={ROUTES.LABORAN.PEMINJAMAN}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>
@@ -1102,12 +1112,12 @@ export function AppRouter() {
             }
           />
           <Route
-            path="/laboran/persetujuan"
+            path={ROUTES.LABORAN.PERSETUJUAN}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>
                   <AppLayout>
-                    <LaboranPeminjamanAktifPage />
+                    <LaboranPersetujuanPage />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>
@@ -1128,7 +1138,7 @@ export function AppRouter() {
 
           {/* Laboran - Laboratorium */}
           <Route
-            path="/laboran/laboratorium"
+            path={ROUTES.LABORAN.LABORATORIUM}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>
@@ -1142,7 +1152,7 @@ export function AppRouter() {
 
           {/* Laboran - Kelola Jadwal */}
           <Route
-            path="/laboran/jadwal"
+            path={ROUTES.LABORAN.JADWAL}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>
@@ -1156,7 +1166,7 @@ export function AppRouter() {
 
           {/* Laboran - Laporan */}
           <Route
-            path="/laboran/laporan"
+            path={ROUTES.LABORAN.LAPORAN}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>
@@ -1170,7 +1180,7 @@ export function AppRouter() {
 
           {/* Laboran - Notifikasi */}
           <Route
-            path="/laboran/notifikasi"
+            path={ROUTES.LABORAN.NOTIFIKASI}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>
@@ -1184,7 +1194,7 @@ export function AppRouter() {
 
           {/* Laboran - Profil */}
           <Route
-            path="/laboran/profil"
+            path={ROUTES.LABORAN.PROFILE}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>
@@ -1198,7 +1208,7 @@ export function AppRouter() {
 
           {/* Laboran - Offline Sync */}
           <Route
-            path="/laboran/offline-sync"
+            path={ROUTES.LABORAN.OFFLINE_SYNC}
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>

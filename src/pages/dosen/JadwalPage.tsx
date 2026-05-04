@@ -80,7 +80,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
@@ -156,14 +155,7 @@ const jadwalSchema = z
     tanggal_praktikum: z.date({ message: "Tanggal praktikum harus dipilih" }),
     jam_mulai: z.string().min(1, "Jam mulai harus dipilih"),
     jam_selesai: z.string().min(1, "Jam selesai harus dipilih"),
-    topik: z
-      .string()
-      .optional()
-      .refine(
-        (val) => !val || val.length >= 10,
-        "Topik harus minimal 10 karakter",
-      ),
-    catatan: z.string().optional(),
+    topik: z.string().trim().min(1, "Topik harus diisi"),
     is_active: z.boolean().optional(),
   })
   .refine((data) => data.jam_mulai < data.jam_selesai, {
@@ -893,6 +885,17 @@ export default function JadwalPage() {
     fetchJadwal();
   }, [scheduleCacheKeys]);
 
+  useEffect(() => {
+    const handleJadwalChanged = () => {
+      fetchJadwal(true);
+    };
+
+    window.addEventListener("jadwal:changed", handleJadwalChanged);
+    return () => {
+      window.removeEventListener("jadwal:changed", handleJadwalChanged);
+    };
+  }, [scheduleCacheKeys]);
+
   // ============================================================================
   // CREATE FORM
   // ============================================================================
@@ -907,7 +910,6 @@ export default function JadwalPage() {
       jam_mulai: "08:00",
       jam_selesai: "10:00",
       topik: "",
-      catatan: "",
       is_active: true,
     },
   });
@@ -965,8 +967,7 @@ export default function JadwalPage() {
         tanggal_praktikum: format(data.tanggal_praktikum, "yyyy-MM-dd"),
         jam_mulai: data.jam_mulai,
         jam_selesai: data.jam_selesai,
-        topik: data.topik || undefined,
-        catatan: data.catatan || undefined,
+        topik: data.topik,
         is_active: data.is_active ?? true,
       };
 
@@ -995,27 +996,13 @@ export default function JadwalPage() {
         ).catch((err) => {
           console.error("Failed to notify laboran:", err);
         });
-
-        // Notify mahasiswa in the kelas (best-effort, non-blocking)
-        const mahasiswaIds = await getMahasiswaIds(kelasId);
-        if (mahasiswaIds.length > 0) {
-          notifyMahasiswaJadwalChange(
-            mahasiswaIds,
-            selectedMataKuliah.nama_mk || "Mata Kuliah",
-            selectedKelas.nama_kelas,
-            data.tanggal_praktikum instanceof Date
-              ? data.tanggal_praktikum.toISOString()
-              : data.tanggal_praktikum,
-            "baru",
-          ).catch((err) => {
-            console.error("Failed to notify mahasiswa:", err);
-          });
-        }
       }
 
       setIsCreateOpen(false);
       createForm.reset();
-      fetchJadwal();
+      await invalidateCache(scheduleCacheKeys.jadwal);
+      await invalidateCache(scheduleCacheKeys.events);
+      fetchJadwal(true);
     } catch (error: any) {
       toast.error("Gagal menambahkan jadwal", {
         description: error.message || "Unknown error occurred",
@@ -1049,7 +1036,6 @@ export default function JadwalPage() {
       jam_mulai: jadwal.jam_mulai || "08:00",
       jam_selesai: jadwal.jam_selesai || "10:00",
       topik: jadwal.topik || "",
-      catatan: jadwal.catatan || "",
       is_active: jadwal.is_active ?? true,
     });
 
@@ -1104,8 +1090,7 @@ export default function JadwalPage() {
         tanggal_praktikum: format(data.tanggal_praktikum, "yyyy-MM-dd"),
         jam_mulai: data.jam_mulai,
         jam_selesai: data.jam_selesai,
-        topik: data.topik || undefined,
-        catatan: data.catatan || undefined,
+        topik: data.topik,
         is_active: data.is_active ?? true,
       };
 
@@ -1135,27 +1120,30 @@ export default function JadwalPage() {
           });
         }
 
-        // Notify mahasiswa
-        const mahasiswaIds = await getMahasiswaIds(kelas.id);
-        if (mahasiswaIds.length > 0) {
-          notifyMahasiswaJadwalChange(
-            mahasiswaIds,
-            selectedMataKuliah.nama_mk,
-            kelas.nama_kelas,
-            data.tanggal_praktikum instanceof Date
-              ? data.tanggal_praktikum.toISOString()
-              : data.tanggal_praktikum,
-            "diupdate",
-          ).catch((err) => {
-            console.error("Failed to notify mahasiswa:", err);
-          });
+        if (selectedJadwal.status === "approved") {
+          const mahasiswaIds = await getMahasiswaIds(kelas.id);
+          if (mahasiswaIds.length > 0) {
+            notifyMahasiswaJadwalChange(
+              mahasiswaIds,
+              selectedMataKuliah.nama_mk,
+              kelas.nama_kelas,
+              data.tanggal_praktikum instanceof Date
+                ? data.tanggal_praktikum.toISOString()
+                : data.tanggal_praktikum,
+              "diupdate",
+            ).catch((err) => {
+              console.error("Failed to notify mahasiswa:", err);
+            });
+          }
         }
       }
 
       setIsEditOpen(false);
       editForm.reset();
       setSelectedJadwal(null);
-      fetchJadwal();
+      await invalidateCache(scheduleCacheKeys.jadwal);
+      await invalidateCache(scheduleCacheKeys.events);
+      fetchJadwal(true);
     } catch (error: any) {
       toast.error("Gagal memperbarui jadwal", {
         description: error.message,
@@ -1197,7 +1185,7 @@ export default function JadwalPage() {
       const kelas = kelasList.find((k) => k.id === selectedJadwal.kelas_id);
       const mataKuliah = getMataKuliahForJadwal(selectedJadwal);
 
-      if (kelas && mataKuliah) {
+      if (kelas && mataKuliah && selectedJadwal.status === "approved") {
         const mahasiswaIds = await getMahasiswaIds(kelas.id);
         if (mahasiswaIds.length > 0) {
           notifyMahasiswaJadwalChange(
@@ -1431,31 +1419,9 @@ export default function JadwalPage() {
         name="topik"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Topik (Optional)</FormLabel>
+            <FormLabel>Topik *</FormLabel>
             <FormControl>
               <Input placeholder="Topik praktikum..." {...field} />
-            </FormControl>
-            <FormDescription>
-              Minimal 10 karakter untuk menjelaskan materi praktikum
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Catatan Field */}
-      <FormField
-        control={form.control}
-        name="catatan"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Catatan (Optional)</FormLabel>
-            <FormControl>
-              <Textarea
-                placeholder="Catatan tambahan..."
-                className="resize-none"
-                {...field}
-              />
             </FormControl>
             <FormMessage />
           </FormItem>

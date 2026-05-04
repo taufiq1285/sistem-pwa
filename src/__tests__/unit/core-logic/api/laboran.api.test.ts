@@ -1460,7 +1460,7 @@ describe("Laboran API", () => {
         laboranAPI.markBorrowingReturned("pem-1", "baik", "ok", 0),
       ).resolves.not.toThrow();
 
-      expect(inventarisUpdate).toHaveBeenCalledWith({ jumlah_tersedia: 7 });
+      expect(inventarisUpdate).not.toHaveBeenCalled();
     });
 
     it("should throw when inventaris list query fails", async () => {
@@ -1671,7 +1671,7 @@ describe("Laboran API", () => {
       ).resolves.not.toThrow();
 
       expect(peminjamanUpdate).toHaveBeenCalled();
-      expect(inventarisUpdate).toHaveBeenCalledWith({ jumlah_tersedia: 3 });
+      expect(inventarisUpdate).not.toHaveBeenCalled();
     });
 
     it("should reject processApproval without rejection reason", async () => {
@@ -3222,7 +3222,9 @@ describe("Laboran API", () => {
 
       await expect(
         laboranAPI.markBorrowingReturned("pem-missing", "baik"),
-      ).rejects.toThrow("Peminjaman not found or not in approved status");
+      ).rejects.toThrow(
+        "Peminjaman tidak ditemukan atau belum diajukan untuk pengembalian",
+      );
     });
   });
 });

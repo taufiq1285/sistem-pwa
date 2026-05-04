@@ -19,7 +19,6 @@ import {
   type KehadiranHistoryRecord,
 } from "@/lib/api/kehadiran.api";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 interface KehadiranHistoryProps {
   kelasId: string;
@@ -87,6 +86,37 @@ export function KehadiranHistory({
     return total > 0 ? Math.round((hadir / total) * 100) : 0;
   };
 
+  const groupedHistory = history.reduce<
+    Array<{
+      id: string;
+      nama: string;
+      kode: string;
+      records: KehadiranHistoryRecord[];
+      totalPertemuan: number;
+    }>
+  >((groups, record) => {
+    const groupId = record.mata_kuliah_id || "tanpa-mata-kuliah";
+    const groupName = record.mata_kuliah_nama || "Mata kuliah belum terpetakan";
+    const groupCode = record.mata_kuliah_kode || "";
+    const existing = groups.find((group) => group.id === groupId);
+
+    if (existing) {
+      existing.records.push(record);
+      existing.totalPertemuan += 1;
+      return groups;
+    }
+
+    groups.push({
+      id: groupId,
+      nama: groupName,
+      kode: groupCode,
+      records: [record],
+      totalPertemuan: 1,
+    });
+
+    return groups;
+  }, []);
+
   if (loading) {
     return (
       <Card>
@@ -127,169 +157,184 @@ export function KehadiranHistory({
           {kelasNama} | {history.length} pertemuan tercatat
           {mataKuliahId
             ? " untuk mata kuliah aktif"
-            : " dari semua mata kuliah"}
+            : " dan dikelompokkan per mata kuliah"}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          {history.map((record) => {
-            const recordKey = getRecordKey(record);
-            const isExpanded = expandedDates.has(recordKey);
-            const percentage = calculatePercentage(
-              record.hadir,
-              record.total_mahasiswa,
-            );
-
-            return (
-              <div
-                key={recordKey}
-                className="border rounded-lg overflow-hidden transition-all hover:shadow-md"
-              >
-                <button
-                  onClick={() => toggleExpand(recordKey)}
-                  className="w-full p-4 hover:bg-muted/50 transition-colors flex items-center justify-between text-left"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium text-base">
-                      {formatDate(record.tanggal)}
+        <div className="space-y-5">
+          {groupedHistory.map((group) => (
+            <div key={group.id} className="space-y-2">
+              <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="font-semibold text-primary">
+                      {group.nama}
+                      {group.kode ? ` (${group.kode})` : ""}
                     </div>
-                    {record.mata_kuliah_nama && (
-                      <div className="mt-1 text-sm font-semibold text-primary">
-                        {record.mata_kuliah_nama}
-                        {record.mata_kuliah_kode
-                          ? ` (${record.mata_kuliah_kode})`
-                          : ""}
-                      </div>
-                    )}
-                    <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                      <Users className="h-3 w-3" />
-                      {record.total_mahasiswa} mahasiswa | {percentage}%
-                      kehadiran
+                    <div className="text-sm text-muted-foreground">
+                      {group.totalPertemuan} pertemuan tercatat
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className="bg-green-50 text-green-700 border-green-200"
-                    >
-                      Hadir {record.hadir}
-                    </Badge>
-                    {record.izin > 0 && (
-                      <Badge
-                        variant="outline"
-                        className="bg-blue-50 text-blue-700 border-blue-200"
-                      >
-                        Izin {record.izin}
-                      </Badge>
-                    )}
-                    {record.sakit > 0 && (
-                      <Badge
-                        variant="outline"
-                        className="bg-yellow-50 text-yellow-700 border-yellow-200"
-                      >
-                        Sakit {record.sakit}
-                      </Badge>
-                    )}
-                    {record.alpha > 0 && (
-                      <Badge
-                        variant="outline"
-                        className="bg-red-50 text-red-700 border-red-200"
-                      >
-                        Alpha {record.alpha}
-                      </Badge>
-                    )}
-                    {isExpanded ? (
-                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                </button>
-
-                {isExpanded && (
-                  <div className="px-4 pb-4 bg-muted/20 border-t">
-                    <div className="grid grid-cols-4 gap-4 pt-4">
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-green-600">
-                          {record.hadir}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Hadir
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          (
-                          {Math.round(
-                            (record.hadir / record.total_mahasiswa) * 100,
-                          )}
-                          %)
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-blue-600">
-                          {record.izin}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Izin
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          (
-                          {Math.round(
-                            (record.izin / record.total_mahasiswa) * 100,
-                          )}
-                          %)
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-yellow-600">
-                          {record.sakit}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Sakit
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          (
-                          {Math.round(
-                            (record.sakit / record.total_mahasiswa) * 100,
-                          )}
-                          %)
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-red-600">
-                          {record.alpha}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Alpha
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          (
-                          {Math.round(
-                            (record.alpha / record.total_mahasiswa) * 100,
-                          )}
-                          %)
-                        </div>
-                      </div>
+                  {!mataKuliahId && (
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Riwayat dipisah per mata kuliah
                     </div>
-
-                    {(onSelectDate || onSelectRecord) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-4"
-                        onClick={() => {
-                          onSelectRecord?.(record);
-                          onSelectDate?.(record.tanggal);
-                        }}
-                      >
-                        Lihat Detail / Edit Kehadiran
-                      </Button>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            );
-          })}
+
+              {group.records.map((record) => {
+                const recordKey = getRecordKey(record);
+                const isExpanded = expandedDates.has(recordKey);
+                const percentage = calculatePercentage(
+                  record.hadir,
+                  record.total_mahasiswa,
+                );
+
+                return (
+                  <div
+                    key={recordKey}
+                    className="border rounded-lg overflow-hidden transition-all hover:shadow-md"
+                  >
+                    <button
+                      onClick={() => toggleExpand(recordKey)}
+                      className="w-full p-4 hover:bg-muted/50 transition-colors flex items-center justify-between text-left"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-base">
+                          {formatDate(record.tanggal)}
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                          <Users className="h-3 w-3" />
+                          {record.total_mahasiswa} mahasiswa | {percentage}%
+                          kehadiran
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className="bg-green-50 text-green-700 border-green-200"
+                        >
+                          Hadir {record.hadir}
+                        </Badge>
+                        {record.izin > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="bg-blue-50 text-blue-700 border-blue-200"
+                          >
+                            Izin {record.izin}
+                          </Badge>
+                        )}
+                        {record.sakit > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="bg-yellow-50 text-yellow-700 border-yellow-200"
+                          >
+                            Sakit {record.sakit}
+                          </Badge>
+                        )}
+                        {record.alpha > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="bg-red-50 text-red-700 border-red-200"
+                          >
+                            Alpha {record.alpha}
+                          </Badge>
+                        )}
+                        {isExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-4 pb-4 bg-muted/20 border-t">
+                        <div className="grid grid-cols-4 gap-4 pt-4">
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-green-600">
+                              {record.hadir}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Hadir
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              (
+                              {Math.round(
+                                (record.hadir / record.total_mahasiswa) * 100,
+                              )}
+                              %)
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-blue-600">
+                              {record.izin}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Izin
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              (
+                              {Math.round(
+                                (record.izin / record.total_mahasiswa) * 100,
+                              )}
+                              %)
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-yellow-600">
+                              {record.sakit}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Sakit
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              (
+                              {Math.round(
+                                (record.sakit / record.total_mahasiswa) * 100,
+                              )}
+                              %)
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-red-600">
+                              {record.alpha}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Alpha
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              (
+                              {Math.round(
+                                (record.alpha / record.total_mahasiswa) * 100,
+                              )}
+                              %)
+                            </div>
+                          </div>
+                        </div>
+
+                        {(onSelectDate || onSelectRecord) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-4"
+                            onClick={() => {
+                              onSelectRecord?.(record);
+                              onSelectDate?.(record.tanggal);
+                            }}
+                          >
+                            Lihat Detail / Edit Kehadiran
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

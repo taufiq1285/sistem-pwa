@@ -96,6 +96,44 @@ describe("Jadwal API", () => {
     },
   };
 
+  const mockMahasiswaScheduleContext = ({
+    mahasiswaId = "mhs-1",
+    kelasIds = ["kelas-1"],
+  }: {
+    mahasiswaId?: string | null;
+    kelasIds?: string[];
+  } = {}) => {
+    vi.mocked(supabase.from).mockImplementation((table: string) => {
+      if (table === "mahasiswa") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: mahasiswaId ? { id: mahasiswaId } : null,
+                error: null,
+              }),
+            }),
+          }),
+        } as any;
+      }
+
+      if (table === "kelas_mahasiswa") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: kelasIds.map((kelas_id) => ({ kelas_id })),
+                error: null,
+              }),
+            }),
+          }),
+        } as any;
+      }
+
+      return {} as any;
+    });
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(baseApi.withApiResponse).mockImplementation(
@@ -546,6 +584,7 @@ describe("Jadwal API", () => {
 
   describe("getJadwalPraktikumMahasiswa", () => {
     it("should fetch all active jadwal for mahasiswa without date range", async () => {
+      mockMahasiswaScheduleContext();
       vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
         mockJadwalWithLab,
       ]);
@@ -557,6 +596,8 @@ describe("Jadwal API", () => {
         "jadwal_praktikum",
         expect.arrayContaining([
           { column: "is_active", operator: "eq", value: true },
+          { column: "status", operator: "eq", value: "approved" },
+          { column: "kelas_id", operator: "in", value: ["kelas-1"] },
         ]),
         expect.objectContaining({
           select: expect.stringContaining("laboratorium:laboratorium_id"),
@@ -566,6 +607,7 @@ describe("Jadwal API", () => {
     });
 
     it("should fetch jadwal with start date filter", async () => {
+      mockMahasiswaScheduleContext();
       vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
         mockJadwalWithLab,
       ]);
@@ -578,6 +620,8 @@ describe("Jadwal API", () => {
         "jadwal_praktikum",
         expect.arrayContaining([
           { column: "is_active", operator: "eq", value: true },
+          { column: "status", operator: "eq", value: "approved" },
+          { column: "kelas_id", operator: "in", value: ["kelas-1"] },
           {
             column: "tanggal_praktikum",
             operator: "gte",
@@ -589,6 +633,7 @@ describe("Jadwal API", () => {
     });
 
     it("should fetch jadwal with date range", async () => {
+      mockMahasiswaScheduleContext();
       vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
         mockJadwalWithLab,
       ]);
@@ -606,6 +651,8 @@ describe("Jadwal API", () => {
         "jadwal_praktikum",
         expect.arrayContaining([
           { column: "is_active", operator: "eq", value: true },
+          { column: "status", operator: "eq", value: "approved" },
+          { column: "kelas_id", operator: "in", value: ["kelas-1"] },
           {
             column: "tanggal_praktikum",
             operator: "gte",
@@ -622,6 +669,7 @@ describe("Jadwal API", () => {
     });
 
     it("should handle errors gracefully", async () => {
+      mockMahasiswaScheduleContext();
       const error = new Error("Database error");
       vi.mocked(baseApi.queryWithFilters).mockRejectedValue(error);
 
@@ -631,6 +679,7 @@ describe("Jadwal API", () => {
 
   describe("getJadwalHariIni", () => {
     it("should fetch today's jadwal for mahasiswa", async () => {
+      mockMahasiswaScheduleContext();
       vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
         mockJadwalWithLab,
       ]);
@@ -644,6 +693,7 @@ describe("Jadwal API", () => {
 
   describe("getJadwalMingguIni", () => {
     it("should fetch this week's jadwal for mahasiswa", async () => {
+      mockMahasiswaScheduleContext();
       vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
         mockJadwalWithLab,
       ]);
@@ -657,6 +707,7 @@ describe("Jadwal API", () => {
 
   describe("getJadwalBulanIni", () => {
     it("should fetch this month's jadwal for mahasiswa", async () => {
+      mockMahasiswaScheduleContext();
       vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
         mockJadwalWithLab,
       ]);
@@ -758,6 +809,7 @@ describe("Jadwal API", () => {
     });
 
     it("should handle very long time ranges", async () => {
+      mockMahasiswaScheduleContext();
       const startDate = new Date("2025-01-01");
       const endDate = new Date("2025-12-31");
 
@@ -789,6 +841,110 @@ describe("Jadwal API", () => {
               eq: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue({
                   data: { id: "dosen-1" },
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        if (table === "mahasiswa") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { id: "mhs-1" },
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        if (table === "kelas_mahasiswa") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({
+                  data: [{ kelas_id: "kelas-1" }],
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        if (table === "mahasiswa") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { id: "mhs-1" },
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        if (table === "kelas_mahasiswa") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({
+                  data: [{ kelas_id: "kelas-1" }],
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        if (table === "mahasiswa") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { id: "mhs-1" },
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        if (table === "kelas_mahasiswa") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({
+                  data: [{ kelas_id: "kelas-1" }],
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        if (table === "mahasiswa") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { id: "mhs-1" },
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        if (table === "kelas_mahasiswa") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({
+                  data: [{ kelas_id: "kelas-1" }],
                   error: null,
                 }),
               }),
@@ -946,20 +1102,43 @@ describe("Jadwal API", () => {
       vi.mocked(baseApi.remove).mockResolvedValue(true as any);
 
       vi.mocked(supabase.from).mockImplementation((table: string) => {
-        if (table === "dosen") {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { id: "dosen-1" },
-                  error: null,
+        switch (table) {
+          case "dosen":
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { id: "dosen-1" },
+                    error: null,
+                  }),
                 }),
               }),
-            }),
-          } as any;
+            } as any;
+          case "mahasiswa":
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue({
+                    data: { id: "mhs-1" },
+                    error: null,
+                  }),
+                }),
+              }),
+            } as any;
+          case "kelas_mahasiswa":
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockResolvedValue({
+                    data: [{ kelas_id: "kelas-1" }],
+                    error: null,
+                  }),
+                }),
+              }),
+            } as any;
+          default:
+            return {} as any;
         }
-
-        return {} as any;
       });
 
       vi.mocked(supabase.auth.getUser).mockResolvedValue({

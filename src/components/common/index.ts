@@ -54,4 +54,4 @@ export { RoleGuard } from "./RoleGuard";
 
 export { NotificationDropdown } from "./NotificationDropdown";
 // export { NotificationBell } from './NotificationBell';
-//export { UpdatePrompt } from './UpdatePrompt';
+export { UpdatePrompt } from "./UpdatePrompt";

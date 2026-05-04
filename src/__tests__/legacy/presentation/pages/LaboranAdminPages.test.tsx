@@ -237,15 +237,15 @@ describe("Laboran LaboratoriumPage", () => {
     expect(
       container.querySelector(".animate-pulse") ||
         container.querySelector(".animate-spin") ||
-        screen.getByRole("heading", { name: /^Laboratorium$/i }),
+        screen.getByRole("heading", { name: /^Data Laboratorium$/i }),
     ).toBeTruthy();
   });
 
-  it("menampilkan judul Laboratorium", async () => {
+  it("menampilkan judul Data Laboratorium", async () => {
     wrap(<LaboratoriumPage />);
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: /^Laboratorium$/i }),
+        screen.getByRole("heading", { name: /^Data Laboratorium$/i }),
       ).toBeInTheDocument(),
     );
   });
@@ -331,11 +331,13 @@ describe("Laboran LaporanPage", () => {
     vi.mocked(reportsApi.getRecentActivities).mockResolvedValue([] as any);
   });
 
-  it("menampilkan judul Laporan", async () => {
+  it("menampilkan judul Laporan Pertanggungjawaban Laboran", async () => {
     wrap(<LaporanPage />);
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: /Laporan\s*&\s*Analitik/i }),
+        screen.getByRole("heading", {
+          name: /Laporan Pertanggungjawaban Laboran/i,
+        }),
       ).toBeInTheDocument(),
     );
   });

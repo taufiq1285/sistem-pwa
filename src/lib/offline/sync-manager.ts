@@ -14,6 +14,7 @@
 
 import { queueManager } from "./queue-manager";
 import { networkDetector } from "./network-detector";
+import { indexedDBManager } from "./indexeddb";
 import type { SyncQueueItem } from "@/types/offline.types";
 import { supabase } from "@/lib/supabase/client";
 import { submitAnswerSafe } from "@/lib/api/kuis-versioned-simple.api";
@@ -47,6 +48,10 @@ async function defaultSyncProcessor(item: SyncQueueItem): Promise<void> {
     }
 
     await submitAnswerSafe({ attempt_id, soal_id, jawaban });
+    await indexedDBManager.delete(
+      "offline_answers",
+      `${attempt_id}_${soal_id}`,
+    );
     return;
   }
 

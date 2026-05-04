@@ -58,6 +58,7 @@ async function resolveMataKuliahIdForKelas(
     .select("mata_kuliah_id")
     .eq("kelas_id", kelasId)
     .eq("is_active", true)
+    .eq("status", "approved")
     .not("mata_kuliah_id", "is", null)
     .gte("tanggal_praktikum", today)
     .order("tanggal_praktikum", { ascending: true })
@@ -73,6 +74,7 @@ async function resolveMataKuliahIdForKelas(
     .select("mata_kuliah_id")
     .eq("kelas_id", kelasId)
     .eq("is_active", true)
+    .eq("status", "approved")
     .not("mata_kuliah_id", "is", null)
     .order("tanggal_praktikum", { ascending: false })
     .limit(1);
@@ -131,6 +133,7 @@ async function getDashboardActiveKelasIds(
         .select("kelas_id")
         .in("kelas_id", enrolledKelasIds)
         .eq("is_active", true)
+        .eq("status", "approved")
         .gte("tanggal_praktikum", today),
       supabase
         .from("kuis")
@@ -147,7 +150,9 @@ async function getDashboardActiveKelasIds(
   const activeKelasIds = new Set(
     ((activeKelasResult.data as any[]) || [])
       .map((item: any) => item.id)
-      .filter((id: any): id is string => typeof id === "string" && id.length > 0),
+      .filter(
+        (id: any): id is string => typeof id === "string" && id.length > 0,
+      ),
   );
 
   const dashboardKelasIds = new Set<string>();
@@ -280,12 +285,13 @@ export async function getMahasiswaStats(): Promise<MahasiswaStats> {
         const today = new Date().toISOString().split("T")[0];
         const { data: jadwalData } =
           kelasIds.length > 0
-            ? await supabase
+            ? await (supabase as any)
                 .from("jadwal_praktikum")
                 .select("id")
                 .eq("tanggal_praktikum", today)
                 .in("kelas_id", kelasIds)
                 .eq("is_active", true)
+                .eq("status", "approved")
             : { data: [] };
 
         const jadwalHariIni = jadwalData?.length || 0;
@@ -402,20 +408,22 @@ export async function getAvailableKelas(): Promise<AvailableKelas[]> {
           .eq("kelas_id", kelas.id)
           .eq("is_active", true);
 
-        const { count: jadwalCount } = await supabase
+        const { count: jadwalCount } = await (supabase as any)
           .from("jadwal_praktikum")
           .select("*", { count: "exact", head: true })
           .eq("kelas_id", kelas.id)
-          .eq("is_active", true);
+          .eq("is_active", true)
+          .eq("status", "approved");
 
         // FIXED: No .single() to avoid 406 error when no data
         const today = new Date().toISOString().split("T")[0];
-        const { data: nextJadwalArray } = await supabase
+        const { data: nextJadwalArray } = await (supabase as any)
           .from("jadwal_praktikum")
           .select("tanggal_praktikum, jam_mulai, jam_selesai, laboratorium_id")
           .eq("kelas_id", kelas.id)
           .gte("tanggal_praktikum", today)
           .eq("is_active", true)
+          .eq("status", "approved")
           .order("tanggal_praktikum", { ascending: true })
           .limit(1);
 
@@ -717,6 +725,7 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
       .gte("tanggal_praktikum", todayStr)
       .lte("tanggal_praktikum", futureDateStr)
       .eq("is_active", true)
+      .eq("status", "approved")
       .order("tanggal_praktikum", { ascending: true })
       .order("jam_mulai", { ascending: true })
       .limit(limit || 50);

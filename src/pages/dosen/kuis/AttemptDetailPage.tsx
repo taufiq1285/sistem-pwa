@@ -235,7 +235,7 @@ export default function AttemptDetailPage() {
       const grading = gradingState[jawaban.id];
       const soal = getSoalForJawaban(jawaban);
       const derivedAutoScore =
-        soal && checkAnswer(jawaban, soal) ? (soal.poin || 0) : 0;
+        soal && checkAnswer(jawaban, soal) ? soal.poin || 0 : 0;
 
       return (
         sum +

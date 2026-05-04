@@ -25,7 +25,13 @@ export type {
  * Peminjaman filter options
  */
 export interface PeminjamanFilterOptions {
-  status?: "pending" | "approved" | "rejected" | "returned" | "overdue";
+  status?:
+    | "pending"
+    | "approved"
+    | "return_requested"
+    | "rejected"
+    | "returned"
+    | "overdue";
   peminjam_id?: string;
   dosen_id?: string;
   inventaris_id?: string;

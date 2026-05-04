@@ -170,6 +170,7 @@ export async function registerServiceWorker(
     // Handle waiting worker (update available)
     if (registration.waiting) {
       logger.info("[SW] New service worker waiting to activate");
+      dispatchUpdateAvailableEvent(registration);
       if (onUpdate) {
         onUpdate(registration);
       }
@@ -210,6 +211,7 @@ function setupUpdateListeners(
         // New service worker available — trigger onUpdate regardless of
         // whether a controller exists (handles first-install updates too)
         logger.info("[SW] New version installed, waiting to activate");
+        dispatchUpdateAvailableEvent(registration);
 
         if (onUpdate) {
           onUpdate(registration);
@@ -218,6 +220,7 @@ function setupUpdateListeners(
 
       if (newWorker.state === "activated") {
         logger.info("[SW] New version activated");
+        dispatchUpdateInstalledEvent();
         // Don't auto-reload here - let the controllerchange event handle it
         // This prevents update loops
       }
@@ -393,6 +396,20 @@ function dispatchSWEvent(type: string, message: SWMessage): void {
     detail: message,
   });
   window.dispatchEvent(event);
+}
+
+function dispatchUpdateAvailableEvent(
+  registration: ServiceWorkerRegistration,
+): void {
+  window.dispatchEvent(
+    new CustomEvent("sw-update-available", {
+      detail: { registration },
+    }),
+  );
+}
+
+function dispatchUpdateInstalledEvent(): void {
+  window.dispatchEvent(new CustomEvent("sw-update-installed"));
 }
 
 // ============================================================================

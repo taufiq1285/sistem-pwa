@@ -65,9 +65,7 @@ import type {
 } from "@/types/logbook.types";
 import type { Jadwal } from "@/types/jadwal.types";
 import { toast } from "sonner";
-import {
-  SKILL_KEBIDANAN,
-} from "@/types/logbook.types";
+import { SKILL_KEBIDANAN } from "@/types/logbook.types";
 
 // ============================================================================
 // COMPONENT
@@ -176,11 +174,7 @@ export default function MahasiswaLogbookPage() {
       window.removeEventListener("logbook:changed", handleLogbookChanged);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [
-    user?.mahasiswa?.id,
-    jadwalCacheKey,
-    logbookCacheKey,
-  ]);
+  }, [user?.mahasiswa?.id, jadwalCacheKey, logbookCacheKey]);
 
   useEffect(() => {
     if (!jadwalCacheKey && !logbookCacheKey) {
@@ -220,6 +214,17 @@ export default function MahasiswaLogbookPage() {
     return () =>
       window.removeEventListener("cache:updated", handleCacheUpdated);
   }, [jadwalCacheKey, logbookCacheKey]);
+
+  useEffect(() => {
+    const handleJadwalChanged = () => {
+      loadData(true);
+    };
+
+    window.addEventListener("jadwal:changed", handleJadwalChanged);
+    return () => {
+      window.removeEventListener("jadwal:changed", handleJadwalChanged);
+    };
+  }, [user?.mahasiswa?.id, jadwalCacheKey, logbookCacheKey]);
 
   useEffect(() => {
     if (!selectedLogbook) {
@@ -262,9 +267,7 @@ export default function MahasiswaLogbookPage() {
             (item): item is LogbookEntry => item != null && "id" in item,
           )
         : [];
-      const hasCachedData =
-        cachedJadwal.length > 0 ||
-        cachedLogbook.length > 0;
+      const hasCachedData = cachedJadwal.length > 0 || cachedLogbook.length > 0;
 
       if (hasCachedData) {
         setJadwalList(cachedJadwal);
@@ -272,7 +275,6 @@ export default function MahasiswaLogbookPage() {
         setIsOfflineData(!navigator.onLine);
         setLastUpdatedAt(
           Math.max(
-            cachedEnrollmentsEntry?.timestamp || 0,
             cachedJadwalEntry?.timestamp || 0,
             cachedLogbookEntry?.timestamp || 0,
           ) || null,

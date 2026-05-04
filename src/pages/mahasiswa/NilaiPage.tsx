@@ -674,15 +674,24 @@ export default function MahasiswaNilaiPageEnhanced() {
         {/* Tabs */}
         <Tabs defaultValue="per-kelas" className="space-y-4">
           <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-2xl bg-white/80 p-1 shadow-sm md:grid-cols-3">
-            <TabsTrigger value="per-kelas" className="gap-2 rounded-xl py-2.5 font-semibold">
+            <TabsTrigger
+              value="per-kelas"
+              className="gap-2 rounded-xl py-2.5 font-semibold"
+            >
               <FileText className="h-4 w-4" />
               Per Kelas
             </TabsTrigger>
-            <TabsTrigger value="per-mk" className="gap-2 rounded-xl py-2.5 font-semibold">
+            <TabsTrigger
+              value="per-mk"
+              className="gap-2 rounded-xl py-2.5 font-semibold"
+            >
               <BookOpen className="h-4 w-4" />
               Rekap Mata Kuliah
             </TabsTrigger>
-            <TabsTrigger value="permintaan" className="gap-2 rounded-xl py-2.5 font-semibold">
+            <TabsTrigger
+              value="permintaan"
+              className="gap-2 rounded-xl py-2.5 font-semibold"
+            >
               <History className="h-4 w-4" />
               Riwayat Permintaan ({permintaanList.length})
             </TabsTrigger>
@@ -713,95 +722,101 @@ export default function MahasiswaNilaiPageEnhanced() {
                 ) : (
                   <div className="overflow-hidden rounded-2xl border border-border/60">
                     <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader className="bg-muted/40">
-                        <TableRow>
-                          <TableHead className="w-12">No</TableHead>
-                          <TableHead>Kode MK</TableHead>
-                          <TableHead>Mata Kuliah</TableHead>
-                          <TableHead>Kelas</TableHead>
-                          <TableHead>Dosen Penilai</TableHead>
-                          <TableHead className="text-center">
-                            Praktikum
-                          </TableHead>
-                          <TableHead className="text-center">
-                            Nilai Akhir
-                          </TableHead>
-                          <TableHead className="text-center">Grade</TableHead>
-                          <TableHead>Aksi</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredNilai.map((nilai, index) => (
-                          <TableRow key={nilai.id} className="hover:bg-primary/5">
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="rounded-full font-mono">
-                                {nilai.kelas?.mata_kuliah?.kode_mk || "-"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="min-w-[220px] font-semibold">
-                              {nilai.kelas?.mata_kuliah?.nama_mk ||
-                                "Mata kuliah tidak diketahui"}
-                            </TableCell>
-                            <TableCell>
-                              <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold">
-                                Kelas {nilai.kelas?.nama_kelas || "-"}
-                              </span>
-                            </TableCell>
-                            <TableCell className="min-w-[160px]">
-                              <div className="font-semibold">
-                                {getDosenPenilaiLabel(nilai)}
-                              </div>
-                              {getDosenPenilaiMeta(nilai) ? (
-                                <div className="text-xs text-muted-foreground">
-                                  {getDosenPenilaiMeta(nilai)}
-                                </div>
-                              ) : (
-                                <div className="text-xs text-muted-foreground">
-                                  Nilai lama atau belum disimpan dosen
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {nilai.nilai_praktikum?.toFixed(1) || "0.0"}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <span className="text-lg font-black text-primary">
-                                {nilai.nilai_akhir?.toFixed(2) || "0.00"}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <StatusBadge
-                                status={
-                                  nilai.nilai_huruf?.startsWith("A")
-                                    ? "success"
-                                    : nilai.nilai_huruf?.startsWith("B")
-                                      ? "info"
-                                      : nilai.nilai_huruf?.startsWith("C")
-                                        ? "warning"
-                                        : "error"
-                                }
-                                pulse={false}
-                              >
-                                {nilai.nilai_huruf || "-"}
-                              </StatusBadge>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="gap-1 rounded-xl"
-                                onClick={() => handleAjukanPerbaikan(nilai)}
-                              >
-                                <Edit className="h-3 w-3" />
-                                Ajukan Perbaikan
-                              </Button>
-                            </TableCell>
+                      <Table>
+                        <TableHeader className="bg-muted/40">
+                          <TableRow>
+                            <TableHead className="w-12">No</TableHead>
+                            <TableHead>Kode MK</TableHead>
+                            <TableHead>Mata Kuliah</TableHead>
+                            <TableHead>Kelas</TableHead>
+                            <TableHead>Dosen Penilai</TableHead>
+                            <TableHead className="text-center">
+                              Praktikum
+                            </TableHead>
+                            <TableHead className="text-center">
+                              Nilai Akhir
+                            </TableHead>
+                            <TableHead className="text-center">Grade</TableHead>
+                            <TableHead>Aksi</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredNilai.map((nilai, index) => (
+                            <TableRow
+                              key={nilai.id}
+                              className="hover:bg-primary/5"
+                            >
+                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full font-mono"
+                                >
+                                  {nilai.kelas?.mata_kuliah?.kode_mk || "-"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="min-w-[220px] font-semibold">
+                                {nilai.kelas?.mata_kuliah?.nama_mk ||
+                                  "Mata kuliah tidak diketahui"}
+                              </TableCell>
+                              <TableCell>
+                                <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold">
+                                  Kelas {nilai.kelas?.nama_kelas || "-"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="min-w-[160px]">
+                                <div className="font-semibold">
+                                  {getDosenPenilaiLabel(nilai)}
+                                </div>
+                                {getDosenPenilaiMeta(nilai) ? (
+                                  <div className="text-xs text-muted-foreground">
+                                    {getDosenPenilaiMeta(nilai)}
+                                  </div>
+                                ) : (
+                                  <div className="text-xs text-muted-foreground">
+                                    Nilai lama atau belum disimpan dosen
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {nilai.nilai_praktikum?.toFixed(1) || "0.0"}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <span className="text-lg font-black text-primary">
+                                  {nilai.nilai_akhir?.toFixed(2) || "0.00"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <StatusBadge
+                                  status={
+                                    nilai.nilai_huruf?.startsWith("A")
+                                      ? "success"
+                                      : nilai.nilai_huruf?.startsWith("B")
+                                        ? "info"
+                                        : nilai.nilai_huruf?.startsWith("C")
+                                          ? "warning"
+                                          : "error"
+                                  }
+                                  pulse={false}
+                                >
+                                  {nilai.nilai_huruf || "-"}
+                                </StatusBadge>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1 rounded-xl"
+                                  onClick={() => handleAjukanPerbaikan(nilai)}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                  Ajukan Perbaikan
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
                 )}
@@ -835,65 +850,73 @@ export default function MahasiswaNilaiPageEnhanced() {
                 ) : (
                   <div className="overflow-hidden rounded-2xl border border-border/60">
                     <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader className="bg-muted/40">
-                        <TableRow>
-                          <TableHead className="w-12">No</TableHead>
-                          <TableHead>Kode MK</TableHead>
-                          <TableHead>Mata Kuliah</TableHead>
-                          <TableHead className="text-center">SKS</TableHead>
-                          <TableHead className="text-center">
-                            Total Record
-                          </TableHead>
-                          <TableHead className="text-center">
-                            Rata-rata Nilai
-                          </TableHead>
-                          <TableHead className="text-center">Grade</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {nilaiKumulatif.map((mk, index) => (
-                          <TableRow key={mk.mata_kuliah_id} className="hover:bg-primary/5">
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="rounded-full font-mono">
-                                {mk.kode_mk || "-"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="min-w-[220px] font-semibold">
-                              {mk.nama_mk}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {mk.sks}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="outline">{mk.total_kelas}</Badge>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <span className="text-lg font-black text-primary">
-                                {mk.nilai_kumulatif.toFixed(2)}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <StatusBadge
-                                status={
-                                  mk.nilai_huruf.startsWith("A")
-                                    ? "success"
-                                    : mk.nilai_huruf.startsWith("B")
-                                      ? "info"
-                                      : mk.nilai_huruf.startsWith("C")
-                                        ? "warning"
-                                        : "error"
-                                }
-                                pulse={false}
-                              >
-                                {mk.nilai_huruf}
-                              </StatusBadge>
-                            </TableCell>
+                      <Table>
+                        <TableHeader className="bg-muted/40">
+                          <TableRow>
+                            <TableHead className="w-12">No</TableHead>
+                            <TableHead>Kode MK</TableHead>
+                            <TableHead>Mata Kuliah</TableHead>
+                            <TableHead className="text-center">SKS</TableHead>
+                            <TableHead className="text-center">
+                              Total Record
+                            </TableHead>
+                            <TableHead className="text-center">
+                              Rata-rata Nilai
+                            </TableHead>
+                            <TableHead className="text-center">Grade</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {nilaiKumulatif.map((mk, index) => (
+                            <TableRow
+                              key={mk.mata_kuliah_id}
+                              className="hover:bg-primary/5"
+                            >
+                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full font-mono"
+                                >
+                                  {mk.kode_mk || "-"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="min-w-[220px] font-semibold">
+                                {mk.nama_mk}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {mk.sks}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="outline">
+                                  {mk.total_kelas}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <span className="text-lg font-black text-primary">
+                                  {mk.nilai_kumulatif.toFixed(2)}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <StatusBadge
+                                  status={
+                                    mk.nilai_huruf.startsWith("A")
+                                      ? "success"
+                                      : mk.nilai_huruf.startsWith("B")
+                                        ? "info"
+                                        : mk.nilai_huruf.startsWith("C")
+                                          ? "warning"
+                                          : "error"
+                                  }
+                                  pulse={false}
+                                >
+                                  {mk.nilai_huruf}
+                                </StatusBadge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
                 )}
@@ -1046,86 +1069,87 @@ export default function MahasiswaNilaiPageEnhanced() {
           <DialogContent className="sm:max-w-125">
             <DialogHeader>
               <DialogTitle>Ajukan Permintaan Perbaikan Nilai</DialogTitle>
-            <DialogDescription>
-              {selectedNilai?.kelas?.mata_kuliah?.nama_mk} -{" "}
-              {selectedNilai?.kelas?.nama_kelas}
-            </DialogDescription>
-          </DialogHeader>
+              <DialogDescription>
+                {selectedNilai?.kelas?.mata_kuliah?.nama_mk} -{" "}
+                {selectedNilai?.kelas?.nama_kelas}
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="grid gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 sm:grid-cols-2">
-              <div>
-                <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  Mata Kuliah
-                </Label>
-                <div className="mt-1 rounded-xl bg-white px-3 py-2 text-sm font-semibold">
-                  {selectedNilai?.kelas?.mata_kuliah?.nama_mk ||
-                    "Mata kuliah tidak diketahui"}
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  Dosen Tujuan
-                </Label>
-                {selectedNilai?.dosen_id ? (
-                  <div className="mt-1 rounded-xl bg-white px-3 py-2 text-sm">
-                    <div className="font-semibold">
-                      {selectedNilai.dosen?.user?.full_name || "Dosen penilai"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Otomatis mengikuti dosen yang memasukkan nilai ini.
-                    </div>
-                  </div>
-                ) : (
-                  <Select
-                    value={selectedTargetDosenId}
-                    onValueChange={setSelectedTargetDosenId}
-                  >
-                    <SelectTrigger className="mt-1 rounded-xl bg-white">
-                      <SelectValue placeholder="Pilih dosen tujuan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {dosenOptions.length === 0 ? (
-                        <div className="p-3 text-sm text-muted-foreground">
-                          Tidak ada dosen tersedia
-                        </div>
-                      ) : (
-                        dosenOptions.map((dosen) => (
-                          <SelectItem key={dosen.id} value={dosen.id}>
-                            <div className="flex flex-col">
-                              <span className="font-semibold">
-                                {dosen.full_name}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {dosen.nip || dosen.email || "Dosen"}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
-              <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Nilai Saat Ini
-              </Label>
-              <div className="mt-1 flex items-end justify-between gap-3">
+            <div className="space-y-4">
+              <div className="grid gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-sm font-semibold">Nilai Mata Kuliah</p>
-                  <p className="text-xs text-muted-foreground">
-                    Pengajuan akan direview dosen, lalu nilai diperbarui lewat
-                    halaman Penilaian.
-                  </p>
+                  <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    Mata Kuliah
+                  </Label>
+                  <div className="mt-1 rounded-xl bg-white px-3 py-2 text-sm font-semibold">
+                    {selectedNilai?.kelas?.mata_kuliah?.nama_mk ||
+                      "Mata kuliah tidak diketahui"}
+                  </div>
                 </div>
-                <span className="text-2xl font-black text-primary">
-                  {Number(selectedNilai?.nilai_akhir ?? 0).toFixed(2)}
-                </span>
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    Dosen Tujuan
+                  </Label>
+                  {selectedNilai?.dosen_id ? (
+                    <div className="mt-1 rounded-xl bg-white px-3 py-2 text-sm">
+                      <div className="font-semibold">
+                        {selectedNilai.dosen?.user?.full_name ||
+                          "Dosen penilai"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Otomatis mengikuti dosen yang memasukkan nilai ini.
+                      </div>
+                    </div>
+                  ) : (
+                    <Select
+                      value={selectedTargetDosenId}
+                      onValueChange={setSelectedTargetDosenId}
+                    >
+                      <SelectTrigger className="mt-1 rounded-xl bg-white">
+                        <SelectValue placeholder="Pilih dosen tujuan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dosenOptions.length === 0 ? (
+                          <div className="p-3 text-sm text-muted-foreground">
+                            Tidak ada dosen tersedia
+                          </div>
+                        ) : (
+                          dosenOptions.map((dosen) => (
+                            <SelectItem key={dosen.id} value={dosen.id}>
+                              <div className="flex flex-col">
+                                <span className="font-semibold">
+                                  {dosen.full_name}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {dosen.nip || dosen.email || "Dosen"}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
               </div>
-            </div>
+
+              <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+                <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Nilai Saat Ini
+                </Label>
+                <div className="mt-1 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">Nilai Mata Kuliah</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pengajuan akan direview dosen, lalu nilai diperbarui lewat
+                      halaman Penilaian.
+                    </p>
+                  </div>
+                  <span className="text-2xl font-black text-primary">
+                    {Number(selectedNilai?.nilai_akhir ?? 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
 
               <div>
                 <Label>

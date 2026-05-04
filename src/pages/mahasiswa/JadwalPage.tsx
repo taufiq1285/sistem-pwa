@@ -57,6 +57,17 @@ export default function JadwalPage() {
   }, [user?.id]);
 
   useEffect(() => {
+    const handleJadwalChanged = () => {
+      fetchData(true);
+    };
+
+    window.addEventListener("jadwal:changed", handleJadwalChanged);
+    return () => {
+      window.removeEventListener("jadwal:changed", handleJadwalChanged);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     if (!kelasCacheKey || !jadwalCacheKey) {
       return;
     }
@@ -108,6 +119,7 @@ export default function JadwalPage() {
       )
       .in("kelas_id", kelasIds)
       .eq("is_active", true)
+      .eq("status", "approved")
       .order("tanggal_praktikum", { ascending: true })
       .order("jam_mulai", { ascending: true });
 
@@ -410,8 +422,8 @@ export default function JadwalPage() {
               <AlertDescription className="text-primary dark:text-primary/80">
                 Jadwal praktikum diatur oleh dosen pengampu kelas Anda. Jika ada
                 pertanyaan terkait jadwal, silakan hubungi dosen yang
-                bersangkutan. Sesi yang sudah lewat akan otomatis masuk ke
-                tab riwayat.
+                bersangkutan. Sesi yang sudah lewat akan otomatis masuk ke tab
+                riwayat.
               </AlertDescription>
             </Alert>
           </CardContent>

@@ -208,10 +208,7 @@ export default function DosenMateriPage() {
     }
 
     try {
-      const query = supabase
-        .from("dosen")
-        .select("id")
-        .eq("user_id", user.id);
+      const query = supabase.from("dosen").select("id").eq("user_id", user.id);
 
       if (typeof (query as any).maybeSingle !== "function") {
         return resolvedDosenId || user?.dosen?.id || null;
@@ -227,7 +224,10 @@ export default function DosenMateriPage() {
       setResolvedDosenId(nextDosenId);
       return nextDosenId;
     } catch (error) {
-      console.warn("[Dosen MateriPage] Failed to resolve fresh dosen_id", error);
+      console.warn(
+        "[Dosen MateriPage] Failed to resolve fresh dosen_id",
+        error,
+      );
       return resolvedDosenId || user?.dosen?.id || null;
     }
   };
@@ -328,15 +328,11 @@ export default function DosenMateriPage() {
             staleWhileRevalidate: true,
           },
         ),
-        cacheAPI(
-          mataKuliahCacheKey,
-          () => getMataKuliah({ is_active: true }),
-          {
-            ttl: MASTER_DATA_CACHE_TTL,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
+        cacheAPI(mataKuliahCacheKey, () => getMataKuliah({ is_active: true }), {
+          ttl: MASTER_DATA_CACHE_TTL,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
         cacheAPI(
           kelasCacheKey,
           () =>
@@ -388,9 +384,7 @@ export default function DosenMateriPage() {
 
   function getMateriMataKuliahId(materi: Materi): string | null {
     return (
-      (materi as any).mata_kuliah_id ||
-      (materi as any).mata_kuliah?.id ||
-      null
+      (materi as any).mata_kuliah_id || (materi as any).mata_kuliah?.id || null
     );
   }
 
@@ -426,7 +420,13 @@ export default function DosenMateriPage() {
     }
 
     setFilteredMateri(filtered);
-  }, [materiList, selectedMataKuliah, selectedKelas, selectedMinggu, searchQuery]);
+  }, [
+    materiList,
+    selectedMataKuliah,
+    selectedKelas,
+    selectedMinggu,
+    searchQuery,
+  ]);
 
   useEffect(() => {
     filterMateri();
@@ -910,8 +910,7 @@ function UploadDialog({
   uploadProgress,
 }: UploadDialogProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedMataKuliahId, setSelectedMataKuliahId] =
-    useState<string>("");
+  const [selectedMataKuliahId, setSelectedMataKuliahId] = useState<string>("");
   const [selectedKelasId, setSelectedKelasId] = useState<string>("");
   const [selectedMingguKe, setSelectedMingguKe] = useState<string>("");
 

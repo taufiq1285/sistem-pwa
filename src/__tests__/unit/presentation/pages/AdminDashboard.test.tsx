@@ -7,11 +7,13 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { DashboardPage } from "@/pages/admin/DashboardPage";
 
-const { mockUseAuth, mockCacheAPI, mockNetworkDetector } = vi.hoisted(() => ({
-  mockUseAuth: vi.fn(),
-  mockCacheAPI: vi.fn(),
-  mockNetworkDetector: { isOnline: vi.fn(() => true) },
-}));
+const { mockUseAuth, mockCacheAPI, mockGetCachedData, mockNetworkDetector } =
+  vi.hoisted(() => ({
+    mockUseAuth: vi.fn(),
+    mockCacheAPI: vi.fn(),
+    mockGetCachedData: vi.fn(),
+    mockNetworkDetector: { isOnline: vi.fn(() => true) },
+  }));
 
 vi.mock("@/lib/hooks/useAuth", () => ({
   useAuth: () => mockUseAuth(),
@@ -19,7 +21,7 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
-  getCachedData: vi.fn().mockResolvedValue(null),
+  getCachedData: (...args: unknown[]) => mockGetCachedData(...args),
 }));
 
 vi.mock("@/lib/offline/network-detector", () => ({
@@ -113,6 +115,8 @@ describe("Admin DashboardPage", () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
+    mockGetCachedData.mockResolvedValue(null);
+    navigator.onLine = true;
   });
 
   describe("loading state", () => {
@@ -181,6 +185,29 @@ describe("Admin DashboardPage", () => {
     it("tidak crash saat user null", () => {
       mockUseAuth.mockReturnValue({ user: null });
       expect(() => renderWithRouter(<DashboardPage />)).not.toThrow();
+    });
+  });
+
+  describe("offline indicator", () => {
+    it("menampilkan Mode Offline dan Snapshot lokal saat memakai cache perangkat", async () => {
+      navigator.onLine = false;
+      mockNetworkDetector.isOnline.mockReturnValue(false);
+      mockGetCachedData.mockImplementation(async (key: unknown) => {
+        if (String(key).includes("stats")) {
+          return { data: mockStats, timestamp: Date.now() };
+        }
+        return { data: [], timestamp: Date.now() };
+      });
+      mockCacheAPI.mockReset().mockRejectedValue(new Error("offline"));
+
+      renderWithRouter(<DashboardPage />);
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/Mode Offline/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Snapshot lokal/i).length).toBeGreaterThan(
+          0,
+        );
+      });
     });
   });
 });

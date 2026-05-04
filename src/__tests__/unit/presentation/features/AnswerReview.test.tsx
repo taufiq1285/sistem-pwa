@@ -149,7 +149,12 @@ describe("AnswerReview", () => {
         is_correct: null,
       });
       render(
-        <AnswerReview soal={essaySoal} jawaban={essayJawaban} number={1} defaultExpanded={true} />,
+        <AnswerReview
+          soal={essaySoal}
+          jawaban={essayJawaban}
+          number={1}
+          defaultExpanded={true}
+        />,
       );
       expect(
         screen.getByText(/menunggu penilaian dari dosen/),
@@ -167,7 +172,12 @@ describe("AnswerReview", () => {
         poin_diperoleh: 0,
       });
       render(
-        <AnswerReview soal={essaySoal} jawaban={essayJawaban} number={1} defaultExpanded={true} />,
+        <AnswerReview
+          soal={essaySoal}
+          jawaban={essayJawaban}
+          number={1}
+          defaultExpanded={true}
+        />,
       );
       expect(screen.queryByText("Jawaban yang Benar:")).not.toBeInTheDocument();
     });
@@ -182,7 +192,12 @@ describe("AnswerReview", () => {
         poin_diperoleh: null,
       });
       render(
-        <AnswerReview soal={fileUploadSoal} jawaban={fileJawaban} number={1} defaultExpanded={true} />,
+        <AnswerReview
+          soal={fileUploadSoal}
+          jawaban={fileJawaban}
+          number={1}
+          defaultExpanded={true}
+        />,
       );
       expect(screen.getByText("Lihat File Laporan")).toBeInTheDocument();
     });

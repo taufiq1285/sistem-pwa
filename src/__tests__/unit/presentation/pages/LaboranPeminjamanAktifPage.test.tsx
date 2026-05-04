@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import PeminjamanAktifPage from "@/pages/laboran/PeminjamanAktifPage";
 
 const {
@@ -9,6 +10,7 @@ const {
   mockApprovePeminjaman,
   mockRejectPeminjaman,
   mockGetActiveBorrowings,
+  mockGetReturnRequestedBorrowings,
   mockGetReturnedBorrowings,
   mockMarkBorrowingReturned,
   mockToast,
@@ -19,6 +21,7 @@ const {
   mockApprovePeminjaman: vi.fn(),
   mockRejectPeminjaman: vi.fn(),
   mockGetActiveBorrowings: vi.fn(),
+  mockGetReturnRequestedBorrowings: vi.fn(),
   mockGetReturnedBorrowings: vi.fn(),
   mockMarkBorrowingReturned: vi.fn(),
   mockToast: { success: vi.fn(), error: vi.fn() },
@@ -35,6 +38,8 @@ vi.mock("@/lib/api/laboran.api", () => ({
   approvePeminjaman: (...args: unknown[]) => mockApprovePeminjaman(...args),
   rejectPeminjaman: (...args: unknown[]) => mockRejectPeminjaman(...args),
   getActiveBorrowings: (...args: unknown[]) => mockGetActiveBorrowings(...args),
+  getReturnRequestedBorrowings: (...args: unknown[]) =>
+    mockGetReturnRequestedBorrowings(...args),
   getReturnedBorrowings: (...args: unknown[]) =>
     mockGetReturnedBorrowings(...args),
   markBorrowingReturned: (...args: unknown[]) =>
@@ -79,6 +84,23 @@ describe("Laboran PeminjamanAktifPage", () => {
         days_overdue: 0,
       },
     ]);
+    mockGetReturnRequestedBorrowings.mockResolvedValue([
+      {
+        id: "r1",
+        peminjam_nama: "Andi",
+        peminjam_nim: "001",
+        inventaris_nama: "Mikroskop",
+        inventaris_kode: "MKR-01",
+        laboratorium_nama: "Lab Anatomi",
+        jumlah_pinjam: 1,
+        tanggal_pinjam: "2025-01-10",
+        tanggal_kembali_rencana: "2025-01-12",
+        kondisi_pinjam: "baik",
+        keterangan_kembali: null,
+        is_overdue: false,
+        days_overdue: 0,
+      },
+    ]);
 
     mockGetPendingApprovals.mockResolvedValue([]);
     mockGetReturnedBorrowings.mockResolvedValue([]);
@@ -95,39 +117,55 @@ describe("Laboran PeminjamanAktifPage", () => {
       expect(
         screen.getByRole("heading", { name: /Peminjaman Alat/i }),
       ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Pusat Operasional Peminjaman/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Kelola tindak lanjut peminjaman alat dari satu tempat/i,
+        ),
+      ).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Masih Dipinjam/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Sedang Dipinjam/i }));
 
     expect(screen.getByText("Andi")).toBeInTheDocument();
     expect(screen.getByText("Mikroskop")).toBeInTheDocument();
   });
 
   it("buka dialog pengembalian dan submit return", async () => {
+    const user = userEvent.setup();
     render(<PeminjamanAktifPage />);
 
-    fireEvent.click(screen.getByRole("tab", { name: /Masih Dipinjam/i }));
+    const returnRequestedTab = screen.getByRole("tab", {
+      name: /Pengembalian Diajukan/i,
+    });
+    await user.click(returnRequestedTab);
 
     await waitFor(() => {
-      expect(screen.getByText("Andi")).toBeInTheDocument();
+      expect(returnRequestedTab).toHaveAttribute("aria-selected", "true");
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Verifikasi Pengembalian/i }),
+      ).toBeInTheDocument();
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Terima Pengembalian/i }),
+      screen.getByRole("button", { name: /Verifikasi Pengembalian/i }),
     );
 
     await waitFor(() => {
       expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /Simpan Pengembalian/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Simpan Verifikasi/i }));
 
     await waitFor(() => {
       expect(mockMarkBorrowingReturned).toHaveBeenCalled();
       expect(mockInvalidateCache).toHaveBeenCalledWith(
-        "laboran_active_borrowings",
+        "laboran_return_requested_borrowings",
       );
       expect(mockToast.success).toHaveBeenCalled();
     });

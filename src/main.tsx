@@ -1,24 +1,25 @@
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot as createReactRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { logger } from "@/lib/utils/logger";
 import {
   checkForServiceWorkerUpdate,
+  onUpdateAvailable,
+  onUpdateInstalled,
   registerServiceWorker,
   skipWaiting,
 } from "@/lib/pwa/register-sw";
 import { startSupabaseWarmup } from "@/lib/supabase/warmup";
 import { initializeSyncManager } from "@/lib/offline/sync-manager";
+import { UpdatePrompt } from "@/components/common/UpdatePrompt";
 
-// Render app
-createRoot(document.getElementById("root")!).render(
+createReactRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
   </StrictMode>,
 );
 
-// Start lightweight Supabase warm-up (safe, non-intrusive)
 const shouldRunSupabaseWarmup = navigator.onLine;
 const stopSupabaseWarmup = shouldRunSupabaseWarmup
   ? startSupabaseWarmup()
@@ -40,7 +41,6 @@ window.addEventListener(
 // OFFLINE SYNC MANAGER INITIALIZATION
 // ============================================================================
 
-// Saat startup offline, tunda init sync manager supaya app shell/auth bisa tampil lebih cepat.
 const bootstrapSyncManager = () => {
   initializeSyncManager().catch((error) => {
     logger.warn("⚠️ SyncManager initialization failed (non-fatal):", error);
@@ -63,10 +63,10 @@ if (navigator.onLine) {
 }
 
 // ============================================================================
-// PWA SERVICE WORKER REGISTRATION
+// PWA UPDATE PROMPT
 // ============================================================================
 
-const isDevelopment = import.meta.env.DEV;
+const isDevelopment = import.meta.env.DEV && import.meta.env.MODE !== "test";
 
 if (isDevelopment) {
   logger.info("🔧 Development Mode: PWA enabled for testing");
@@ -74,22 +74,91 @@ if (isDevelopment) {
   logger.info("🚀 Production Mode: PWA enabled");
 }
 
+const updatePromptContainer = document.createElement("div");
+updatePromptContainer.id = "pwa-update-root";
+document.body.appendChild(updatePromptContainer);
+
+const updatePromptRoot = createReactRoot(updatePromptContainer);
+let updateRegistration: ServiceWorkerRegistration | null = null;
+let updatePromptOpen = false;
+let updatePromptUpdating = false;
+
+function renderUpdatePrompt() {
+  updatePromptRoot.render(
+    <UpdatePrompt
+      open={updatePromptOpen && !isDevelopment}
+      isUpdating={updatePromptUpdating}
+      onDismiss={() => {
+        updatePromptOpen = false;
+        updatePromptUpdating = false;
+        renderUpdatePrompt();
+      }}
+      onUpdate={async () => {
+        updatePromptUpdating = true;
+        renderUpdatePrompt();
+
+        logger.info("🔄 Activating new service worker...");
+
+        try {
+          if (updateRegistration?.waiting) {
+            updateRegistration.waiting.postMessage({ type: "SKIP_WAITING" });
+            navigator.serviceWorker.addEventListener(
+              "controllerchange",
+              () => {
+                window.location.reload();
+              },
+              { once: true },
+            );
+            window.setTimeout(() => {
+              window.location.reload();
+            }, 5000);
+            return;
+          }
+
+          await skipWaiting();
+        } catch (error) {
+          updatePromptUpdating = false;
+          logger.error("❌ Failed to activate new service worker", error);
+          renderUpdatePrompt();
+        }
+      }}
+    />,
+  );
+}
+
+renderUpdatePrompt();
+
+onUpdateAvailable((registration) => {
+  logger.info("🔄 New Service Worker version available", {
+    waiting: registration.waiting?.state,
+    active: registration.active?.state,
+  });
+
+  updateRegistration = registration;
+  updatePromptOpen = true;
+  updatePromptUpdating = false;
+  renderUpdatePrompt();
+});
+
+onUpdateInstalled(() => {
+  updateRegistration = null;
+  updatePromptOpen = false;
+  updatePromptUpdating = false;
+  renderUpdatePrompt();
+});
+
 // Register Service Worker
 registerServiceWorker({
-  swPath: "/sw.js", // Default path from vite-plugin-pwa
+  swPath: "/sw.js",
   scope: "/",
-  checkUpdateInterval: 5 * 60 * 1000, // ✅ Check every 5 minutes (lebih cepat untuk ujian)
+  checkUpdateInterval: 5 * 60 * 1000,
   enableAutoUpdate: true,
-
-  // Called when Service Worker is successfully registered
   onSuccess: async (registration) => {
     logger.info("✅ Service Worker registered successfully", {
       scope: registration.scope,
       active: registration.active?.state,
     });
 
-    // ✅ IMMEDIATE UPDATE CHECK: Cek update segera setelah registrasi
-    // Ini memastikan user dapat update terbaru saat pertama buka aplikasi
     const updated = await checkForServiceWorkerUpdate(registration, {
       source: "on-success",
       logOfflineAsInfo: true,
@@ -99,25 +168,6 @@ registerServiceWorker({
       logger.info("🔄 Initial update check completed");
     }
   },
-
-  // Called when a new Service Worker version is available
-  onUpdate: (registration) => {
-    logger.info("🔄 New Service Worker version available", {
-      waiting: registration.waiting?.state,
-      active: registration.active?.state,
-    });
-
-    // Show update notification to user
-    if (isDevelopment) {
-      // In development, auto-reload for easier testing
-      logger.info("🔧 Dev mode: Auto-reloading for update");
-    } else {
-      // In production, show notification — pass registration so update button works reliably
-      showUpdateAvailableNotification(registration);
-    }
-  },
-
-  // Called when registration fails
   onError: (error) => {
     logger.error("❌ Service Worker registration failed", error);
   },
@@ -129,7 +179,7 @@ registerServiceWorker({
  *
  * Safe: does NOT fire during active input events (click, keydown, scroll, touchstart).
  */
-const IDLE_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+const IDLE_TIMEOUT_MS = 2 * 60 * 1000;
 
 function setupIdleAutoUpdate(): void {
   if (!("serviceWorker" in navigator)) return;
@@ -151,8 +201,7 @@ function setupIdleAutoUpdate(): void {
         },
         { once: true },
       );
-      // Fallback reload
-      setTimeout(() => {
+      window.setTimeout(() => {
         window.location.reload();
       }, 5000);
     }, IDLE_TIMEOUT_MS);
@@ -165,124 +214,20 @@ function setupIdleAutoUpdate(): void {
     "touchstart",
     "mousemove",
   ] as const;
-  ACTIVITY_EVENTS.forEach((e) =>
-    window.addEventListener(e, resetTimer, { passive: true }),
+
+  ACTIVITY_EVENTS.forEach((eventName) =>
+    window.addEventListener(eventName, resetTimer, { passive: true }),
   );
 
-  // Start the initial timer
   resetTimer();
 }
 
 setupIdleAutoUpdate();
 
-/**
- * Show update available notification to user
- */
-function showUpdateAvailableNotification(
-  registration: ServiceWorkerRegistration,
-) {
-  // Remove existing notification if any
-  const existing = document.getElementById("pwa-update-notification");
-  if (existing) {
-    existing.remove();
-  }
-
-  // Create notification element
-  const notification = document.createElement("div");
-  notification.id = "pwa-update-notification";
-  notification.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 16px 24px;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    z-index: 9999;
-    font-family: system-ui, -apple-system, sans-serif;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    animation: slideIn 0.3s ease-out;
-  `;
-
-  notification.innerHTML = `
-    <div style="flex: 1">
-      <div style="font-weight: 600; margin-bottom: 4px;">Update Tersedia!</div>
-      <div style="font-size: 14px; opacity: 0.9;">Versi baru aplikasi sudah tersedia.</div>
-    </div>
-    <button id="pwa-update-btn" style="
-      background: white;
-      color: #667eea;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s;
-    ">Update</button>
-    <button id="pwa-dismiss-btn" style="
-      background: transparent;
-      color: white;
-      border: 1px solid rgba(255,255,255,0.3);
-      padding: 8px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-    ">✕</button>
-  `;
-
-  // Add styles for animation
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes slideIn {
-      from { transform: translateY(100px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-  `;
-  document.head.appendChild(style);
-
-  // Add notification to DOM
-  document.body.appendChild(notification);
-
-  // Handle update button click
-  document
-    .getElementById("pwa-update-btn")
-    ?.addEventListener("click", async () => {
-      logger.info("🔄 Activating new service worker...");
-      // Kirim SKIP_WAITING langsung ke waiting SW via registration yang sudah kita simpan
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: "SKIP_WAITING" });
-        // Tunggu controller change lalu reload
-        navigator.serviceWorker.addEventListener(
-          "controllerchange",
-          () => {
-            window.location.reload();
-          },
-          { once: true },
-        );
-        // Fallback reload jika controllerchange tidak terjadi dalam 5 detik
-        setTimeout(() => {
-          window.location.reload();
-        }, 5000);
-      } else {
-        // Tidak ada waiting SW, coba skipWaiting generic lalu reload
-        await skipWaiting();
-      }
-    });
-
-  // Handle dismiss button click
-  document.getElementById("pwa-dismiss-btn")?.addEventListener("click", () => {
-    notification.remove();
-  });
-}
-
 // ============================================================================
 // BLANK SCREEN RECOVERY
 // ============================================================================
 
-// Jika app blank setelah 4 detik (root kosong) DAN ada SW waiting → paksa update
-// Ini menyelamatkan user yang skip notifikasi update lalu buka offline
 if ("serviceWorker" in navigator) {
   setTimeout(async () => {
     const root = document.getElementById("root");
@@ -290,7 +235,6 @@ if ("serviceWorker" in navigator) {
       !root || root.children.length === 0 || root.innerHTML.trim() === "";
     if (!isBlank) return;
 
-    // ✅ Anti-loop: hanya reload sekali per session
     if (sessionStorage.getItem("sw_blank_recovery_attempted")) return;
     sessionStorage.setItem("sw_blank_recovery_attempted", "1");
 
@@ -308,12 +252,11 @@ if ("serviceWorker" in navigator) {
         },
         { once: true },
       );
-      setTimeout(() => window.location.reload(), 3000);
+      window.setTimeout(() => window.location.reload(), 3000);
     }
   }, 4000);
 }
 
-// Log PWA status
 if ("serviceWorker" in navigator) {
   logger.info("✅ Service Worker API supported");
 } else {
@@ -330,8 +273,6 @@ if ("ononline" in window && "onoffline" in window) {
 // UPDATE CHECK ON FOCUS/RESUME
 // ============================================================================
 
-// ✅ Cek update setiap kali aplikasi dibuka/difocus kembali
-// Ini berguna untuk PWA yang sering dibuka-tutup
 if ("serviceWorker" in navigator) {
   window.addEventListener("focus", () => {
     void checkForServiceWorkerUpdate(undefined, {
@@ -341,7 +282,6 @@ if ("serviceWorker" in navigator) {
     });
   });
 
-  // ✅ Juga cek saat visibility berubah (tab aktif lagi)
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       void checkForServiceWorkerUpdate(undefined, {

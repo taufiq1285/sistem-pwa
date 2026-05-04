@@ -22,6 +22,8 @@ export type NotificationType =
   | "peminjaman_baru" // New peminjaman created
   | "peminjaman_disetujui" // Peminjaman approved
   | "peminjaman_ditolak" // Peminjaman rejected
+  | "peminjaman_pengembalian_diajukan" // Dosen submits return request
+  | "peminjaman_pengembalian_diverifikasi" // Laboran verifies final return
   | "peminjaman_terlambat" // Peminjaman returned late
   // Jadwal notifications
   | "jadwal_baru" // New jadwal created

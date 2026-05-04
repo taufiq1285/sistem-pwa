@@ -1300,13 +1300,19 @@ export default function KuisResultsPage() {
                             ...soal,
                             tipe_soal: soal?.tipe_soal || soal?.tipe,
                             opsi_jawaban:
-                              soal?.opsi_jawaban || soal?.pilihan_jawaban || null,
+                              soal?.opsi_jawaban ||
+                              soal?.pilihan_jawaban ||
+                              null,
                           };
-                          const jawaban = (selectedCbtAttempt?.jawaban || []).find(
+                          const jawaban = (
+                            selectedCbtAttempt?.jawaban || []
+                          ).find(
                             (item: any) => item?.soal_id === normalizedSoal.id,
                           );
                           const jawabanMahasiswa =
-                            jawaban?.jawaban ?? jawaban?.jawaban_mahasiswa ?? "";
+                            jawaban?.jawaban ??
+                            jawaban?.jawaban_mahasiswa ??
+                            "";
                           const isCorrect =
                             typeof jawaban?.is_correct === "boolean"
                               ? jawaban.is_correct
@@ -1378,7 +1384,6 @@ export default function KuisResultsPage() {
                           );
                         })}
                       </div>
-
                     </div>
                   </div>
                 )}
@@ -1400,8 +1405,8 @@ export default function KuisResultsPage() {
                   {/* Counter: sudah dinilai / total */}
                   {filteredAttempts.length > 0 &&
                     (() => {
-                      const gradedCount = filteredAttempts.filter(
-                        (a) => attemptHasReviewResult(a),
+                      const gradedCount = filteredAttempts.filter((a) =>
+                        attemptHasReviewResult(a),
                       ).length;
                       const submittedCount = filteredAttempts.filter(
                         (a) =>
@@ -2327,36 +2332,36 @@ function getAttemptAutoGradedSummary(
 
   const summary = soalList.reduce(
     (acc, soal) => {
-    const jawaban = jawabanList.find((item) => item?.soal_id === soal.id);
-    if (!jawaban) {
-      return acc;
-    }
+      const jawaban = jawabanList.find((item) => item?.soal_id === soal.id);
+      if (!jawaban) {
+        return acc;
+      }
 
-    if (typeof jawaban.is_correct === "boolean") {
-      return {
-        correctCount: acc.correctCount + (jawaban.is_correct ? 1 : 0),
-        totalPoin:
-          acc.totalPoin +
-          (jawaban.poin_diperoleh ??
-            (jawaban.is_correct ? (soal?.poin ?? 0) : 0)),
-      };
-    }
+      if (typeof jawaban.is_correct === "boolean") {
+        return {
+          correctCount: acc.correctCount + (jawaban.is_correct ? 1 : 0),
+          totalPoin:
+            acc.totalPoin +
+            (jawaban.poin_diperoleh ??
+              (jawaban.is_correct ? (soal?.poin ?? 0) : 0)),
+        };
+      }
 
-    const jawabanMahasiswa =
-      jawaban?.jawaban ?? jawaban?.jawaban_mahasiswa ?? "";
-    if (!jawabanMahasiswa.trim()) {
-      return acc;
-    }
+      const jawabanMahasiswa =
+        jawaban?.jawaban ?? jawaban?.jawaban_mahasiswa ?? "";
+      if (!jawabanMahasiswa.trim()) {
+        return acc;
+      }
 
-    const tipeSoal = soal?.tipe_soal;
-    const isAutoGradable =
-      tipeSoal === "pilihan_ganda" ||
-      tipeSoal === "benar_salah" ||
-      tipeSoal === "jawaban_singkat";
+      const tipeSoal = soal?.tipe_soal;
+      const isAutoGradable =
+        tipeSoal === "pilihan_ganda" ||
+        tipeSoal === "benar_salah" ||
+        tipeSoal === "jawaban_singkat";
 
-    if (!isAutoGradable) {
-      return acc;
-    }
+      if (!isAutoGradable) {
+        return acc;
+      }
 
       const isCorrect = checkAnswerCorrect(soal, jawabanMahasiswa);
       return {

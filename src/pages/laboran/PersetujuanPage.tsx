@@ -66,6 +66,7 @@ const invalidatePeminjamanCaches = async () => {
   await Promise.all([
     invalidateCache("laboran_pending_approvals"),
     invalidateCache("laboran_active_borrowings"),
+    invalidateCache("laboran_return_requested_borrowings"),
     invalidateCache("laboran_returned_borrowings"),
     invalidateCache("dosen_my_borrowings"),
     invalidateCache("dosen_available_equipment"),
@@ -206,19 +207,19 @@ export default function PersetujuanPage() {
               </div>
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  Approval aktif
+                  Persetujuan aktif
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                     Persetujuan Peminjaman Alat
                   </h1>
                   <p className="text-sm text-muted-foreground sm:text-base">
-                    Fokus halaman ini hanya untuk permintaan baru yang masih
-                    menunggu keputusan laboran.
+                    Tahap awal alur peminjaman alat untuk meninjau permintaan
+                    baru yang masih menunggu keputusan laboran.
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Setelah disetujui, data pindah ke menu
-                    <strong> "Kelola Peminjaman Aktif"</strong> untuk proses
+                    <strong> "Peminjaman Alat"</strong> untuk proses
                     pengembalian alat.
                   </p>
                 </div>
@@ -233,7 +234,7 @@ export default function PersetujuanPage() {
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
               />
-              Refresh
+              Muat Ulang
             </Button>
           </div>
         </GlassCard>
@@ -267,8 +268,8 @@ export default function PersetujuanPage() {
                 Tahap 1: Persetujuan
               </CardTitle>
               <CardDescription>
-                Laboran/admin memutuskan permintaan dosen: disetujui atau
-                ditolak dengan alasan.
+                Laboran memutuskan permintaan dosen: disetujui atau ditolak
+                dengan alasan yang tercatat.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -276,11 +277,11 @@ export default function PersetujuanPage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Package className="h-4 w-4 text-primary" />
-                Tahap 2: Peminjaman Aktif
+                Tahap 2: Peminjaman Alat
               </CardTitle>
               <CardDescription>
-                Permintaan yang sudah disetujui dikelola di halaman aktif
-                sampai alat dikembalikan dan stok tercatat lagi.
+                Permintaan yang sudah disetujui dikelola di halaman peminjaman
+                alat sampai pengembalian selesai dan stok tercatat kembali.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -288,7 +289,7 @@ export default function PersetujuanPage() {
 
         <div className="grid gap-4 md:grid-cols-3">
           <DashboardCard
-            title="Pending Peminjaman"
+            title="Menunggu Persetujuan"
             value={equipmentRequests.length}
             icon={Package}
             color="amber"
@@ -318,7 +319,7 @@ export default function PersetujuanPage() {
               Permintaan Peminjaman Alat
             </CardTitle>
             <CardDescription>
-              Hanya menampilkan permintaan dengan status pending/menunggu.
+              Hanya menampilkan permintaan dengan status menunggu persetujuan.
               Peminjaman yang sudah disetujui tidak tampil di tabel ini.
             </CardDescription>
           </CardHeader>
@@ -329,8 +330,8 @@ export default function PersetujuanPage() {
               <Alert className="border-border/60 bg-muted/40">
                 <Clock className="h-4 w-4" />
                 <AlertDescription className="text-sm text-muted-foreground">
-                  Tidak ada permintaan pending. Semua permintaan peminjaman alat
-                  sudah diproses.
+                  Tidak ada permintaan yang menunggu persetujuan. Semua
+                  permintaan peminjaman alat sudah diproses.
                 </AlertDescription>
               </Alert>
             ) : (
@@ -340,17 +341,17 @@ export default function PersetujuanPage() {
                     <TableRow>
                       <TableHead>Peminjam</TableHead>
                       <TableHead>Alat</TableHead>
-                      <TableHead>Laboratorium</TableHead>
+                      <TableHead>Lab Tujuan</TableHead>
                       <TableHead>Jumlah</TableHead>
                       <TableHead>Tanggal Pinjam</TableHead>
                       <TableHead>Tanggal Kembali</TableHead>
-                      <TableHead>Keperluan</TableHead>
+                      <TableHead>Konteks Praktikum</TableHead>
                       <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {equipmentRequests.map((request) => (
-                        <TableRow key={request.id} className="align-top">
+                      <TableRow key={request.id} className="align-top">
                         <TableCell>
                           <div>
                             <div className="font-medium">

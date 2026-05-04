@@ -6,6 +6,7 @@
 import { supabase } from "./client";
 import { clearUserRoleCache } from "@/lib/middleware";
 import { logger } from "@/lib/utils/logger";
+import { ROUTES } from "@/config/routes.config";
 import type {
   AuthUser,
   AuthSession,
@@ -82,6 +83,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
           ...(data.role === "dosen" && {
             nip: data.nip,
             nidn: data.nidn,
+            nuptk: data.nuptk,
             gelar_depan: data.gelar_depan,
             gelar_belakang: data.gelar_belakang,
           }),
@@ -363,7 +365,7 @@ export async function resetPassword(email: string): Promise<AuthResponse> {
     logger.auth("resetPassword: START", { email });
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}${ROUTES.RESET_PASSWORD}`,
     });
 
     logger.auth("resetPassword: Supabase response", { error });
@@ -487,6 +489,7 @@ async function createUserProfile(
       };
 
       if (data.nip) dosenPayload.nip = data.nip;
+      if (data.nuptk) dosenPayload.nuptk = data.nuptk;
       if (data.gelar_depan) dosenPayload.gelar_depan = data.gelar_depan;
       if (data.gelar_belakang)
         dosenPayload.gelar_belakang = data.gelar_belakang;
@@ -587,7 +590,7 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
           const { data: dosenData } = await supabase
             .from("dosen")
             .select(
-              "id, nip, nidn, gelar_depan, gelar_belakang, fakultas, program_studi",
+              "id, nip, nidn, nuptk, gelar_depan, gelar_belakang, fakultas, program_studi",
             )
             .eq("user_id", userId)
             .maybeSingle();

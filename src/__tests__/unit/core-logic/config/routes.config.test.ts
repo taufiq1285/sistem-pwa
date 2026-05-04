@@ -8,6 +8,9 @@ import {
   buildRoute,
   getRoleBasePath,
   getRoleDashboard,
+  getRoleNotificationPath,
+  getRoleOfflineSyncPath,
+  getRoleProfilePath,
 } from "@/config/routes.config";
 
 describe("ROUTES", () => {
@@ -22,6 +25,10 @@ describe("ROUTES", () => {
 
     it("REGISTER adalah '/register'", () => {
       expect(ROUTES.REGISTER).toBe("/register");
+    });
+
+    it("RESET_PASSWORD adalah '/reset-password'", () => {
+      expect(ROUTES.RESET_PASSWORD).toBe("/reset-password");
     });
 
     it("UNAUTHORIZED adalah '/403'", () => {
@@ -62,6 +69,14 @@ describe("ROUTES", () => {
       expect(ROUTES.DOSEN.KUIS).toHaveProperty("EDIT");
       expect(ROUTES.DOSEN.KUIS).toHaveProperty("RESULTS");
     });
+
+    it("DOSEN memiliki route pendukung lintas fitur yang sinkron", () => {
+      expect(ROUTES.DOSEN.BANK_SOAL).toBe("/dosen/bank-soal");
+      expect(ROUTES.DOSEN.LOGBOOK_REVIEW).toBe("/dosen/logbook-review");
+      expect(ROUTES.DOSEN.PROFILE).toBe("/dosen/profil");
+      expect(ROUTES.DOSEN.OFFLINE_SYNC).toBe("/dosen/offline-sync");
+      expect(ROUTES.DOSEN.PENGUMUMAN).toBe("/dosen/pengumuman");
+    });
   });
 
   describe("mahasiswa routes", () => {
@@ -74,6 +89,10 @@ describe("ROUTES", () => {
       expect(ROUTES.MAHASISWA.KUIS).toHaveProperty("ATTEMPT");
       expect(ROUTES.MAHASISWA.KUIS).toHaveProperty("RESULT");
     });
+
+    it("MAHASISWA.PROFILE mengikuti route /profil yang dipakai layout", () => {
+      expect(ROUTES.MAHASISWA.PROFILE).toBe("/mahasiswa/profil");
+    });
   });
 
   describe("laboran routes", () => {
@@ -83,6 +102,15 @@ describe("ROUTES", () => {
 
     it("LABORAN.DASHBOARD ada", () => {
       expect(ROUTES.LABORAN.DASHBOARD).toBeTruthy();
+    });
+
+    it("LABORAN memiliki route fitur utama yang sinkron", () => {
+      expect(ROUTES.LABORAN.INVENTARIS).toBe("/laboran/inventaris");
+      expect(ROUTES.LABORAN.PEMINJAMAN).toBe("/laboran/peminjaman");
+      expect(ROUTES.LABORAN.LABORATORIUM).toBe("/laboran/laboratorium");
+      expect(ROUTES.LABORAN.JADWAL).toBe("/laboran/jadwal");
+      expect(ROUTES.LABORAN.PROFILE).toBe("/laboran/profil");
+      expect(ROUTES.LABORAN.OFFLINE_SYNC).toBe("/laboran/offline-sync");
     });
   });
 });
@@ -153,5 +181,28 @@ describe("getRoleDashboard", () => {
 
   it("role tidak dikenal → '/'", () => {
     expect(getRoleDashboard("unknown")).toBe("/");
+  });
+});
+
+describe("role helper routes", () => {
+  it("getRoleProfilePath mengembalikan route profil yang konsisten", () => {
+    expect(getRoleProfilePath("dosen")).toBe("/dosen/profil");
+    expect(getRoleProfilePath("mahasiswa")).toBe("/mahasiswa/profil");
+    expect(getRoleProfilePath("laboran")).toBe("/laboran/profil");
+    expect(getRoleProfilePath("admin")).toBe("/admin/profil");
+  });
+
+  it("getRoleNotificationPath mengembalikan route notifikasi per role", () => {
+    expect(getRoleNotificationPath("dosen")).toBe("/dosen/notifikasi");
+    expect(getRoleNotificationPath("mahasiswa")).toBe("/mahasiswa/notifikasi");
+    expect(getRoleNotificationPath("laboran")).toBe("/laboran/notifikasi");
+    expect(getRoleNotificationPath("admin")).toBe("/admin/notifikasi");
+  });
+
+  it("getRoleOfflineSyncPath mengembalikan route offline sync per role", () => {
+    expect(getRoleOfflineSyncPath("dosen")).toBe("/dosen/offline-sync");
+    expect(getRoleOfflineSyncPath("mahasiswa")).toBe("/mahasiswa/offline-sync");
+    expect(getRoleOfflineSyncPath("laboran")).toBe("/laboran/offline-sync");
+    expect(getRoleOfflineSyncPath("admin")).toBe("/admin/offline-sync");
   });
 });

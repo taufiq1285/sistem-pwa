@@ -37,6 +37,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showPassword, setShowPassword] = useState(false);
+  const [submitMode, setSubmitMode] = useState<
+    "idle" | "online" | "offline" | "fallback"
+  >("idle");
 
   const {
     register,
@@ -68,13 +71,15 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      const currentOnlineState = navigator.onLine;
       console.log("Login attempt:", {
         email: data.email,
         isOnline,
-        navigatorOnline: navigator.onLine,
+        navigatorOnline: currentOnlineState,
       });
 
       setError(null);
+      setSubmitMode(currentOnlineState ? "fallback" : "offline");
       await login(data);
       console.log("Login successful");
       onSuccess?.();
@@ -85,8 +90,15 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         errorMessage = err.message;
       }
       setError(errorMessage);
+    } finally {
+      setSubmitMode("idle");
     }
   };
+
+  const isNetworkRelatedError =
+    error?.toLowerCase().includes("koneksi ke server") ||
+    error?.toLowerCase().includes("batas waktu") ||
+    error?.toLowerCase().includes("tidak stabil");
 
   return (
     <div className="space-y-6">
@@ -140,13 +152,48 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           </Alert>
         )}
 
-        {error && (
-          <Alert variant="destructive" className="shadow-sm">
-            <AlertCircle className="h-5 w-5" />
-            <AlertTitle className="text-base font-semibold">
-              Login Gagal
+        {isOnline && isSubmitting && submitMode === "fallback" && (
+          <Alert className="border-[#FCD34D] bg-[#FFFBEB] shadow-sm">
+            <Loader2 className="h-5 w-5 animate-spin text-[#B45309]" />
+            <AlertTitle className="text-base font-semibold text-[#92400E]">
+              Mencoba Login Online
             </AlertTitle>
-            <AlertDescription className="text-sm">{error}</AlertDescription>
+            <AlertDescription className="text-sm text-[#78350F]">
+              Sistem sedang mencoba login ke server. Jika koneksi lambat atau
+              gagal dijangkau, login offline akan dicoba otomatis bila akun ini
+              sudah pernah login online di perangkat ini.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {error && (
+          <Alert
+            variant={isNetworkRelatedError ? "default" : "destructive"}
+            className={
+              isNetworkRelatedError
+                ? "border-[#FCD34D] bg-[#FFFBEB] shadow-sm"
+                : "shadow-sm"
+            }
+          >
+            <AlertCircle
+              className={`h-5 w-5 ${
+                isNetworkRelatedError ? "text-[#B45309]" : ""
+              }`}
+            />
+            <AlertTitle
+              className={`text-base font-semibold ${
+                isNetworkRelatedError ? "text-[#92400E]" : ""
+              }`}
+            >
+              {isNetworkRelatedError ? "Jaringan Belum Stabil" : "Login Gagal"}
+            </AlertTitle>
+            <AlertDescription
+              className={`text-sm ${
+                isNetworkRelatedError ? "text-[#78350F]" : ""
+              }`}
+            >
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -225,7 +272,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              {!isOnline ? "Login Offline..." : "Masuk..."}
+              {!isOnline
+                ? "Login Offline..."
+                : submitMode === "fallback"
+                  ? "Coba Login & Siapkan Fallback..."
+                  : "Masuk..."}
             </>
           ) : !isOnline ? (
             <>
@@ -245,6 +296,16 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <AlertDescription className="text-sm text-[#1E293B]">
               <strong>Tips Login Offline:</strong> Masukkan email dan password
               yang sama dengan login online terakhir.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isOnline && !isSubmitting && (
+          <Alert className="border-[#E8E0D8] bg-[#F8F3EE]">
+            <AlertDescription className="text-sm text-[#334155]">
+              Jika koneksi sedang jelek, sistem akan mencoba login online lebih
+              dulu lalu beralih otomatis ke login offline bila akun ini sudah
+              pernah login online di perangkat ini.
             </AlertDescription>
           </Alert>
         )}

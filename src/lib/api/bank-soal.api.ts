@@ -301,9 +301,7 @@ export async function saveSoalToBank(
   tags?: string[],
 ): Promise<{ bankSoal: BankSoal; duplicates: BankSoal[] }> {
   if (!dosenId) {
-    throw new Error(
-      "Gagal menyimpan ke Bank Soal: dosen_id tidak tersedia.",
-    );
+    throw new Error("Gagal menyimpan ke Bank Soal: dosen_id tidak tersedia.");
   }
 
   // Handle both: objects from database (with 'tipe') and objects with 'tipe_soal'

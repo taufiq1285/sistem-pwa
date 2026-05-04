@@ -39,6 +39,7 @@ const invalidatePeminjamanCaches = async () => {
   await Promise.all([
     invalidateCache("laboran_pending_approvals"),
     invalidateCache("laboran_active_borrowings"),
+    invalidateCache("laboran_return_requested_borrowings"),
     invalidateCache("laboran_returned_borrowings"),
     invalidateCache("dosen_my_borrowings"),
     invalidateCache("dosen_available_equipment"),
@@ -158,6 +159,16 @@ export default function ApprovalPage() {
     });
   };
 
+  const formatBorrowingContext = (request: PendingApproval) => {
+    if (request.keperluan?.trim()) {
+      return request.keperluan.replace(/\s-\s/g, " • ");
+    }
+
+    return [request.laboratorium_nama, formatDate(request.tanggal_pinjam)]
+      .filter(Boolean)
+      .join(" • ");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -231,7 +242,7 @@ export default function ApprovalPage() {
                     <TableHead>Jumlah</TableHead>
                     <TableHead>Tanggal Pinjam</TableHead>
                     <TableHead>Tanggal Kembali</TableHead>
-                    <TableHead>Keperluan</TableHead>
+                    <TableHead>Konteks Praktikum</TableHead>
                     <TableHead>Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -266,8 +277,11 @@ export default function ApprovalPage() {
                       <TableCell className="text-sm">
                         {formatDate(request.tanggal_kembali_rencana)}
                       </TableCell>
-                      <TableCell className="text-sm max-w-xs truncate">
-                        {request.keperluan}
+                      <TableCell
+                        className="text-sm max-w-xs truncate"
+                        title={formatBorrowingContext(request)}
+                      >
+                        {formatBorrowingContext(request)}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">

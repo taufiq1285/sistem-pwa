@@ -54,7 +54,12 @@ describe("Laboran LaboratoriumPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /^Laboratorium$/i }),
+        screen.getByRole("heading", { name: /^Data Laboratorium$/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Kelola data laboratorium, kapasitas, dan fasilitas pendukung/i,
+        ),
       ).toBeInTheDocument();
       expect(screen.getByText("Lab Anatomi")).toBeInTheDocument();
     });

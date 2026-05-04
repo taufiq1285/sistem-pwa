@@ -12,7 +12,7 @@ DO $$ BEGIN CREATE TYPE gender_type AS ENUM ('L', 'P'); EXCEPTION WHEN duplicate
 DO $$ BEGIN CREATE TYPE quiz_status AS ENUM ('draft', 'published', 'archived'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE question_type AS ENUM ('multiple_choice', 'true_false', 'essay', 'short_answer'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE attempt_status AS ENUM ('in_progress', 'submitted', 'graded', 'pending_sync'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN CREATE TYPE borrowing_status AS ENUM ('pending', 'approved', 'rejected', 'returned', 'overdue'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE borrowing_status AS ENUM ('pending', 'approved', 'return_requested', 'rejected', 'returned', 'overdue'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE equipment_condition AS ENUM ('baik', 'rusak_ringan', 'rusak_berat', 'maintenance'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE day_of_week AS ENUM ('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE sync_status AS ENUM ('pending', 'syncing', 'synced', 'failed', 'conflict'); EXCEPTION WHEN duplicate_object THEN null; END $$;
@@ -406,6 +406,8 @@ CREATE TABLE IF NOT EXISTS notifications (
         'peminjaman_baru',
         'peminjaman_disetujui',
         'peminjaman_ditolak',
+        'peminjaman_pengembalian_diajukan',
+        'peminjaman_pengembalian_diverifikasi',
         'peminjaman_terlambat',
         'kuis_published',
         'kuis_baru',
@@ -612,9 +614,9 @@ CREATE OR REPLACE FUNCTION update_inventory_availability()
 RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
-        IF NEW.status = 'approved' THEN
+        IF NEW.status = 'approved' AND (OLD IS NULL OR OLD.status IS DISTINCT FROM 'approved') THEN
             UPDATE inventaris SET jumlah_tersedia = jumlah_tersedia - NEW.jumlah_pinjam WHERE id = NEW.inventaris_id;
-        ELSIF NEW.status = 'returned' AND OLD.status = 'approved' THEN
+        ELSIF NEW.status = 'returned' AND OLD.status = 'return_requested' THEN
             UPDATE inventaris SET jumlah_tersedia = jumlah_tersedia + NEW.jumlah_pinjam WHERE id = NEW.inventaris_id;
         END IF;
     ELSIF TG_OP = 'DELETE' THEN

@@ -10,7 +10,7 @@
  * - Input return condition and fines
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Package,
@@ -66,24 +66,27 @@ import {
   approvePeminjaman,
   rejectPeminjaman,
   getActiveBorrowings,
+  getReturnRequestedBorrowings,
   getReturnedBorrowings,
   markBorrowingReturned,
   type PendingApproval,
   type ActiveBorrowing,
+  type ReturnRequestedBorrowing,
   type ReturnedBorrowing,
 } from "@/lib/api/laboran.api";
 import { getRBACErrorMessage } from "@/lib/errors/permission.errors";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import { supabase } from "@/lib/supabase/client";
 
 const invalidatePeminjamanCaches = async () => {
   await Promise.all([
     invalidateCache("laboran_pending_approvals"),
     invalidateCache("laboran_active_borrowings"),
+    invalidateCache("laboran_return_requested_borrowings"),
     invalidateCache("laboran_returned_borrowings"),
     invalidateCache("dosen_my_borrowings"),
     invalidateCache("dosen_available_equipment"),
   ]);
-  window.dispatchEvent(new CustomEvent("peminjaman:changed"));
 };
 
 // ============================================================================
@@ -93,17 +96,25 @@ const invalidatePeminjamanCaches = async () => {
 export default function PeminjamanAktifPage() {
   const location = useLocation();
   const isAdminView = location.pathname.startsWith("/admin/");
+  const activeTabRef = useRef("active");
+  const returnedBorrowingsCountRef = useRef(0);
+  const refreshInFlightRef = useRef(false);
+  const lastRefreshAtRef = useRef(0);
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>(
     [],
   );
   const [activeBorrowings, setActiveBorrowings] = useState<ActiveBorrowing[]>(
     [],
   );
+  const [returnRequestedBorrowings, setReturnRequestedBorrowings] = useState<
+    ReturnRequestedBorrowing[]
+  >([]);
   const [returnedBorrowings, setReturnedBorrowings] = useState<
     ReturnedBorrowing[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [pendingLoading, setPendingLoading] = useState(true);
+  const [returnRequestedLoading, setReturnRequestedLoading] = useState(true);
   const [returnedLoading, setReturnedLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -134,7 +145,7 @@ export default function PeminjamanAktifPage() {
   // Return dialog state
   const [returnDialog, setReturnDialog] = useState<{
     open: boolean;
-    borrowing: ActiveBorrowing | null;
+    borrowing: ReturnRequestedBorrowing | null;
   }>({
     open: false,
     borrowing: null,
@@ -146,8 +157,87 @@ export default function PeminjamanAktifPage() {
   });
 
   useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
+  useEffect(() => {
+    returnedBorrowingsCountRef.current = returnedBorrowings.length;
+  }, [returnedBorrowings.length]);
+
+  useEffect(() => {
     loadPendingApprovals(false);
     loadActiveBorrowings(false);
+    loadReturnRequestedBorrowings(false);
+  }, []);
+
+  useEffect(() => {
+    const refreshBorrowingData = async () => {
+      const now = Date.now();
+      if (refreshInFlightRef.current) {
+        return;
+      }
+
+      // focus + visibilitychange + realtime can arrive almost together.
+      // Ignore bursts so one state change only triggers one refresh cycle.
+      if (now - lastRefreshAtRef.current < 750) {
+        return;
+      }
+
+      refreshInFlightRef.current = true;
+      lastRefreshAtRef.current = now;
+
+      await invalidatePeminjamanCaches();
+      try {
+        await Promise.all([
+          loadPendingApprovals(true),
+          loadActiveBorrowings(true),
+          loadReturnRequestedBorrowings(true),
+        ]);
+
+        if (
+          activeTabRef.current === "returned" ||
+          returnedBorrowingsCountRef.current > 0
+        ) {
+          await loadReturnedBorrowings(true);
+        }
+      } finally {
+        refreshInFlightRef.current = false;
+      }
+    };
+
+    const handleExternalRefresh = () => {
+      void refreshBorrowingData();
+    };
+
+    const subscription = supabase
+      .channel("laboran-peminjaman-sync")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "peminjaman",
+        },
+        () => {
+          void refreshBorrowingData();
+        },
+      )
+      .subscribe();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshBorrowingData();
+      }
+    };
+
+    window.addEventListener("peminjaman:changed", handleExternalRefresh);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("peminjaman:changed", handleExternalRefresh);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const loadPendingApprovals = async (forceRefresh = false) => {
@@ -195,6 +285,27 @@ export default function PeminjamanAktifPage() {
     }
   };
 
+  const loadReturnRequestedBorrowings = async (forceRefresh = false) => {
+    try {
+      setReturnRequestedLoading(true);
+      const data = await cacheAPI(
+        "laboran_return_requested_borrowings",
+        () => getReturnRequestedBorrowings(100),
+        {
+          ttl: 3 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
+      setReturnRequestedBorrowings(data);
+    } catch (error) {
+      toast.error("Gagal memuat pengajuan pengembalian");
+      console.error(error);
+    } finally {
+      setReturnRequestedLoading(false);
+    }
+  };
+
   const loadReturnedBorrowings = async (forceRefresh = false) => {
     try {
       setReturnedLoading(true);
@@ -216,7 +327,7 @@ export default function PeminjamanAktifPage() {
     }
   };
 
-  const handleOpenReturnDialog = (borrowing: ActiveBorrowing) => {
+  const handleOpenReturnDialog = (borrowing: ReturnRequestedBorrowing) => {
     setReturnDialog({ open: true, borrowing });
     setReturnForm({
       kondisi: "baik",
@@ -243,6 +354,7 @@ export default function PeminjamanAktifPage() {
       await Promise.all([
         loadPendingApprovals(true),
         loadActiveBorrowings(true),
+        loadReturnRequestedBorrowings(true),
       ]);
       setApproveDialog({ open: false, id: "", name: "" });
     } catch (error) {
@@ -298,15 +410,16 @@ export default function PeminjamanAktifPage() {
         0,
       );
 
-      toast.success("Pengembalian alat berhasil dicatat");
+      toast.success("Pengembalian alat berhasil diverifikasi");
       setReturnDialog({ open: false, borrowing: null });
       setReturnForm({ kondisi: "baik", keterangan: "" });
 
       await invalidatePeminjamanCaches();
-      await loadActiveBorrowings(true);
-      if (returnedBorrowings.length > 0) {
-        await loadReturnedBorrowings(true);
-      }
+      await Promise.all([
+        loadActiveBorrowings(true),
+        loadReturnRequestedBorrowings(true),
+      ]);
+      await loadReturnedBorrowings(true);
     } catch (error) {
       console.error("Error marking borrowing as returned:", error);
       const errorMessage = getRBACErrorMessage(error);
@@ -322,6 +435,27 @@ export default function PeminjamanAktifPage() {
       month: "short",
       day: "numeric",
     });
+  };
+
+  const formatBorrowingContext = ({
+    keperluan,
+    laboratorium_nama,
+    tanggal_pinjam,
+  }: {
+    keperluan?: string | null;
+    laboratorium_nama?: string | null;
+    tanggal_pinjam?: string | null;
+  }) => {
+    if (keperluan?.trim()) {
+      return keperluan.replace(/\s-\s/g, " • ");
+    }
+
+    const parts = [
+      laboratorium_nama || "Lab belum ditentukan",
+      tanggal_pinjam ? formatDate(tanggal_pinjam) : null,
+    ].filter(Boolean);
+
+    return parts.join(" • ");
   };
 
   const getKondisiBadge = (kondisi: string) => {
@@ -345,7 +479,6 @@ export default function PeminjamanAktifPage() {
     );
   };
 
-  const overdueCount = activeBorrowings.filter((b) => b.is_overdue).length;
   const returnedTodayCount = returnedBorrowings.filter((r) => {
     const today = new Date().toDateString();
     const returnDate = new Date(r.tanggal_kembali_aktual).toDateString();
@@ -365,8 +498,8 @@ export default function PeminjamanAktifPage() {
               <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
                 <Package className="h-3.5 w-3.5 text-primary" />
                 {isAdminView
-                  ? "Backup pengelolaan peminjaman alat"
-                  : "Satu pusat peminjaman alat"}
+                  ? "Backup Operasional Peminjaman"
+                  : "Pusat Operasional Peminjaman"}
               </div>
               <div className="flex items-start gap-4">
                 <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20 shadow-sm">
@@ -379,7 +512,7 @@ export default function PeminjamanAktifPage() {
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                     {isAdminView
                       ? "Admin memakai halaman ini sebagai backup operasional saat laboran tidak hadir. Setujui permintaan, pantau alat yang dipinjam, dan proses pengembalian tanpa mengubah alur data utama."
-                      : "Kelola seluruh alur peminjaman alat dari satu tempat: persetujuan permintaan baru, peminjaman aktif, sampai riwayat pengembalian."}
+                      : "Kelola tindak lanjut peminjaman alat dari satu tempat: permintaan baru, alat yang sedang dipinjam, verifikasi pengembalian, dan riwayat operasional."}
                   </p>
                 </div>
               </div>
@@ -387,7 +520,7 @@ export default function PeminjamanAktifPage() {
             <div className="rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning lg:max-w-sm">
               {isAdminView
                 ? "Gunakan fitur ini hanya saat backup laboran. Pastikan permintaan dan kondisi barang diperiksa agar stok inventaris tetap akurat."
-                : "Alurnya sekarang disatukan: permintaan masuk diproses di tab pertama, lalu otomatis berpindah ke peminjaman aktif setelah disetujui."}
+                : "Alur kerja dipisah per tahap agar mudah ditinjau: permintaan baru diproses lebih dulu, lalu berlanjut ke peminjaman aktif, verifikasi pengembalian, dan arsip riwayat."}
             </div>
           </div>
         </GlassCard>
@@ -407,10 +540,10 @@ export default function PeminjamanAktifPage() {
             color="blue"
           />
           <DashboardCard
-            title="Terlambat"
-            value={overdueCount}
-            icon={AlertTriangle}
-            color="red"
+            title="Pengembalian Diajukan"
+            value={returnRequestedBorrowings.length}
+            icon={CheckCircle}
+            color="amber"
           />
           <DashboardCard
             title="Dikembalikan Hari Ini"
@@ -421,8 +554,12 @@ export default function PeminjamanAktifPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid h-auto w-full grid-cols-1 gap-1.5 rounded-3xl border border-slate-200/70 bg-white/85 p-1.5 shadow-sm backdrop-blur md:grid-cols-3">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-1.5 rounded-3xl border border-slate-200/70 bg-white/85 p-1.5 shadow-sm backdrop-blur md:grid-cols-4">
             <TabsTrigger
               value="pending"
               className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-amber-500 data-[state=active]:text-white sm:text-sm"
@@ -435,7 +572,7 @@ export default function PeminjamanAktifPage() {
                 </span>
               </span>
               <span className="hidden text-[11px] font-normal opacity-80 sm:block">
-                Review permintaan baru
+                Tinjau permintaan tahap awal
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -444,13 +581,33 @@ export default function PeminjamanAktifPage() {
             >
               <span className="inline-flex items-center gap-1.5 font-semibold">
                 <Package className="h-3.5 w-3.5" />
-                Masih Dipinjam
+                Sedang Dipinjam
                 <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
                   {activeBorrowings.length}
                 </span>
               </span>
               <span className="hidden text-[11px] font-normal opacity-80 sm:block">
-                Terima pengembalian alat
+                Pantau alat yang masih dipakai
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="return_requested"
+              className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-amber-500 data-[state=active]:text-white sm:text-sm"
+              onClick={() => {
+                if (returnRequestedBorrowings.length === 0) {
+                  loadReturnRequestedBorrowings(false);
+                }
+              }}
+            >
+              <span className="inline-flex items-center gap-1.5 font-semibold">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Pengembalian Diajukan
+                <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
+                  {returnRequestedBorrowings.length}
+                </span>
+              </span>
+              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+                Verifikasi pengembalian akhir
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -464,10 +621,10 @@ export default function PeminjamanAktifPage() {
             >
               <span className="inline-flex items-center gap-1.5 font-semibold">
                 <History className="h-3.5 w-3.5" />
-                Riwayat Pengembalian
+                Riwayat
               </span>
               <span className="hidden text-[11px] font-normal opacity-80 sm:block">
-                Arsip alat selesai
+                Arsip transaksi selesai
               </span>
             </TabsTrigger>
           </TabsList>
@@ -483,8 +640,8 @@ export default function PeminjamanAktifPage() {
                   Permintaan Menunggu Persetujuan
                 </CardTitle>
                 <CardDescription>
-                  Tinjau pengajuan baru dari dosen. Jika disetujui, data akan
-                  masuk ke tab peminjaman aktif.
+                  Tinjau pengajuan baru dari dosen. Permintaan yang disetujui
+                  akan berpindah ke tahap peminjaman aktif.
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-0 pb-0">
@@ -505,11 +662,11 @@ export default function PeminjamanAktifPage() {
                         <TableRow>
                           <TableHead>Peminjam</TableHead>
                           <TableHead>Alat</TableHead>
-                          <TableHead>Laboratorium</TableHead>
+                          <TableHead>Lab Tujuan</TableHead>
                           <TableHead>Jumlah</TableHead>
                           <TableHead>Tanggal Pinjam</TableHead>
                           <TableHead>Tanggal Kembali</TableHead>
-                          <TableHead>Keperluan</TableHead>
+                          <TableHead>Konteks Praktikum</TableHead>
                           <TableHead className="text-right">Aksi</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -556,9 +713,9 @@ export default function PeminjamanAktifPage() {
                             </TableCell>
                             <TableCell
                               className="max-w-xs truncate text-sm text-muted-foreground"
-                              title={request.keperluan}
+                              title={formatBorrowingContext(request)}
                             >
-                              {request.keperluan}
+                              {formatBorrowingContext(request)}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex flex-wrap justify-end gap-2">
@@ -603,8 +760,9 @@ export default function PeminjamanAktifPage() {
                   Daftar Alat Masih Dipinjam
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Data pada tabel ini adalah peminjaman yang sudah disetujui
-                  dan belum dicatat kembali oleh laboran.
+                  Data pada tabel ini adalah peminjaman yang sudah disetujui dan
+                  masih digunakan. Pengembalian final baru diproses setelah
+                  dosen mengajukan pengembalian.
                 </p>
               </CardHeader>
               <CardContent className="px-0 pb-0">
@@ -625,13 +783,13 @@ export default function PeminjamanAktifPage() {
                         <TableRow>
                           <TableHead>Peminjam</TableHead>
                           <TableHead>Alat</TableHead>
-                          <TableHead>Lab</TableHead>
+                          <TableHead>Lab Tujuan</TableHead>
                           <TableHead>Jumlah</TableHead>
                           <TableHead>Tgl Pinjam</TableHead>
                           <TableHead>Harus Kembali</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Kondisi</TableHead>
-                          <TableHead>Aksi</TableHead>
+                          <TableHead>Status Proses</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -690,6 +848,121 @@ export default function PeminjamanAktifPage() {
                             <TableCell>
                               {getKondisiBadge(borrowing.kondisi_pinjam)}
                             </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              Menunggu dosen ajukan pengembalian
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </GlassCard>
+          </TabsContent>
+
+          <TabsContent value="return_requested">
+            <GlassCard
+              intensity="low"
+              className="border-border/60 bg-background/85 shadow-lg"
+            >
+              <CardHeader className="space-y-2 px-0 pt-0">
+                <CardTitle className="text-xl font-semibold text-foreground">
+                  Pengembalian Diajukan
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Dosen sudah mengajukan pengembalian. Verifikasi kondisi akhir
+                  alat di sini sebelum transaksi ditutup ke riwayat.
+                </p>
+              </CardHeader>
+              <CardContent className="px-0 pb-0">
+                {returnRequestedLoading ? (
+                  <DashboardSkeleton />
+                ) : returnRequestedBorrowings.length === 0 ? (
+                  <Alert className="border-border/60 bg-muted/40">
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription className="text-sm text-muted-foreground">
+                      Belum ada pengembalian yang diajukan dosen.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Peminjam</TableHead>
+                          <TableHead>Alat</TableHead>
+                          <TableHead>Lab Tujuan</TableHead>
+                          <TableHead>Jumlah</TableHead>
+                          <TableHead>Target Kembali</TableHead>
+                          <TableHead>Kondisi Awal</TableHead>
+                          <TableHead>Catatan Dosen</TableHead>
+                          <TableHead>Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {returnRequestedBorrowings.map((borrowing) => (
+                          <TableRow key={borrowing.id} className="align-top">
+                            <TableCell>
+                              <div>
+                                <div className="text-sm font-medium text-foreground">
+                                  {borrowing.peminjam_nama}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {borrowing.peminjam_nim}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-sm font-medium text-foreground">
+                                  {borrowing.inventaris_nama}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {borrowing.inventaris_kode}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {borrowing.laboratorium_nama || "-"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {borrowing.jumlah_pinjam}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="text-sm text-foreground">
+                                  {formatDate(
+                                    borrowing.tanggal_kembali_rencana,
+                                  )}
+                                </div>
+                                {borrowing.is_overdue && (
+                                  <StatusBadge
+                                    status="error"
+                                    pulse={false}
+                                    className="text-xs"
+                                  >
+                                    Terlambat {borrowing.days_overdue} hari
+                                  </StatusBadge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {getKondisiBadge(
+                                borrowing.kondisi_kembali ||
+                                  borrowing.kondisi_pinjam,
+                              )}
+                            </TableCell>
+                            <TableCell className="max-w-xs">
+                              <span
+                                className="block truncate text-sm text-muted-foreground"
+                                title={borrowing.keterangan_kembali || "-"}
+                              >
+                                {borrowing.keterangan_kembali || "-"}
+                              </span>
+                            </TableCell>
                             <TableCell>
                               <Button
                                 size="sm"
@@ -700,7 +973,7 @@ export default function PeminjamanAktifPage() {
                                 }
                               >
                                 <CheckCircle className="mr-1 h-4 w-4" />
-                                Terima Pengembalian
+                                Verifikasi Pengembalian
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -962,11 +1235,11 @@ export default function PeminjamanAktifPage() {
         >
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Catat Pengembalian Alat</DialogTitle>
+              <DialogTitle>Verifikasi Pengembalian Alat</DialogTitle>
               <DialogDescription>
-                Gunakan form ini hanya saat alat sudah benar-benar diterima
-                kembali oleh laboran. Stok inventaris akan otomatis bertambah
-                setelah catatan pengembalian disimpan.
+                Gunakan form ini setelah alat benar-benar diterima kembali oleh
+                laboran. Stok inventaris akan kembali bertambah hanya setelah
+                verifikasi final ini disimpan.
               </DialogDescription>
             </DialogHeader>
 
@@ -1021,6 +1294,14 @@ export default function PeminjamanAktifPage() {
                           {formatDate(
                             returnDialog.borrowing.tanggal_kembali_rencana,
                           )}
+                        </p>
+                      </div>
+                      <div className="space-y-1 sm:col-span-2">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Catatan awal dosen
+                        </p>
+                        <p className="text-sm font-medium text-foreground">
+                          {returnDialog.borrowing.keterangan_kembali || "-"}
                         </p>
                       </div>
                     </div>
@@ -1093,7 +1374,7 @@ export default function PeminjamanAktifPage() {
                 ) : (
                   <>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Simpan Pengembalian
+                    Simpan Verifikasi
                   </>
                 )}
               </Button>

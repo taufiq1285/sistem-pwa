@@ -184,7 +184,7 @@ export default function InventarisPage() {
       if (!navigator.onLine) {
         setIsOfflineData(true);
       } else {
-        toast.error("Failed to load inventaris data");
+        toast.error("Gagal memuat data inventaris");
       }
       console.error(error);
     } finally {
@@ -205,7 +205,7 @@ export default function InventarisPage() {
       );
       if (cats.length > 0) setCategories(cats);
     } catch (error) {
-      console.error("Failed to load categories:", error);
+      console.error("Gagal memuat kategori inventaris:", error);
     }
   };
 
@@ -248,15 +248,15 @@ export default function InventarisPage() {
     e.preventDefault();
     try {
       if (!formData.kode_barang || !formData.nama_barang) {
-        toast.error("Please fill in all required fields");
+        toast.error("Lengkapi semua field wajib");
         return;
       }
       if (selectedItem) {
         await updateInventaris(selectedItem.id, formData);
-        toast.success("Inventaris updated successfully");
+        toast.success("Inventaris berhasil diperbarui");
       } else {
         await createInventaris(formData as CreateInventarisData);
-        toast.success("Inventaris created successfully");
+        toast.success("Inventaris berhasil ditambahkan");
       }
       setIsFormOpen(false);
       // Invalidate all inventaris caches
@@ -264,7 +264,9 @@ export default function InventarisPage() {
       await loadInventaris(true);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to save inventaris";
+        error instanceof Error
+          ? error.message
+          : "Gagal menyimpan data inventaris";
       toast.error(message);
     }
   };
@@ -273,14 +275,14 @@ export default function InventarisPage() {
     if (!selectedItem) return;
     try {
       await deleteInventaris(selectedItem.id);
-      toast.success("Inventaris deleted successfully");
+      toast.success("Inventaris berhasil dihapus");
       setIsDeleteOpen(false);
       // Invalidate all inventaris caches
       await invalidateCache("inventaris_list_");
       await loadInventaris(true);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to delete inventaris";
+        error instanceof Error ? error.message : "Gagal menghapus inventaris";
       toast.error(message);
     }
   };
@@ -293,14 +295,14 @@ export default function InventarisPage() {
         stockAdjustment.amount,
         stockAdjustment.type,
       );
-      toast.success("Stock updated successfully");
+      toast.success("Stok inventaris berhasil diperbarui");
       setIsStockOpen(false);
       // Invalidate all inventaris caches
       await invalidateCache("inventaris_list_");
       await loadInventaris(true);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to update stock";
+        error instanceof Error ? error.message : "Gagal memperbarui stok";
       toast.error(message);
     }
   };
@@ -349,15 +351,15 @@ export default function InventarisPage() {
               </div>
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  Inventaris aktif
+                  Data inventaris aktif
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    Inventaris Lab
+                    Data Inventaris Laboratorium
                   </h1>
                   <p className="text-sm text-muted-foreground sm:text-base">
-                    Kelola peralatan laboratorium, stok tersedia, dan kategori
-                    inventaris yang masih dipakai.
+                    Kelola peralatan laboratorium, stok tersedia, kategori, dan
+                    kondisi inventaris untuk operasional praktikum.
                   </p>
                 </div>
               </div>
@@ -365,11 +367,11 @@ export default function InventarisPage() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button variant="outline" onClick={exportToCSV}>
                 <Download className="mr-2 h-4 w-4" />
-                Export CSV
+                Ekspor CSV
               </Button>
               <Button onClick={handleCreate}>
                 <Plus className="mr-2 h-4 w-4" />
-                Tambah Barang
+                Tambah Inventaris
               </Button>
             </div>
           </div>
@@ -388,19 +390,19 @@ export default function InventarisPage() {
 
         <div className="grid gap-4 md:grid-cols-3">
           <DashboardCard
-            title="Total Items"
+            title="Total Item"
             value={totalCount}
             icon={Package}
             color="primary"
           />
           <DashboardCard
-            title="Low Stock"
+            title="Stok Rendah"
             value={inventaris.filter((i) => i.jumlah_tersedia < 5).length}
             icon={AlertCircle}
             color="warning"
           />
           <DashboardCard
-            title="Categories"
+            title="Kategori"
             value={categories.length}
             icon={Filter}
             color="accent"
@@ -501,7 +503,7 @@ export default function InventarisPage() {
                       Lab
                     </TableHead>
                     <TableHead className="text-right font-semibold text-foreground">
-                      Actions
+                      Aksi
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -583,7 +585,7 @@ export default function InventarisPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleStockManagement(item)}
-                              title="Manage Stock"
+                              title="Kelola stok"
                             >
                               <Package className="h-4 w-4 text-muted-foreground" />
                             </Button>
@@ -617,12 +619,12 @@ export default function InventarisPage() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {selectedItem ? "Edit Inventaris" : "Add New Inventaris"}
+                {selectedItem ? "Edit Inventaris" : "Tambah Inventaris"}
               </DialogTitle>
               <DialogDescription>
                 {selectedItem
-                  ? "Update inventory item details"
-                  : "Add a new item to the inventory"}
+                  ? "Perbarui detail item inventaris"
+                  : "Tambahkan item baru ke inventaris"}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -660,7 +662,7 @@ export default function InventarisPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder="Pilih kategori" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (
@@ -810,10 +812,10 @@ export default function InventarisPage() {
                   variant="outline"
                   onClick={() => setIsFormOpen(false)}
                 >
-                  Cancel
+                  Batal
                 </Button>
                 <Button type="submit">
-                  {selectedItem ? "Update" : "Create"}
+                  {selectedItem ? "Simpan Perubahan" : "Tambah Barang"}
                 </Button>
               </DialogFooter>
             </form>
@@ -824,16 +826,16 @@ export default function InventarisPage() {
         <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogTitle>Hapus Inventaris?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete "{selectedItem?.nama_barang}". This
-                action cannot be undone.
+                Inventaris "{selectedItem?.nama_barang}" akan dihapus permanen.
+                Tindakan ini tidak dapat dibatalkan.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmDelete}>
-                Delete
+                Hapus
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -843,22 +845,22 @@ export default function InventarisPage() {
         <Dialog open={isStockOpen} onOpenChange={setIsStockOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Manage Stock</DialogTitle>
+              <DialogTitle>Kelola Stok</DialogTitle>
               <DialogDescription>
-                Adjust stock for: {selectedItem?.nama_barang}
+                Atur stok untuk: {selectedItem?.nama_barang}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="rounded-lg border p-4 bg-muted/50">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Current Total</p>
+                    <p className="text-muted-foreground">Total Saat Ini</p>
                     <p className="text-4xl font-extrabold">
                       {selectedItem?.jumlah}
                     </p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Available</p>
+                    <p className="text-muted-foreground">Tersedia</p>
                     <p className="text-4xl font-extrabold">
                       {selectedItem?.jumlah_tersedia}
                     </p>
@@ -866,7 +868,7 @@ export default function InventarisPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Adjustment Type</Label>
+                <Label>Jenis Penyesuaian</Label>
                 <Select
                   value={stockAdjustment.type}
                   onValueChange={(value: "add" | "subtract" | "set") =>
@@ -880,21 +882,21 @@ export default function InventarisPage() {
                     <SelectItem value="add">
                       <div className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4" />
-                        Add Stock
+                        Tambah Stok
                       </div>
                     </SelectItem>
                     <SelectItem value="subtract">
                       <div className="flex items-center gap-2">
                         <TrendingDown className="h-4 w-4" />
-                        Subtract Stock
+                        Kurangi Stok
                       </div>
                     </SelectItem>
-                    <SelectItem value="set">Set Exact Amount</SelectItem>
+                    <SelectItem value="set">Tetapkan Jumlah Pasti</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Amount</Label>
+                <Label>Jumlah</Label>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -913,9 +915,9 @@ export default function InventarisPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsStockOpen(false)}>
-                Cancel
+                Batal
               </Button>
-              <Button onClick={handleStockUpdate}>Update Stock</Button>
+              <Button onClick={handleStockUpdate}>Simpan Stok</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

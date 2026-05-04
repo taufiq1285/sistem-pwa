@@ -227,7 +227,9 @@ export function QuizTimer({
             Sisa waktu
           </span>
         </div>
-        <span className={cn("font-mono text-sm font-semibold", getColorClass())}>
+        <span
+          className={cn("font-mono text-sm font-semibold", getColorClass())}
+        >
           {formatTime(timeRemaining)}
         </span>
       </div>

@@ -269,6 +269,28 @@ describe("Kuis Attempt Offline Integration", () => {
     cachedQuiz = null;
     cachedQuestions = null;
     offlineAnswers = {};
+
+    vi.mocked(indexedDBManager.initialize).mockResolvedValue(
+      undefined as never,
+    );
+    vi.mocked(indexedDBManager.create).mockResolvedValue(undefined as never);
+    vi.mocked(indexedDBManager.update).mockResolvedValue(undefined as never);
+    vi.mocked(indexedDBManager.delete).mockResolvedValue(undefined as never);
+    vi.mocked(indexedDBManager.getById).mockResolvedValue(null as never);
+    vi.mocked(indexedDBManager.getAll).mockImplementation(async (store) => {
+      if (store === "quiz_answers") {
+        return Object.entries(offlineAnswers).map(([soal_id, jawaban]) => ({
+          id: `attempt-1_${soal_id}`,
+          attempt_id: "attempt-1",
+          soal_id,
+          jawaban,
+          savedAt: new Date().toISOString(),
+          synced: false,
+        })) as never;
+      }
+
+      return [] as never;
+    });
   });
 
   afterEach(() => {

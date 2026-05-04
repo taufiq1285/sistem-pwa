@@ -8,19 +8,49 @@
 import "@testing-library/jest-dom/vitest";
 import "fake-indexeddb/auto";
 
-// Suppress React act() warnings in tests
-const originalError = console.error;
-console.error = (...args: any[]) => {
-  if (
-    typeof args[0] === "string" &&
-    ((args[0].includes("Warning: An update to") &&
-      args[0].includes("was not wrapped in act")) ||
-      args[0].includes("IndexedDB initialization failed"))
-  ) {
-    return;
-  }
-  originalError.call(console, ...args);
+const verboseTestLogs = process.env.VITEST_VERBOSE_LOGS === "true";
+const originalConsole = {
+  log: console.log,
+  info: console.info,
+  warn: console.warn,
+  error: console.error,
+  group: console.group,
+  groupEnd: console.groupEnd,
 };
+
+const shouldSuppressConsoleMessage = (args: any[]) => {
+  if (!args.length) return true;
+
+  const firstArg = args[0];
+  if (typeof firstArg !== "string") {
+    return true;
+  }
+
+  if (
+    (firstArg.includes("Warning: An update to") &&
+      firstArg.includes("was not wrapped in act")) ||
+    firstArg.includes("IndexedDB initialization failed")
+  ) {
+    return true;
+  }
+
+  return true;
+};
+
+const createConsoleSilencer =
+  (method: keyof typeof originalConsole) =>
+  (...args: any[]) => {
+    if (verboseTestLogs || !shouldSuppressConsoleMessage(args)) {
+      originalConsole[method].call(console, ...args);
+    }
+  };
+
+console.log = createConsoleSilencer("log");
+console.info = createConsoleSilencer("info");
+console.warn = createConsoleSilencer("warn");
+console.error = createConsoleSilencer("error");
+console.group = createConsoleSilencer("group");
+console.groupEnd = createConsoleSilencer("groupEnd");
 
 // Mock window.matchMedia for tests
 Object.defineProperty(window, "matchMedia", {

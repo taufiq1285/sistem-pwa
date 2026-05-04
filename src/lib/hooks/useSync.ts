@@ -10,6 +10,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { queueManager } from "../offline/queue-manager";
+import { indexedDBManager } from "../offline/indexeddb";
 import type {
   SyncQueueItem,
   SyncOperation,
@@ -82,6 +83,10 @@ async function processSyncQueueItem(item: SyncQueueItem): Promise<void> {
     }
 
     await submitAnswerSafe({ attempt_id, soal_id, jawaban });
+    await indexedDBManager.delete(
+      "offline_answers",
+      `${attempt_id}_${soal_id}`,
+    );
     return;
   }
 

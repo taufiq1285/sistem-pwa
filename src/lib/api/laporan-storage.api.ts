@@ -310,7 +310,7 @@ export async function openLaporanFileInNewTab(params: {
   }
 
   openedWindow.document.write(
-    "<!doctype html><title>Membuka laporan...</title><body style=\"font-family: sans-serif; padding: 24px;\">Membuka file laporan...</body>",
+    '<!doctype html><title>Membuka laporan...</title><body style="font-family: sans-serif; padding: 24px;">Membuka file laporan...</body>',
   );
 
   const showOpenError = (message: string) => {

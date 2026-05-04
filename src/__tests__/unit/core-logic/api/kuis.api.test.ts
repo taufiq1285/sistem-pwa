@@ -395,6 +395,112 @@ describe("kuis.api - CORE LOGIC", () => {
       });
     });
 
+    it("syncPendingOfflineQuizSubmissions membaca flag pending dari sync_status fallback", async () => {
+      const permission = await import("@/lib/middleware/permission.middleware");
+      vi.mocked(permission.getCurrentMahasiswaId).mockResolvedValue("mhs-1");
+      vi.mocked(getById).mockResolvedValue({
+        id: "att-pending",
+        mahasiswa_id: "mhs-1",
+      } as any);
+      vi.mocked(indexedDBManager.getAll).mockResolvedValue([
+        {
+          id: "att-pending",
+          sync_status: "pending_submit",
+          data: {
+            id: "att-pending",
+            kuis_id: "kuis-1",
+            mahasiswa_id: "mhs-1",
+            attempt_number: 1,
+            status: "submitted",
+            started_at: "2025-01-01T00:00:00.000Z",
+            sisa_waktu: 80,
+          },
+        },
+      ] as any);
+      vi.mocked(indexedDBManager.getById).mockResolvedValue({
+        id: "att-pending",
+        sync_status: "pending_submit",
+        data: {
+          id: "att-pending",
+          kuis_id: "kuis-1",
+          mahasiswa_id: "mhs-1",
+          attempt_number: 1,
+          status: "submitted",
+          started_at: "2025-01-01T00:00:00.000Z",
+          sisa_waktu: 80,
+        },
+      } as any);
+      vi.mocked(submitQuizSafe).mockResolvedValue({
+        id: "att-pending",
+        kuis_id: "kuis-1",
+        mahasiswa_id: "mhs-1",
+        attempt_number: 1,
+        status: "submitted",
+        started_at: "2025-01-01T00:00:00.000Z",
+        submitted_at: "2025-01-01T00:15:00.000Z",
+      } as any);
+
+      await expect(
+        kuisApi.syncPendingOfflineQuizSubmissions("mhs-1"),
+      ).resolves.toBe(1);
+
+      expect(submitQuizSafe).toHaveBeenCalledWith({
+        attempt_id: "att-pending",
+        sisa_waktu: 80,
+      });
+    });
+
+    it("syncPendingOfflineQuizSubmission mendedupe sync bersamaan untuk attempt yang sama", async () => {
+      const permission = await import("@/lib/middleware/permission.middleware");
+      vi.mocked(permission.getCurrentMahasiswaId).mockResolvedValue("mhs-1");
+      vi.mocked(getById).mockResolvedValue({
+        id: "att-dedupe",
+        mahasiswa_id: "mhs-1",
+      } as any);
+      vi.mocked(indexedDBManager.getById).mockResolvedValue({
+        id: "att-dedupe",
+        pending_submit: true,
+        sync_status: "pending_submit",
+        data: {
+          id: "att-dedupe",
+          kuis_id: "kuis-1",
+          mahasiswa_id: "mhs-1",
+          attempt_number: 1,
+          status: "submitted",
+          started_at: "2025-01-01T00:00:00.000Z",
+          sisa_waktu: 65,
+        },
+      } as any);
+      vi.mocked(indexedDBManager.getAll).mockResolvedValue([] as any);
+      vi.mocked(submitQuizSafe).mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  id: "att-dedupe",
+                  kuis_id: "kuis-1",
+                  mahasiswa_id: "mhs-1",
+                  attempt_number: 1,
+                  status: "submitted",
+                  started_at: "2025-01-01T00:00:00.000Z",
+                  submitted_at: "2025-01-01T00:20:00.000Z",
+                } as any),
+              10,
+            ),
+          ),
+      );
+
+      const [first, second] = await Promise.all([
+        kuisApi.syncPendingOfflineQuizSubmission("att-dedupe"),
+        kuisApi.syncPendingOfflineQuizSubmission("att-dedupe"),
+      ]);
+
+      expect(submitQuizSafe).toHaveBeenCalledTimes(1);
+      expect(first).toMatchObject({ id: "att-dedupe", sync_status: "synced" });
+      expect(second).toMatchObject({ id: "att-dedupe", sync_status: "synced" });
+    });
+
     it("getKuisByIdOffline memakai API lalu cache saat online", async () => {
       vi.mocked(getById).mockResolvedValueOnce({
         id: "k-online",

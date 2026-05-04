@@ -122,9 +122,7 @@ export default function DosenLogbookReviewPage() {
     }
   }, [selectedLogbook]);
 
-  async function notifyMahasiswaLogbookStatus(
-    logbookId: string,
-  ) {
+  async function notifyMahasiswaLogbookStatus(logbookId: string) {
     const supabaseAny = supabase as any;
     const { data: logbookNotifData, error } = await supabaseAny
       .from("logbook_entries")
@@ -176,7 +174,9 @@ export default function DosenLogbookReviewPage() {
 
   async function refreshAfterLogbookMutation(logbook?: LogbookEntry | null) {
     if (logbook?.mahasiswa_id) {
-      await invalidateCache(`mahasiswa_logbook_entries_${logbook.mahasiswa_id}`);
+      await invalidateCache(
+        `mahasiswa_logbook_entries_${logbook.mahasiswa_id}`,
+      );
     }
 
     window.dispatchEvent(
@@ -436,7 +436,8 @@ export default function DosenLogbookReviewPage() {
         .filter((logbook) => logbook.jadwal?.mata_kuliah_id)
         .filter(
           (logbook) =>
-            selectedKelas === "all" || logbook.jadwal?.kelas_id === selectedKelas,
+            selectedKelas === "all" ||
+            logbook.jadwal?.kelas_id === selectedKelas,
         )
         .map((logbook) => [
           logbook.jadwal?.mata_kuliah_id,
@@ -664,7 +665,8 @@ export default function DosenLogbookReviewPage() {
 
                       {logbook.status === "graded" && (
                         <p className="mt-2 inline-flex rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
-                          Logbook telah dinilai dan tetap tersimpan di riwayat dosen
+                          Logbook telah dinilai dan tetap tersimpan di riwayat
+                          dosen
                         </p>
                       )}
                     </div>
@@ -752,7 +754,8 @@ export default function DosenLogbookReviewPage() {
             <DialogHeader>
               <DialogTitle>Nilai Logbook</DialogTitle>
               <DialogDescription>
-                Periksa isi logbook mahasiswa, lalu simpan nilai dan feedback pemeriksaan.
+                Periksa isi logbook mahasiswa, lalu simpan nilai dan feedback
+                pemeriksaan.
               </DialogDescription>
             </DialogHeader>
 

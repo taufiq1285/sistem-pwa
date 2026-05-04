@@ -7,11 +7,13 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { DashboardPage } from "@/pages/dosen/DashboardPage";
 
-const { mockUseAuth, mockCacheAPI, mockNetworkDetector } = vi.hoisted(() => ({
-  mockUseAuth: vi.fn(),
-  mockCacheAPI: vi.fn(),
-  mockNetworkDetector: { isOnline: vi.fn(() => true) },
-}));
+const { mockUseAuth, mockCacheAPI, mockGetCachedData, mockNetworkDetector } =
+  vi.hoisted(() => ({
+    mockUseAuth: vi.fn(),
+    mockCacheAPI: vi.fn(),
+    mockGetCachedData: vi.fn(),
+    mockNetworkDetector: { isOnline: vi.fn(() => true) },
+  }));
 
 vi.mock("@/lib/hooks/useAuth", () => ({
   useAuth: () => mockUseAuth(),
@@ -19,7 +21,7 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args) => mockCacheAPI(...args),
-  getCachedData: vi.fn().mockResolvedValue(null),
+  getCachedData: (...args) => mockGetCachedData(...args),
   invalidateCache: vi.fn(),
 }));
 
@@ -85,6 +87,9 @@ describe("Dosen DashboardPage", () => {
         full_name: "Dr. Budi",
         email: "budi@example.com",
         role: "dosen",
+        dosen: {
+          id: "dosen-1",
+        },
       },
     });
 
@@ -117,6 +122,8 @@ describe("Dosen DashboardPage", () => {
       if (key.startsWith("dosen_kuis_")) return [];
       return {};
     });
+    mockGetCachedData.mockResolvedValue(null);
+    navigator.onLine = true;
   });
 
   describe("loading state", () => {
@@ -159,6 +166,33 @@ describe("Dosen DashboardPage", () => {
 
     it("menjaga integritas state saat pemuatan asinkron", () => {
       expect(true).toBe(true);
+    });
+  });
+
+  describe("offline indicator", () => {
+    it("menampilkan status Mode Offline dan sumber Snapshot lokal", async () => {
+      navigator.onLine = false;
+      mockNetworkDetector.isOnline.mockReturnValue(false);
+      mockGetCachedData.mockImplementation(async (key: unknown) => {
+        const cacheKey = String(key);
+        if (cacheKey.startsWith("dosen_stats_")) {
+          return { data: mockStats, timestamp: Date.now() };
+        }
+        if (cacheKey.startsWith("dosen_kelas_")) {
+          return { data: mockKelas, timestamp: Date.now() };
+        }
+        return { data: [], timestamp: Date.now() };
+      });
+      mockCacheAPI.mockReset().mockRejectedValue(new Error("offline"));
+
+      renderWithRouter(<DashboardPage />);
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/Mode Offline/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Snapshot lokal/i).length).toBeGreaterThan(
+          0,
+        );
+      });
     });
   });
 });

@@ -18,6 +18,12 @@ import {
   notifyMahasiswaTugasBaru,
   notifyMahasiswaKuisPublished,
 } from "./notification.api";
+import {
+  gradeAnswerWithVersion,
+  submitAnswerSafe,
+  submitAnswerWithVersion,
+  submitQuizSafe,
+} from "./kuis-versioned-simple.api";
 import type {
   Kuis,
   Soal,
@@ -34,6 +40,7 @@ import type {
   QuizStats,
   RecentQuizResult,
 } from "@/types/kuis.types";
+import { TIPE_SOAL } from "@/types/kuis.types";
 import { supabase } from "@/lib/supabase/client";
 import { handleError, logError } from "@/lib/utils/errors";
 import { conflictResolver } from "@/lib/offline/conflict-resolver";
@@ -193,8 +200,7 @@ function normalizeJawabanRecord(
   const normalizedSoal = jawaban?.soal
     ? normalizeSoalRecord(jawaban.soal)
     : soalMap?.get(jawaban?.soal_id);
-  const jawabanMahasiswa =
-    jawaban?.jawaban_mahasiswa ?? jawaban?.jawaban ?? "";
+  const jawabanMahasiswa = jawaban?.jawaban_mahasiswa ?? jawaban?.jawaban ?? "";
   const normalizedJawaban: Jawaban = {
     ...jawaban,
     jawaban: jawaban?.jawaban ?? jawabanMahasiswa,
@@ -693,35 +699,44 @@ export async function publishKuis(id: string): Promise<Kuis> {
     try {
       const kuis = await getKuisById(id);
 
-      const [{ data: dosenData, error: dosenError }, { data: kelasData, error: kelasError }] =
-        await Promise.all([
-          supabase
-            .from("dosen")
-            .select("user_id, user:user_id(full_name)")
-            .eq("id", kuis.dosen_id)
-            .single(),
-          supabase
-            .from("kelas")
-            .select("nama_kelas")
-            .eq("id", kuis.kelas_id)
-            .single(),
-        ]);
+      const [
+        { data: dosenData, error: dosenError },
+        { data: kelasData, error: kelasError },
+      ] = await Promise.all([
+        supabase
+          .from("dosen")
+          .select("user_id, user:user_id(full_name)")
+          .eq("id", kuis.dosen_id)
+          .single(),
+        supabase
+          .from("kelas")
+          .select("nama_kelas")
+          .eq("id", kuis.kelas_id)
+          .single(),
+      ]);
 
       if (dosenError) {
-        console.error("[NOTIFICATION] Failed to load dosen for publish:", dosenError);
+        console.error(
+          "[NOTIFICATION] Failed to load dosen for publish:",
+          dosenError,
+        );
       }
       if (kelasError) {
-        console.error("[NOTIFICATION] Failed to load kelas for publish:", kelasError);
+        console.error(
+          "[NOTIFICATION] Failed to load kelas for publish:",
+          kelasError,
+        );
       }
 
       const dosenNama = dosenData?.user?.full_name || "Dosen";
       const kelasNama = kelasData?.nama_kelas || "Kelas";
 
-      const { data: kelasMahasiswa, error: kelasMahasiswaError } = await supabase
-        .from("kelas_mahasiswa")
-        .select("mahasiswa:mahasiswa_id(user_id)")
-        .eq("kelas_id", kuis.kelas_id)
-        .eq("is_active", true);
+      const { data: kelasMahasiswa, error: kelasMahasiswaError } =
+        await supabase
+          .from("kelas_mahasiswa")
+          .select("mahasiswa:mahasiswa_id(user_id)")
+          .eq("kelas_id", kuis.kelas_id)
+          .eq("is_active", true);
 
       if (kelasMahasiswaError) {
         console.error(
@@ -738,10 +753,13 @@ export async function publishKuis(id: string): Promise<Kuis> {
           ) || [];
 
       if (mahasiswaIds.length === 0) {
-        console.warn("[NOTIFICATION] No mahasiswa targets found for published kuis", {
-          kuisId: kuis.id,
-          kelasId: kuis.kelas_id,
-        });
+        console.warn(
+          "[NOTIFICATION] No mahasiswa targets found for published kuis",
+          {
+            kuisId: kuis.id,
+            kelasId: kuis.kelas_id,
+          },
+        );
       } else {
         const notifications = await notifyMahasiswaKuisPublished(
           mahasiswaIds,
@@ -1348,8 +1366,8 @@ export async function getAttemptsByKuis(
 
     // ✅ Use unknown first to bypass TypeScript type checking
     // The Supabase query returns all fields including total_poin, started_at, submitted_at
-    return (((attempts || []) as unknown) as AttemptWithStudent[]).map((attempt) =>
-      normalizeAttemptRecord(attempt),
+    return ((attempts || []) as unknown as AttemptWithStudent[]).map(
+      (attempt) => normalizeAttemptRecord(attempt),
     );
   } catch (error) {
     const apiError = handleError(error);
@@ -1555,9 +1573,6 @@ async function submitQuizImpl(data: SubmitQuizData): Promise<AttemptKuis> {
       "update:attempt_kuis",
     );
 
-    // Import versioned wrapper dynamically to avoid circular dependency
-    const { submitQuizSafe } = await import("./kuis-versioned-simple.api");
-
     // Use versioned wrapper - handles conflict auto-resolve
     return await submitQuizSafe(data);
   } catch (error) {
@@ -1613,9 +1628,6 @@ async function submitAnswerImpl(data: SubmitAnswerData): Promise<Jawaban> {
       "update:jawaban",
     );
 
-    // Import versioned wrapper dynamically to avoid circular dependency
-    const { submitAnswerSafe } = await import("./kuis-versioned-simple.api");
-
     // Use versioned wrapper - handles conflict auto-resolve
     return await submitAnswerSafe(data);
   } catch (error) {
@@ -1640,10 +1652,6 @@ async function gradeAnswerImpl(
   feedback?: string,
 ): Promise<Jawaban> {
   try {
-    // Import simplified wrapper dynamically to avoid circular dependency
-    const { gradeAnswerWithVersion } =
-      await import("./kuis-versioned-simple.api");
-
     // Use simplified wrapper - direct database operation
     return await gradeAnswerWithVersion(id, poinDiperoleh, isCorrect, feedback);
   } catch (error) {
@@ -1672,7 +1680,8 @@ async function finalizeAttemptGradingImpl(
       throw handleError(answersError);
     }
 
-    const answerList = (answers as Array<{ poin_diperoleh: number | null }> | null) || [];
+    const answerList =
+      (answers as Array<{ poin_diperoleh: number | null }> | null) || [];
     const hasAnswers = answerList.length > 0;
     const allAnswersGraded =
       hasAnswers &&
@@ -1742,7 +1751,7 @@ async function finalizeAttemptGradingImpl(
     await invalidateCachePatternSync("jawaban");
     await clearAllCacheSync();
 
-    return normalizeAttemptRecord(updatedAttempt as AttemptKuis);
+    return normalizeAttemptRecord(updatedAttempt as unknown as AttemptKuis);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `finalizeAttemptGrading:${attemptId}`);
@@ -2220,6 +2229,28 @@ type OfflineAttemptRecord = {
   server_attempt_id?: string | null;
 };
 
+function isOfflineAttemptPendingSubmit(
+  cached: OfflineAttemptRecord | null | undefined,
+): boolean {
+  if (!cached) {
+    return false;
+  }
+
+  if (typeof cached.pending_submit === "boolean") {
+    return cached.pending_submit;
+  }
+
+  if (typeof cached.data?.offline_submit_pending === "boolean") {
+    return cached.data.offline_submit_pending;
+  }
+
+  if (cached.sync_status === "pending_submit") {
+    return true;
+  }
+
+  return cached.data?.sync_status === "pending_submit";
+}
+
 export interface OfflineAttemptSyncItem {
   attempt_id: string;
   kuis_id: string;
@@ -2243,14 +2274,15 @@ function mapOfflineAttemptRecordToAttempt(
     return null;
   }
 
+  const isPendingSubmit = isOfflineAttemptPendingSubmit(cached);
+
   return {
     ...cached.data,
     is_synced:
       cached.sync_status === "synced"
         ? true
-        : (cached.data.is_synced ?? !cached.pending_submit),
-    offline_submit_pending:
-      cached.pending_submit ?? cached.data.offline_submit_pending ?? false,
+        : (cached.data.is_synced ?? !isPendingSubmit),
+    offline_submit_pending: isPendingSubmit,
     offline_submitted_at:
       cached.offline_submitted_at ??
       cached.data.offline_submitted_at ??
@@ -2259,7 +2291,7 @@ function mapOfflineAttemptRecordToAttempt(
     sync_status:
       cached.sync_status ??
       cached.data.sync_status ??
-      (cached.pending_submit ? "pending_submit" : "synced"),
+      (isPendingSubmit ? "pending_submit" : "synced"),
     server_attempt_id:
       cached.server_attempt_id ?? cached.data.server_attempt_id ?? null,
   };
@@ -2435,26 +2467,27 @@ export async function cacheAttemptOffline(attempt: AttemptKuis): Promise<void> {
       attempt.id,
     )) as OfflineAttemptRecord | null;
 
+    const pendingSubmit =
+      typeof attempt.offline_submit_pending === "boolean"
+        ? attempt.offline_submit_pending
+        : attempt.sync_status === "pending_submit"
+          ? true
+          : isOfflineAttemptPendingSubmit(existing);
+
     const record: OfflineAttemptRecord = {
       ...(existing || {}),
       id: attempt.id,
       kuis_id: attempt.kuis_id,
       mahasiswa_id: attempt.mahasiswa_id,
-      synced:
-        attempt.sync_status === "synced"
-          ? true
-          : (existing?.synced ?? attempt.is_synced ?? true),
-      pending_submit:
-        attempt.offline_submit_pending ?? existing?.pending_submit ?? false,
+      synced: attempt.sync_status === "synced" ? true : !pendingSubmit,
+      pending_submit: pendingSubmit,
       offline_submitted_at:
         attempt.offline_submitted_at ??
         existing?.offline_submitted_at ??
         attempt.submitted_at ??
         null,
       sync_status:
-        attempt.sync_status ??
-        existing?.sync_status ??
-        (attempt.offline_submit_pending ? "pending_submit" : "synced"),
+        attempt.sync_status ?? (pendingSubmit ? "pending_submit" : "synced"),
       server_attempt_id:
         attempt.server_attempt_id ?? existing?.server_attempt_id ?? null,
       data: {
@@ -2755,10 +2788,6 @@ export async function syncOfflineAnswers(attemptId: string): Promise<number> {
       `Syncing ${answerIds.length} offline answers with optimistic locking...`,
     );
 
-    // Import versioned wrapper
-    const { submitAnswerWithVersion } =
-      await import("./kuis-versioned-simple.api");
-
     // Sync each answer with version check
     let syncCount = 0;
     for (const soalId of answerIds) {
@@ -2806,45 +2835,66 @@ export async function syncOfflineAnswers(attemptId: string): Promise<number> {
 export async function syncPendingOfflineQuizSubmission(
   attemptId: string,
 ): Promise<AttemptKuis | null> {
-  try {
-    const cachedRecord = (await indexedDBManager.getById(
-      OFFLINE_STORES.ATTEMPTS,
-      attemptId,
-    )) as OfflineAttemptRecord | null;
+  const globalSyncState = globalThis as typeof globalThis & {
+    __quizPendingSubmissionSyncs?: Map<string, Promise<AttemptKuis | null>>;
+  };
+  const pendingSyncs =
+    globalSyncState.__quizPendingSubmissionSyncs ??
+    (globalSyncState.__quizPendingSubmissionSyncs = new Map());
 
-    const cachedAttempt = mapOfflineAttemptRecordToAttempt(cachedRecord);
-    if (!cachedAttempt || !cachedAttempt.offline_submit_pending) {
-      return cachedAttempt;
-    }
-
-    await syncOfflineAnswers(attemptId);
-
-    const syncedAttempt = await submitQuiz({
-      attempt_id: attemptId,
-      sisa_waktu: cachedAttempt.sisa_waktu ?? 0,
-    });
-
-    await cacheAttemptOffline({
-      ...syncedAttempt,
-      is_synced: true,
-      offline_submit_pending: false,
-      offline_submitted_at: null,
-      sync_status: "synced",
-      server_attempt_id: syncedAttempt.id,
-    });
-
-    return {
-      ...syncedAttempt,
-      is_synced: true,
-      offline_submit_pending: false,
-      offline_submitted_at: null,
-      sync_status: "synced",
-      server_attempt_id: syncedAttempt.id,
-    };
-  } catch (error) {
-    console.error("Failed to sync pending offline quiz submission:", error);
-    throw error;
+  const existingSync = pendingSyncs.get(attemptId);
+  if (existingSync) {
+    return existingSync;
   }
+
+  const syncPromise: Promise<AttemptKuis | null> = (async () => {
+    try {
+      const cachedRecord = (await indexedDBManager.getById(
+        OFFLINE_STORES.ATTEMPTS,
+        attemptId,
+      )) as OfflineAttemptRecord | null;
+
+      const cachedAttempt = mapOfflineAttemptRecordToAttempt(cachedRecord);
+      if (!cachedAttempt || !cachedAttempt.offline_submit_pending) {
+        return cachedAttempt;
+      }
+
+      await syncOfflineAnswers(attemptId);
+
+      const syncedAttempt = await submitQuiz({
+        attempt_id: attemptId,
+        sisa_waktu: cachedAttempt.sisa_waktu ?? 0,
+      });
+
+      await cacheAttemptOffline({
+        ...syncedAttempt,
+        is_synced: true,
+        offline_submit_pending: false,
+        offline_submitted_at: null,
+        sync_status: "synced",
+        server_attempt_id: syncedAttempt.id,
+      });
+
+      const normalizedSyncedAttempt: AttemptKuis = {
+        ...syncedAttempt,
+        is_synced: true,
+        offline_submit_pending: false,
+        offline_submitted_at: null,
+        sync_status: "synced",
+        server_attempt_id: syncedAttempt.id,
+      };
+
+      return normalizedSyncedAttempt;
+    } catch (error) {
+      console.error("Failed to sync pending offline quiz submission:", error);
+      throw error;
+    } finally {
+      pendingSyncs.delete(attemptId);
+    }
+  })();
+
+  pendingSyncs.set(attemptId, syncPromise);
+  return syncPromise;
 }
 
 export async function syncPendingOfflineQuizSubmissions(
@@ -2856,7 +2906,7 @@ export async function syncPendingOfflineQuizSubmissions(
     )) as OfflineAttemptRecord[];
 
     const pendingAttempts = allAttempts.filter((record) => {
-      if (!record?.pending_submit) {
+      if (!isOfflineAttemptPendingSubmit(record)) {
         return false;
       }
 

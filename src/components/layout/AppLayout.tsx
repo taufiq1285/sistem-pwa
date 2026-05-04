@@ -11,6 +11,7 @@ import { useRole } from "@/lib/hooks/useRole"; // ✅ UNCOMMENT
 import { useSessionTimeout } from "@/lib/hooks/useSessionTimeout"; // ✅ NEW
 import { useMultiTabSync } from "@/lib/hooks/useMultiTabSync"; // ✅ NEW
 import { useNotificationPolling } from "@/lib/hooks/useNotificationPolling"; // ✅ NEW: Auto-refresh notifications
+import { getRoleProfilePath } from "@/config/routes.config";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
@@ -73,7 +74,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
   // Handle navigation to profile
   const handleProfileClick = () => {
     if (role) {
-      navigate(`/${role}/profil`);
+      navigate(getRoleProfilePath(role));
     }
   };
 

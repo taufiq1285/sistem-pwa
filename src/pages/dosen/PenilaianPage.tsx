@@ -164,7 +164,7 @@ async function getActiveKelasForPenilaianDirect(): Promise<Kelas[]> {
     throw error;
   }
 
-  return (data || []) as Kelas[];
+  return (data || []) as unknown as Kelas[];
 }
 
 export default function DosenPenilaianPage() {
@@ -1046,41 +1046,41 @@ export default function DosenPenilaianPage() {
             </Button>
             {selectedKelas && (
               <>
-              {!isOnline && (
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-1.5">
-                  <WifiOff className="w-3.5 h-3.5" /> Offline — simpan
-                  dinonaktifkan
-                </span>
-              )}
-              <Button
-                variant="outline"
-                onClick={handleOpenBobotDialog}
-                disabled={!isOnline}
-                title={
-                  !isOnline ? "Tidak dapat mengubah bobot saat offline" : ""
-                }
-                className="flex items-center gap-2 rounded-xl border-2 bg-white/70 font-semibold hover:bg-primary/5"
-              >
-                <Settings className="w-4 h-4" />
-                Atur Bobot
-              </Button>
-              <Button
-                onClick={handleSaveAll}
-                disabled={!hasChanges || saving || !isOnline}
-                title={!isOnline ? "Tidak dapat menyimpan saat offline" : ""}
-                className="flex items-center gap-2 rounded-xl bg-linear-to-r from-primary to-accent px-6 font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:from-primary/90 hover:to-accent/90"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : !isOnline ? (
-                  <WifiOff className="w-4 h-4" />
-                ) : (
-                  <Save className="w-4 h-4" />
+                {!isOnline && (
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-1.5">
+                    <WifiOff className="w-3.5 h-3.5" /> Offline — simpan
+                    dinonaktifkan
+                  </span>
                 )}
-                {!isOnline
-                  ? "Offline"
-                  : `Simpan Semua ${hasChanges ? `(${editedGrades.size})` : ""}`}
-              </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleOpenBobotDialog}
+                  disabled={!isOnline}
+                  title={
+                    !isOnline ? "Tidak dapat mengubah bobot saat offline" : ""
+                  }
+                  className="flex items-center gap-2 rounded-xl border-2 bg-white/70 font-semibold hover:bg-primary/5"
+                >
+                  <Settings className="w-4 h-4" />
+                  Atur Bobot
+                </Button>
+                <Button
+                  onClick={handleSaveAll}
+                  disabled={!hasChanges || saving || !isOnline}
+                  title={!isOnline ? "Tidak dapat menyimpan saat offline" : ""}
+                  className="flex items-center gap-2 rounded-xl bg-linear-to-r from-primary to-accent px-6 font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:from-primary/90 hover:to-accent/90"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : !isOnline ? (
+                    <WifiOff className="w-4 h-4" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {!isOnline
+                    ? "Offline"
+                    : `Simpan Semua ${hasChanges ? `(${editedGrades.size})` : ""}`}
+                </Button>
               </>
             )}
           </div>
@@ -1102,8 +1102,8 @@ export default function DosenPenilaianPage() {
                       Mulai Penilaian
                     </h2>
                     <p className="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-muted-foreground sm:text-base">
-                      Pilih mata kuliah dan kelas aktif dari master admin.
-                      Nilai akan tersimpan khusus untuk kombinasi yang dipilih.
+                      Pilih mata kuliah dan kelas aktif dari master admin. Nilai
+                      akan tersimpan khusus untuk kombinasi yang dipilih.
                     </p>
                   </div>
                 </div>
@@ -1251,7 +1251,10 @@ export default function DosenPenilaianPage() {
                     {!selectedMataKuliah && (
                       <div className="mt-2 flex items-center gap-2 rounded-xl border border-border/70 bg-white/80 px-3 py-1.5 text-xs font-semibold text-muted-foreground">
                         <AlertTriangle className="h-4 w-4" />
-                        <span>Pilih mata kuliah agar nilai masuk ke konteks yang benar</span>
+                        <span>
+                          Pilih mata kuliah agar nilai masuk ke konteks yang
+                          benar
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1709,16 +1712,16 @@ export default function DosenPenilaianPage() {
                   tetapi nilai yang dimuat mengikuti mata kuliah aktif.
                 </p>
                 <div className="flex items-center gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
-                  <Input
-                    placeholder="Cari mahasiswa (NIM atau nama)..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+                    <Input
+                      placeholder="Cari mahasiswa (NIM atau nama)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
               </div>
             )}
 
@@ -1734,9 +1737,8 @@ export default function DosenPenilaianPage() {
                         Kelas {currentNamaKelas || "-"}
                       </CardTitle>
                       <CardDescription className="mt-1">
-                        {filteredMahasiswa.length} mahasiswa dalam konteks
-                        mata kuliah aktif | Double-click baris untuk edit
-                        detail
+                        {filteredMahasiswa.length} mahasiswa dalam konteks mata
+                        kuliah aktif | Double-click baris untuk edit detail
                       </CardDescription>
                     </div>
                     {searchQuery && (
@@ -1830,8 +1832,12 @@ export default function DosenPenilaianPage() {
                             );
 
                             const nilaiAkhir = calculateNilaiAkhir(
-                              editedData?.nilai_kuis ?? mahasiswa.nilai_kuis ?? 0,
-                              editedData?.nilai_tugas ?? mahasiswa.nilai_tugas ?? 0,
+                              editedData?.nilai_kuis ??
+                                mahasiswa.nilai_kuis ??
+                                0,
+                              editedData?.nilai_tugas ??
+                                mahasiswa.nilai_tugas ??
+                                0,
                               editedData?.nilai_uts ?? mahasiswa.nilai_uts ?? 0,
                               editedData?.nilai_uas ?? mahasiswa.nilai_uas ?? 0,
                               editedData?.nilai_praktikum ??

@@ -116,6 +116,11 @@ describe("Pengumuman Pages", () => {
     await waitFor(() => {
       expect(screen.getByText("Khusus Laboran")).toBeInTheDocument();
       expect(screen.getByText("Pengumuman Umum")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Pengumuman resmi laboran, termasuk informasi operasional laboratorium dan peminjaman alat/i,
+        ),
+      ).toBeInTheDocument();
     });
 
     expect(screen.queryByText("Khusus Mahasiswa")).not.toBeInTheDocument();

@@ -20,7 +20,10 @@ export type KehadiranStatus = "hadir" | "izin" | "sakit" | "alpha";
 
 export interface Kehadiran {
   id: string;
-  jadwal_id: string;
+  jadwal_id?: string | null;
+  kelas_id?: string | null;
+  mata_kuliah_id?: string | null;
+  tanggal?: string | null;
   mahasiswa_id: string;
   status: KehadiranStatus;
   keterangan?: string;
@@ -297,12 +300,15 @@ export async function getKehadiranByKelas(
   endDate?: string,
 ): Promise<KehadiranWithMahasiswa[]> {
   try {
-    let query = supabase
+    let query: any = (supabase as any)
       .from("kehadiran")
       .select(
         `
         id,
         jadwal_id,
+        kelas_id,
+        mata_kuliah_id,
+        tanggal,
         mahasiswa_id,
         status,
         keterangan,
@@ -316,23 +322,19 @@ export async function getKehadiranByKelas(
           user:users (
             full_name
           )
-        ),
-        jadwal:jadwal_praktikum (
-          kelas_id,
-          tanggal_praktikum
         )
       `,
       )
-      .eq("jadwal.kelas_id", kelasId);
+      .eq("kelas_id", kelasId);
 
     if (startDate) {
-      query = query.gte("jadwal.tanggal_praktikum", startDate);
+      query = query.gte("tanggal", startDate);
     }
     if (endDate) {
-      query = query.lte("jadwal.tanggal_praktikum", endDate);
+      query = query.lte("tanggal", endDate);
     }
 
-    const { data, error } = await query.order("created_at", {
+    const { data, error } = await query.order("tanggal", {
       ascending: false,
     });
 
@@ -392,10 +394,7 @@ async function saveKehadiranBulkImpl(data: BulkKehadiranData): Promise<void> {
       .eq("kelas_id", context.kelasId)
       .eq("tanggal", context.tanggal);
 
-    existingQuery = applyMataKuliahFilter(
-      existingQuery,
-      context.mataKuliahId,
-    );
+    existingQuery = applyMataKuliahFilter(existingQuery, context.mataKuliahId);
 
     const { data: existing, error: existingError } = await existingQuery;
     if (existingError) throw existingError;
@@ -654,13 +653,13 @@ export async function getMahasiswaKehadiran(
               .maybeSingle()
           : { data: null };
 
-      const { data: mataKuliahData } = resolvedMataKuliahId
-        ? await supabase
-            .from("mata_kuliah")
-            .select("id, nama_mk, kode_mk")
-            .eq("id", resolvedMataKuliahId)
-            .maybeSingle()
-        : { data: null };
+        const { data: mataKuliahData } = resolvedMataKuliahId
+          ? await supabase
+              .from("mata_kuliah")
+              .select("id, nama_mk, kode_mk")
+              .eq("id", resolvedMataKuliahId)
+              .maybeSingle()
+          : { data: null };
 
         const { data: laboratoriumData } = jadwal?.laboratorium_id
           ? await supabase
@@ -685,7 +684,7 @@ export async function getMahasiswaKehadiran(
                   tanggal_praktikum: resolvedTanggal,
                   jam_mulai: jadwal?.jam_mulai || "-",
                   jam_selesai: jadwal?.jam_selesai || "-",
-                  topik: jadwal?.topik || "Kehadiran Kelas",
+                  topik: jadwal?.topik || "Kehadiran Mata Kuliah",
                   mata_kuliah: mataKuliahData
                     ? {
                         id: mataKuliahData.id,

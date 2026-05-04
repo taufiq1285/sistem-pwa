@@ -452,8 +452,8 @@ export function DashboardPage() {
           const assignmentMap = new Map<string, any>();
 
           rawData.forEach((item: any) => {
-            const mataKuliah =
-              item.mata_kuliah || item.kelas?.mata_kuliah || {
+            const mataKuliah = item.mata_kuliah ||
+              item.kelas?.mata_kuliah || {
                 id: item.mata_kuliah_id || "",
                 nama_mk: "Mata Kuliah",
                 kode_mk: "-",
@@ -954,10 +954,12 @@ export function DashboardPage() {
               <Alert className="border-warning/40 bg-warning/10 shadow-sm">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="font-medium text-foreground">
-                  Dashboard dosen sedang memakai snapshot lokal dari perangkat.
+                  Mode Offline aktif. Dashboard dosen sedang memakai Snapshot
+                  lokal dari perangkat.
                   {lastOfflineSnapshotLabel
                     ? ` Pembaruan terakhir: ${lastOfflineSnapshotLabel}.`
-                    : ""}
+                    : ""}{" "}
+                  Beberapa aksi tetap memerlukan koneksi internet.
                 </AlertDescription>
               </Alert>
             )}
@@ -1228,8 +1230,22 @@ export function DashboardPage() {
                         <span>Status dashboard</span>
                         <span className="font-semibold text-foreground">
                           {isOfflineData || !navigator.onLine
-                            ? "Snapshot lokal"
+                            ? "Mode Offline"
                             : "Online"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Sumber data</span>
+                        <span className="font-semibold text-foreground">
+                          {isOfflineData || !navigator.onLine
+                            ? "Snapshot lokal"
+                            : "Data live"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Pembaruan terakhir</span>
+                        <span className="font-semibold text-foreground">
+                          {lastOfflineSnapshotLabel || "-"}
                         </span>
                       </div>
                     </div>

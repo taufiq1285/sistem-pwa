@@ -7,6 +7,15 @@ import { supabase } from "@/lib/supabase/client";
 import { cacheAPI } from "@/lib/offline/api-cache";
 
 import { requirePermission } from "@/lib/middleware";
+import { notifyLaboranPengembalianDiajukan } from "@/lib/api/notification.api";
+import {
+  buildFallbackBorrowingItems,
+  buildNotificationItemLabel,
+  normalizeBorrowingItems,
+  summarizeBorrowingItems,
+  type BorrowingItemInput,
+  type BorrowingItemSummary,
+} from "@/lib/api/peminjaman-items";
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -131,6 +140,11 @@ type AssignedKelasSnapshot = {
 
 export interface MyBorrowingRequest {
   id: string;
+  jadwal_praktikum_id?: string | null;
+  items: BorrowingItemSummary[];
+  item_count: number;
+  total_quantity: number;
+  item_summary: string;
   inventaris_nama: string;
   inventaris_kode: string;
   jumlah_pinjam: number;
@@ -141,6 +155,102 @@ export interface MyBorrowingRequest {
   status: string;
   laboratorium_nama: string;
   created_at: string;
+}
+
+export interface BorrowingScheduleOption {
+  id: string;
+  mata_kuliah_nama: string;
+  kelas_nama: string;
+  tanggal_praktikum: string | null;
+  jam_mulai: string;
+  jam_selesai: string;
+  laboratorium_id: string;
+  laboratorium_nama: string;
+  label: string;
+}
+
+async function getBorrowingItemsMap(
+  peminjamanIds: string[],
+): Promise<Map<string, BorrowingItemSummary[]>> {
+  if (peminjamanIds.length === 0) {
+    return new Map();
+  }
+
+  try {
+    let query = supabase.from("peminjaman_detail" as any).select(
+      `
+      id,
+      peminjaman_id,
+      inventaris_id,
+      jumlah_pinjam,
+      inventaris:inventaris_id (
+        nama_barang,
+        kode_barang,
+        laboratorium:laboratorium_id (
+          nama_lab
+        )
+      )
+    `,
+    );
+
+    query =
+      peminjamanIds.length === 1
+        ? query.eq("peminjaman_id", peminjamanIds[0])
+        : query.in("peminjaman_id", peminjamanIds);
+
+    const { data, error } = await query;
+    if (error) {
+      throw error;
+    }
+
+    const grouped = new Map<string, BorrowingItemSummary[]>();
+    ((data as any[]) || []).forEach((item: any) => {
+      const current = grouped.get(item.peminjaman_id) || [];
+      current.push({
+        id: item.id,
+        peminjaman_id: item.peminjaman_id,
+        inventaris_id: item.inventaris_id,
+        inventaris_nama: item.inventaris?.nama_barang || "Unknown",
+        inventaris_kode: item.inventaris?.kode_barang || "-",
+        jumlah_pinjam: item.jumlah_pinjam,
+        laboratorium_nama: item.inventaris?.laboratorium?.nama_lab || "-",
+      });
+      grouped.set(item.peminjaman_id, current);
+    });
+
+    return grouped;
+  } catch (error) {
+    console.warn(
+      "Failed to load peminjaman_detail, using legacy fallback.",
+      error,
+    );
+    return new Map();
+  }
+}
+
+function formatBorrowingScheduleDate(value: string | null | undefined): string {
+  if (!value) return "Tanggal belum ditentukan";
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function buildBorrowingPurposeFromScheduleContext(context: {
+  mata_kuliah_nama?: string | null;
+  kelas_nama?: string | null;
+  laboratorium_nama?: string | null;
+  tanggal_praktikum?: string | null;
+}): string {
+  return [
+    "Praktikum",
+    context.mata_kuliah_nama || "Mata Kuliah",
+    context.kelas_nama || "Kelas",
+    context.laboratorium_nama || "Laboratorium",
+    formatBorrowingScheduleDate(context.tanggal_praktikum),
+  ].join(" - ");
 }
 
 // ============================================================================
@@ -431,8 +541,8 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
           .eq("dosen_id", dosenId)
           .in("status", ["draft", "published"]);
 
-        const activeKuis =
-          ((activeKuisRows as any[]) || []).filter((kuis: any) => {
+        const activeKuis = ((activeKuisRows as any[]) || []).filter(
+          (kuis: any) => {
             if (kuis?.status === "draft") {
               return true;
             }
@@ -442,7 +552,8 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
               typeof kuis?.tanggal_selesai === "string" &&
               kuis.tanggal_selesai >= now
             );
-          }).length;
+          },
+        ).length;
 
         // ✅ FIX: Exclude archived kuis from pending grading count
         const { data: kuisData } = await supabase
@@ -639,7 +750,9 @@ export async function getDashboardKelas(
     }
 
     const activeKelasIdSet = new Set(activeKelasIds);
-    const filtered = kelasList.filter((kelas) => activeKelasIdSet.has(kelas.id));
+    const filtered = kelasList.filter((kelas) =>
+      activeKelasIdSet.has(kelas.id),
+    );
     return limit ? filtered.slice(0, limit) : filtered;
   } catch (error) {
     console.error("Error fetching dashboard kelas:", error);
@@ -1139,6 +1252,7 @@ export type BorrowingStatus =
   | "menunggu"
   | "disetujui"
   | "dipinjam"
+  | "return_requested"
   | "dikembalikan"
   | "ditolak";
 
@@ -1163,6 +1277,9 @@ export async function getMyBorrowing(
       .select(
         `
         id,
+        jadwal_praktikum_id,
+        laboratorium_tujuan_nama,
+        inventaris_id,
         jumlah_pinjam,
         keperluan,
         tanggal_pinjam,
@@ -1193,21 +1310,135 @@ export async function getMyBorrowing(
     const { data, error } = await query;
     if (error) throw error;
 
-    return (data || []).map((item: any) => ({
-      id: item.id,
-      inventaris_nama: item.inventaris?.nama_barang || "-",
-      inventaris_kode: item.inventaris?.kode_barang || "-",
-      jumlah_pinjam: item.jumlah_pinjam,
-      keperluan: item.keperluan,
-      tanggal_pinjam: item.tanggal_pinjam,
-      tanggal_kembali_rencana: item.tanggal_kembali_rencana,
-      tanggal_kembali_aktual: item.tanggal_kembali_aktual,
-      status: item.status,
-      laboratorium_nama: item.inventaris?.laboratorium?.nama_lab || "-",
-      created_at: item.created_at,
-    }));
+    const rows = (data || []) as any[];
+    const itemsMap = await getBorrowingItemsMap(rows.map((item) => item.id));
+
+    return rows.map((item: any) => {
+      const inventarisRelation = Array.isArray(item.inventaris)
+        ? item.inventaris[0]
+        : item.inventaris;
+      const items =
+        itemsMap.get(item.id) ||
+        buildFallbackBorrowingItems({
+          inventaris_id:
+            item.inventaris_id ||
+            (inventarisRelation?.nama_barang ? `legacy-${item.id}` : null),
+          jumlah_pinjam: item.jumlah_pinjam,
+          inventaris_nama: inventarisRelation?.nama_barang,
+          inventaris_kode: inventarisRelation?.kode_barang,
+          laboratorium_nama:
+            item.laboratorium_tujuan_nama ||
+            inventarisRelation?.laboratorium?.nama_lab,
+        });
+      const summary = summarizeBorrowingItems(items);
+      const fallbackNama = inventarisRelation?.nama_barang || "Unknown";
+      const fallbackKode = inventarisRelation?.kode_barang || "-";
+
+      return {
+        id: item.id,
+        jadwal_praktikum_id: item.jadwal_praktikum_id || null,
+        items,
+        item_count: summary.item_count,
+        total_quantity: summary.total_quantity,
+        item_summary: summary.item_summary,
+        inventaris_nama:
+          summary.item_count > 0 ? summary.inventaris_nama : fallbackNama,
+        inventaris_kode:
+          summary.item_count > 0 ? summary.inventaris_kode : fallbackKode,
+        jumlah_pinjam: summary.total_quantity,
+        keperluan: item.keperluan,
+        tanggal_pinjam: item.tanggal_pinjam,
+        tanggal_kembali_rencana: item.tanggal_kembali_rencana,
+        tanggal_kembali_aktual: item.tanggal_kembali_aktual,
+        status: item.status,
+        laboratorium_nama:
+          item.laboratorium_tujuan_nama ||
+          items[0]?.laboratorium_nama ||
+          inventarisRelation?.laboratorium?.nama_lab ||
+          "-",
+        created_at: item.created_at,
+      };
+    });
   } catch (error) {
     console.error("Error fetching my borrowing:", error);
+    return [];
+  }
+}
+
+export async function getBorrowingScheduleOptions(): Promise<
+  BorrowingScheduleOption[]
+> {
+  try {
+    const dosenId = await getDosenId();
+    if (!dosenId) return [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const { data, error } = await (supabase as any)
+      .from("jadwal_praktikum")
+      .select(
+        `
+        id,
+        status,
+        tanggal_praktikum,
+        jam_mulai,
+        jam_selesai,
+        laboratorium_id,
+        is_active,
+        kelas:kelas_id (
+          nama_kelas
+        ),
+        mata_kuliah:mata_kuliah_id (
+          nama_mk
+        ),
+        laboratorium:laboratorium_id (
+          nama_lab
+        )
+      `,
+      )
+      .eq("dosen_id", dosenId)
+      .eq("is_active", true)
+      .eq("status", "approved")
+      .order("tanggal_praktikum", { ascending: true })
+      .order("jam_mulai", { ascending: true });
+
+    if (error) throw error;
+
+    return (data || [])
+      .filter((item: any) => {
+        if (!item?.tanggal_praktikum) return true;
+        const praktikumDate = new Date(item.tanggal_praktikum);
+        praktikumDate.setHours(0, 0, 0, 0);
+        return praktikumDate >= today;
+      })
+      .map((item: any) => {
+        const mataKuliahNama = item.mata_kuliah?.nama_mk || "Mata Kuliah";
+        const kelasNama = item.kelas?.nama_kelas || "Kelas";
+        const laboratoriumNama = item.laboratorium?.nama_lab || "Laboratorium";
+        const tanggalPraktikum = item.tanggal_praktikum || null;
+        const tanggalLabel = tanggalPraktikum
+          ? new Date(tanggalPraktikum).toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+          : "Tanggal fleksibel";
+
+        return {
+          id: item.id,
+          mata_kuliah_nama: mataKuliahNama,
+          kelas_nama: kelasNama,
+          tanggal_praktikum: tanggalPraktikum,
+          jam_mulai: item.jam_mulai,
+          jam_selesai: item.jam_selesai,
+          laboratorium_id: item.laboratorium_id,
+          laboratorium_nama: laboratoriumNama,
+          label: `${mataKuliahNama} • ${kelasNama} • ${laboratoriumNama} • ${tanggalLabel}`,
+        };
+      });
+  } catch (error) {
+    console.error("Error fetching borrowing schedule options:", error);
     return [];
   }
 }
@@ -1399,11 +1630,12 @@ export async function exportAllStudents() {
  * Dosen can request to borrow equipment from lab inventory
  */
 async function createBorrowingRequestImpl(data: {
-  inventaris_id: string;
-  jumlah_pinjam: number;
+  jadwal_praktikum_id: string;
+  inventaris_id?: string;
+  jumlah_pinjam?: number;
+  items?: BorrowingItemInput[];
   tanggal_pinjam: string;
   tanggal_kembali_rencana: string;
-  keperluan: string;
 }): Promise<{ id: string }> {
   try {
     // ✅ FIX ISSUE #6: Validate tanggal peminjaman
@@ -1436,18 +1668,138 @@ async function createBorrowingRequestImpl(data: {
 
     if (dosenError || !dosenData) throw new Error("Data dosen tidak ditemukan");
 
-    // Create borrowing request
+    const { data: jadwalData, error: jadwalError } = await (supabase as any)
+      .from("jadwal_praktikum")
+      .select(
+        `
+        id,
+        status,
+        tanggal_praktikum,
+        laboratorium_id,
+        is_active,
+        kelas:kelas_id (
+          nama_kelas
+        ),
+        mata_kuliah:mata_kuliah_id (
+          nama_mk
+        ),
+        laboratorium:laboratorium_id (
+          nama_lab
+        )
+      `,
+      )
+      .eq("id", data.jadwal_praktikum_id)
+      .eq("dosen_id", dosenData.id)
+      .single();
+
+    if (jadwalError || !jadwalData) {
+      throw new Error("Jadwal praktikum tidak ditemukan untuk dosen ini");
+    }
+
+    if (jadwalData.is_active === false) {
+      throw new Error("Jadwal praktikum yang dipilih sudah tidak aktif");
+    }
+
+    if (jadwalData.status !== "approved") {
+      throw new Error(
+        "Jadwal praktikum harus sudah disetujui laboran sebelum dipakai untuk peminjaman alat",
+      );
+    }
+
+    if (jadwalData.tanggal_praktikum) {
+      const jadwalDate = new Date(jadwalData.tanggal_praktikum);
+      jadwalDate.setHours(0, 0, 0, 0);
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
+
+      if (jadwalDate < currentDate) {
+        throw new Error("Jadwal praktikum yang dipilih sudah lewat");
+      }
+    }
+
+    const jadwalTanggalPinjam = jadwalData.tanggal_praktikum
+      ? String(jadwalData.tanggal_praktikum).split("T")[0]
+      : null;
+
+    if (!jadwalTanggalPinjam) {
+      throw new Error(
+        "Jadwal praktikum yang dipilih belum memiliki tanggal yang valid",
+      );
+    }
+
+    if (data.tanggal_pinjam !== jadwalTanggalPinjam) {
+      throw new Error(
+        "Tanggal pinjam harus mengikuti tanggal jadwal praktikum",
+      );
+    }
+
+    const autoKeperluan = buildBorrowingPurposeFromScheduleContext({
+      mata_kuliah_nama: jadwalData.mata_kuliah?.nama_mk,
+      kelas_nama: jadwalData.kelas?.nama_kelas,
+      laboratorium_nama: jadwalData.laboratorium?.nama_lab,
+      tanggal_praktikum: jadwalData.tanggal_praktikum,
+    });
+
+    const normalizedItems = normalizeBorrowingItems(
+      data.items && data.items.length > 0
+        ? data.items
+        : data.inventaris_id && data.jumlah_pinjam
+          ? [
+              {
+                inventaris_id: data.inventaris_id,
+                jumlah_pinjam: data.jumlah_pinjam,
+              },
+            ]
+          : [],
+    );
+
+    if (normalizedItems.length === 0) {
+      throw new Error("Minimal pilih satu alat untuk diajukan");
+    }
+
+    const inventarisIds = normalizedItems.map((item) => item.inventaris_id);
+    const { data: inventarisRows, error: inventarisError } = await supabase
+      .from("inventaris")
+      .select("id, nama_barang, jumlah_tersedia")
+      .in("id", inventarisIds);
+
+    if (inventarisError) {
+      throw inventarisError;
+    }
+
+    const inventarisMap = new Map(
+      ((inventarisRows as any[]) || []).map((item: any) => [item.id, item]),
+    );
+
+    normalizedItems.forEach((item) => {
+      const inventaris = inventarisMap.get(item.inventaris_id);
+      if (!inventaris) {
+        throw new Error("Ada alat yang dipilih tidak ditemukan di inventaris");
+      }
+      if (inventaris.jumlah_tersedia < item.jumlah_pinjam) {
+        throw new Error(
+          `Stok tidak cukup untuk ${inventaris.nama_barang}. Tersedia: ${inventaris.jumlah_tersedia}, diminta: ${item.jumlah_pinjam}`,
+        );
+      }
+    });
+
+    const representativeItem = normalizedItems[0];
+
+    // Create borrowing request header
     // peminjam_id = dosen_id (peminjaman hanya untuk dosen, bukan mahasiswa)
     const { data: result, error } = await supabase
-      .from("peminjaman")
+      .from("peminjaman" as any)
       .insert({
-        inventaris_id: data.inventaris_id,
+        jadwal_praktikum_id: jadwalData.id,
+        inventaris_id: representativeItem.inventaris_id,
         peminjam_id: dosenData.id, // Dosen as borrower
         dosen_id: dosenData.id,
-        jumlah_pinjam: data.jumlah_pinjam,
-        keperluan: data.keperluan,
-        tanggal_pinjam: data.tanggal_pinjam,
+        jumlah_pinjam: representativeItem.jumlah_pinjam,
+        keperluan: autoKeperluan,
+        tanggal_pinjam: jadwalTanggalPinjam,
         tanggal_kembali_rencana: data.tanggal_kembali_rencana,
+        laboratorium_tujuan_id: jadwalData.laboratorium_id,
+        laboratorium_tujuan_nama: jadwalData.laboratorium?.nama_lab || null,
         status: "pending",
         kondisi_pinjam: "baik",
       })
@@ -1503,7 +1855,39 @@ async function createBorrowingRequestImpl(data: {
       );
     }
 
-    return { id: result.id };
+    const detailPayload = normalizedItems.map((item) => ({
+      peminjaman_id: (result as any).id,
+      inventaris_id: item.inventaris_id,
+      jumlah_pinjam: item.jumlah_pinjam,
+      kondisi_pinjam: "baik",
+    }));
+
+    const { error: detailError } = await supabase
+      .from("peminjaman_detail" as any)
+      .insert(detailPayload);
+
+    if (detailError) {
+      await supabase
+        .from("peminjaman")
+        .delete()
+        .eq("id", (result as any).id);
+
+      const detailErrorCode = (detailError as any)?.code;
+      const detailErrorMessage = (detailError as any)?.message || "";
+
+      if (detailErrorCode === "42501") {
+        throw new Error(
+          "Gagal menyimpan detail alat peminjaman karena RLS policy tabel peminjaman_detail belum sesuai. " +
+            "Jalankan script database/scripts/FIX_RLS_PEMINJAMAN_DETAIL.sql di Supabase SQL Editor.",
+        );
+      }
+
+      throw new Error(
+        `Gagal menyimpan detail alat peminjaman: ${detailErrorMessage || "Unknown error"}`,
+      );
+    }
+
+    return { id: (result as any).id };
   } catch (error) {
     console.error("Error creating borrowing request:", error);
     throw error;
@@ -1551,8 +1935,8 @@ export async function getAvailableEquipment() {
 }
 
 /**
- * Return/kembalikan borrowed equipment
- * Auto-increases inventory stock when marked as returned
+ * Dosen only submits a return request.
+ * Final return verification and stock restoration are handled by laboran.
  */
 async function returnBorrowingRequestImpl(data: {
   peminjaman_id: string;
@@ -1564,12 +1948,12 @@ async function returnBorrowingRequestImpl(data: {
     | "hilang";
   keterangan_kembali?: string;
 }): Promise<{ id: string }> {
-  let returnTimestamp: string | null = null;
   try {
-    // Get peminjaman details
     const { data: peminjamanData, error: fetchError } = await supabase
       .from("peminjaman")
-      .select("id, inventaris_id, jumlah_pinjam, status")
+      .select(
+        "id, inventaris_id, jumlah_pinjam, status, dosen_id, tanggal_kembali_rencana",
+      )
       .eq("id", data.peminjaman_id)
       .single();
 
@@ -1581,19 +1965,20 @@ async function returnBorrowingRequestImpl(data: {
       throw new Error("Peminjaman sudah dikembalikan sebelumnya");
     }
 
+    if (peminjamanData.status === "return_requested") {
+      throw new Error("Pengajuan pengembalian sudah dikirim ke laboran");
+    }
+
     if (peminjamanData.status !== "approved") {
       throw new Error(
-        "Peminjaman hanya dapat dikembalikan setelah disetujui laboran",
+        "Pengembalian hanya dapat diajukan untuk peminjaman yang masih aktif",
       );
     }
 
-    // Update peminjaman status to returned
-    returnTimestamp = new Date().toISOString().split("T")[0];
     const { error: updateError } = await supabase
       .from("peminjaman")
       .update({
-        status: "returned",
-        tanggal_kembali_aktual: returnTimestamp,
+        status: "return_requested",
         kondisi_kembali: data.kondisi_kembali as any,
         keterangan_kembali: data.keterangan_kembali || null,
       })
@@ -1601,36 +1986,42 @@ async function returnBorrowingRequestImpl(data: {
 
     if (updateError) throw updateError;
 
-    // Auto-increase inventory stock (return the equipment)
-    const { data: invData, error: invFetchError } = await supabase
-      .from("inventaris")
-      .select("jumlah_tersedia")
-      .eq("id", peminjamanData.inventaris_id)
-      .single();
+    try {
+      const [itemsMap, { data: laboranUsers }, authResult] = await Promise.all([
+        getBorrowingItemsMap([peminjamanData.id]),
+        supabase.from("users").select("id").eq("role", "laboran"),
+        supabase.auth.getUser(),
+      ]);
+      const items =
+        itemsMap.get(peminjamanData.id) ||
+        buildFallbackBorrowingItems({
+          inventaris_id: peminjamanData.inventaris_id,
+          jumlah_pinjam: peminjamanData.jumlah_pinjam,
+        });
+      const summary = summarizeBorrowingItems(items);
 
-    if (invFetchError || !invData) throw invFetchError;
+      const dosenNama =
+        authResult.data.user?.user_metadata?.full_name ||
+        authResult.data.user?.email ||
+        "Dosen";
+      const laboranUserIds =
+        laboranUsers?.map((item: { id: string }) => item.id) || [];
 
-    const newStock = invData.jumlah_tersedia + peminjamanData.jumlah_pinjam;
-    const { error: stockError } = await supabase
-      .from("inventaris")
-      .update({
-        jumlah_tersedia: newStock,
-      })
-      .eq("id", peminjamanData.inventaris_id);
-
-    if (stockError) {
-      await supabase
-        .from("peminjaman")
-        .update({
-          status: peminjamanData.status,
-          tanggal_kembali_aktual: null,
-          kondisi_kembali: null,
-          keterangan_kembali: null,
-        })
-        .eq("id", data.peminjaman_id)
-        .eq("status", "returned");
-
-      throw new Error(`Gagal memulihkan stok: ${stockError.message}`);
+      if (laboranUserIds.length > 0) {
+        await notifyLaboranPengembalianDiajukan(
+          laboranUserIds,
+          dosenNama,
+          buildNotificationItemLabel(items),
+          summary.total_quantity,
+          peminjamanData.tanggal_kembali_rencana,
+          data.keterangan_kembali || null,
+        );
+      }
+    } catch (notificationError) {
+      console.error(
+        "Failed to notify laboran about return request:",
+        notificationError,
+      );
     }
 
     return { id: peminjamanData.id };
@@ -1685,11 +2076,12 @@ export const markBorrowingAsTaken = requirePermission(
 async function updateBorrowingRequestImpl(
   peminjaman_id: string,
   data: {
+    jadwal_praktikum_id?: string;
     inventaris_id?: string;
     jumlah_pinjam?: number;
+    items?: BorrowingItemInput[];
     tanggal_pinjam?: string;
     tanggal_kembali_rencana?: string;
-    keperluan?: string;
   },
 ): Promise<{ id: string }> {
   try {
@@ -1731,6 +2123,88 @@ async function updateBorrowingRequestImpl(
       throw new Error("Anda hanya dapat mengubah peminjaman Anda sendiri");
     }
 
+    let jadwalContext:
+      | {
+          id: string;
+          tanggal_praktikum?: string | null;
+          laboratorium_id: string;
+          kelas?: { nama_kelas?: string | null } | null;
+          mata_kuliah?: { nama_mk?: string | null } | null;
+          laboratorium?: { nama_lab?: string | null } | null;
+        }
+      | undefined;
+
+    if (data.jadwal_praktikum_id) {
+      const { data: jadwalData, error: jadwalError } = await (supabase as any)
+        .from("jadwal_praktikum")
+        .select(
+          `
+          id,
+          status,
+          tanggal_praktikum,
+          laboratorium_id,
+          is_active,
+          kelas:kelas_id (
+            nama_kelas
+          ),
+          mata_kuliah:mata_kuliah_id (
+            nama_mk
+          ),
+          laboratorium:laboratorium_id (
+            nama_lab
+          )
+        `,
+        )
+        .eq("id", data.jadwal_praktikum_id)
+        .eq("dosen_id", dosenData.id)
+        .single();
+
+      if (jadwalError || !jadwalData) {
+        throw new Error("Jadwal praktikum tidak ditemukan untuk dosen ini");
+      }
+
+      if (jadwalData.is_active === false) {
+        throw new Error("Jadwal praktikum yang dipilih sudah tidak aktif");
+      }
+
+      if (jadwalData.status !== "approved") {
+        throw new Error(
+          "Jadwal praktikum harus sudah disetujui laboran sebelum dipakai untuk peminjaman alat",
+        );
+      }
+
+      if (jadwalData.tanggal_praktikum) {
+        const jadwalDate = new Date(jadwalData.tanggal_praktikum);
+        jadwalDate.setHours(0, 0, 0, 0);
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+
+        if (jadwalDate < currentDate) {
+          throw new Error("Jadwal praktikum yang dipilih sudah lewat");
+        }
+      }
+
+      jadwalContext = jadwalData as any;
+    }
+
+    const jadwalTanggalPinjam = jadwalContext?.tanggal_praktikum
+      ? String(jadwalContext.tanggal_praktikum).split("T")[0]
+      : null;
+
+    if (data.jadwal_praktikum_id) {
+      if (!jadwalTanggalPinjam) {
+        throw new Error(
+          "Jadwal praktikum yang dipilih belum memiliki tanggal yang valid",
+        );
+      }
+
+      if (data.tanggal_pinjam && data.tanggal_pinjam !== jadwalTanggalPinjam) {
+        throw new Error(
+          "Tanggal pinjam harus mengikuti tanggal jadwal praktikum",
+        );
+      }
+    }
+
     // Validate dates if both provided
     if (data.tanggal_pinjam && data.tanggal_kembali_rencana) {
       const pinjamDate = new Date(data.tanggal_pinjam);
@@ -1740,47 +2214,51 @@ async function updateBorrowingRequestImpl(
       }
     }
 
-    // If changing inventaris_id, check available stock
-    if (
-      data.inventaris_id &&
-      data.inventaris_id !== currentPeminjaman.inventaris_id
-    ) {
-      const { data: newInvData, error: invError } = await supabase
-        .from("inventaris")
-        .select("jumlah_tersedia")
-        .eq("id", data.inventaris_id)
-        .single();
+    const normalizedItems = normalizeBorrowingItems(
+      data.items && data.items.length > 0
+        ? data.items
+        : data.inventaris_id && data.jumlah_pinjam
+          ? [
+              {
+                inventaris_id: data.inventaris_id,
+                jumlah_pinjam: data.jumlah_pinjam,
+              },
+            ]
+          : [],
+    );
 
-      if (invError || !newInvData) {
-        throw new Error("Alat yang dipilih tidak ditemukan");
-      }
-
-      const requestedQty =
-        data.jumlah_pinjam || currentPeminjaman.jumlah_pinjam;
-      if (newInvData.jumlah_tersedia < requestedQty) {
-        throw new Error(
-          `Stok tidak cukup. Tersedia: ${newInvData.jumlah_tersedia}`,
-        );
-      }
+    if (data.items && normalizedItems.length === 0) {
+      throw new Error("Minimal satu alat harus tetap ada pada pengajuan");
     }
 
-    // If only changing quantity, check current inventaris stock
-    if (data.jumlah_pinjam && !data.inventaris_id) {
+    if (normalizedItems.length > 0) {
       const { data: invData, error: invError } = await supabase
         .from("inventaris")
-        .select("jumlah_tersedia")
-        .eq("id", currentPeminjaman.inventaris_id)
-        .single();
-
-      if (invError || !invData) {
-        throw new Error("Alat tidak ditemukan");
-      }
-
-      if (invData.jumlah_tersedia < data.jumlah_pinjam) {
-        throw new Error(
-          `Stok tidak cukup. Tersedia: ${invData.jumlah_tersedia}`,
+        .select("id, nama_barang, jumlah_tersedia")
+        .in(
+          "id",
+          normalizedItems.map((item) => item.inventaris_id),
         );
+
+      if (invError) {
+        throw invError;
       }
+
+      const invMap = new Map(
+        ((invData as any[]) || []).map((item: any) => [item.id, item]),
+      );
+
+      normalizedItems.forEach((item) => {
+        const inventaris = invMap.get(item.inventaris_id);
+        if (!inventaris) {
+          throw new Error("Ada alat yang dipilih tidak ditemukan");
+        }
+        if (inventaris.jumlah_tersedia < item.jumlah_pinjam) {
+          throw new Error(
+            `Stok tidak cukup untuk ${inventaris.nama_barang}. Tersedia: ${inventaris.jumlah_tersedia}`,
+          );
+        }
+      });
     }
 
     // Build update data
@@ -1788,21 +2266,67 @@ async function updateBorrowingRequestImpl(
       updated_at: new Date().toISOString(),
     };
 
-    if (data.inventaris_id) updateData.inventaris_id = data.inventaris_id;
-    if (data.jumlah_pinjam) updateData.jumlah_pinjam = data.jumlah_pinjam;
-    if (data.tanggal_pinjam) updateData.tanggal_pinjam = data.tanggal_pinjam;
+    if (normalizedItems.length > 0) {
+      updateData.inventaris_id = normalizedItems[0].inventaris_id;
+      updateData.jumlah_pinjam = normalizedItems[0].jumlah_pinjam;
+    } else {
+      if (data.inventaris_id) updateData.inventaris_id = data.inventaris_id;
+      if (data.jumlah_pinjam) updateData.jumlah_pinjam = data.jumlah_pinjam;
+    }
+    if (data.jadwal_praktikum_id && jadwalTanggalPinjam) {
+      updateData.tanggal_pinjam = jadwalTanggalPinjam;
+      updateData.keperluan = buildBorrowingPurposeFromScheduleContext({
+        mata_kuliah_nama: jadwalContext?.mata_kuliah?.nama_mk,
+        kelas_nama: jadwalContext?.kelas?.nama_kelas,
+        laboratorium_nama: jadwalContext?.laboratorium?.nama_lab,
+        tanggal_praktikum: jadwalContext?.tanggal_praktikum,
+      });
+    } else if (data.tanggal_pinjam) {
+      updateData.tanggal_pinjam = data.tanggal_pinjam;
+    }
     if (data.tanggal_kembali_rencana)
       updateData.tanggal_kembali_rencana = data.tanggal_kembali_rencana;
-    if (data.keperluan) updateData.keperluan = data.keperluan;
+    if (data.jadwal_praktikum_id && jadwalContext) {
+      updateData.jadwal_praktikum_id = data.jadwal_praktikum_id;
+      updateData.laboratorium_tujuan_id = jadwalContext.laboratorium_id;
+      updateData.laboratorium_tujuan_nama =
+        jadwalContext.laboratorium?.nama_lab || null;
+    }
 
     const { error: updateError } = await supabase
-      .from("peminjaman")
+      .from("peminjaman" as any)
       .update(updateData)
       .eq("id", peminjaman_id);
 
     if (updateError) {
       console.error("Error updating peminjaman:", updateError);
       throw updateError;
+    }
+
+    if (normalizedItems.length > 0) {
+      const { error: deleteDetailError } = await supabase
+        .from("peminjaman_detail" as any)
+        .delete()
+        .eq("peminjaman_id", peminjaman_id);
+
+      if (deleteDetailError) {
+        throw deleteDetailError;
+      }
+
+      const { error: insertDetailError } = await supabase
+        .from("peminjaman_detail" as any)
+        .insert(
+          normalizedItems.map((item) => ({
+            peminjaman_id,
+            inventaris_id: item.inventaris_id,
+            jumlah_pinjam: item.jumlah_pinjam,
+            kondisi_pinjam: "baik",
+          })),
+        );
+
+      if (insertDetailError) {
+        throw insertDetailError;
+      }
     }
 
     return { id: peminjaman_id };

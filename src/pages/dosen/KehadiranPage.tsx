@@ -747,13 +747,11 @@ export default function DosenKehadiranPage() {
         Array.isArray(customEvent.detail.data)
       ) {
         const kelasData = customEvent.detail.data as Kelas[];
-        const filteredKelas = selectedMataKuliah
-          ? buildKelasOptions(
-              kelasData,
-              tahunAjaranFilter,
-              semesterFilter,
-            )
-          : [];
+        const filteredKelas = buildKelasOptions(
+          kelasData,
+          tahunAjaranFilter,
+          semesterFilter,
+        );
 
         setDosenKelasList(kelasData);
         setKelasList(filteredKelas);
@@ -809,7 +807,9 @@ export default function DosenKehadiranPage() {
   const selectedMataKuliahInfo = mataKuliahList.find(
     (mk) => mk.id === selectedMataKuliah,
   );
-  const selectedKelasInfo = kelasList.find((kelas) => kelas.id === selectedKelas);
+  const selectedKelasInfo = kelasList.find(
+    (kelas) => kelas.id === selectedKelas,
+  );
 
   // ============================================================================
   // RENDER
@@ -830,9 +830,9 @@ export default function DosenKehadiranPage() {
                 Kehadiran Mahasiswa
               </h1>
               <p className="text-sm sm:text-base md:text-lg font-semibold mt-2 max-w-xl">
-                Catat presensi per mata kuliah, kelas, dan tanggal. Satu kelas
-                dapat memiliki beberapa mata kuliah dengan riwayat kehadiran
-                yang berbeda.
+                Catat presensi umum per mata kuliah, kelas, dan tanggal. Satu
+                kelas dapat memiliki beberapa mata kuliah dengan riwayat
+                kehadiran yang berbeda.
               </p>
             </div>
             <Button
@@ -973,7 +973,8 @@ export default function DosenKehadiranPage() {
                 <CardTitle className="text-base">Mata Kuliah</CardTitle>
               </div>
               <CardDescription>
-                Pilih saat ingin input atau edit kehadiran mata kuliah tertentu.
+                Pilih mata kuliah dari master admin untuk input atau edit
+                presensi.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1037,15 +1038,12 @@ export default function DosenKehadiranPage() {
                 <CardTitle className="text-base">Kelas</CardTitle>
               </div>
               <CardDescription>
-                Bisa dipilih lebih dulu untuk cek riwayat semua mata kuliah di
-                kelas ini.
+                Pilih kelas aktif dari master admin untuk melihat roster dan
+                riwayat presensi.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Select
-                value={selectedKelas}
-                onValueChange={setSelectedKelas}
-              >
+              <Select value={selectedKelas} onValueChange={setSelectedKelas}>
                 <SelectTrigger
                   className={cn(selectedKelas && "border-success/60")}
                 >
@@ -1163,9 +1161,10 @@ export default function DosenKehadiranPage() {
                 </div>
               </div>
               <p className="mt-3 text-xs font-semibold text-muted-foreground">
-                Mahasiswa yang sama dapat memiliki kehadiran berbeda untuk mata
-                kuliah berbeda. Untuk cek riwayat, cukup pilih kelas; untuk
-                input atau edit detail, pilih mata kuliah aktif.
+                Mahasiswa yang sama dapat memiliki presensi berbeda untuk mata
+                kuliah berbeda pada tanggal yang berbeda. Untuk cek riwayat,
+                cukup pilih kelas; untuk input atau edit detail, pilih mata
+                kuliah aktif.
               </p>
             </CardContent>
           </Card>
@@ -1218,55 +1217,57 @@ export default function DosenKehadiranPage() {
             )}
 
             <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-0 shadow-xl bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Hadir</CardTitle>
-                <CheckCircle2 className="h-5 w-5 text-success" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-success">
-                  {stats.hadir}
-                </div>
-                <p className="text-xs text-muted-foreground">mahasiswa</p>
-              </CardContent>
-            </Card>
+              <Card className="border-0 shadow-xl bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Hadir</CardTitle>
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-success">
+                    {stats.hadir}
+                  </div>
+                  <p className="text-xs text-muted-foreground">mahasiswa</p>
+                </CardContent>
+              </Card>
 
-            <Card className="border-0 shadow-xl bg-linear-to-br from-info/5 to-info/10 dark:from-info/10 dark:to-info/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Izin</CardTitle>
-                <Clock className="h-5 w-5 text-info" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-info">{stats.izin}</div>
-                <p className="text-xs text-muted-foreground">mahasiswa</p>
-              </CardContent>
-            </Card>
+              <Card className="border-0 shadow-xl bg-linear-to-br from-info/5 to-info/10 dark:from-info/10 dark:to-info/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Izin</CardTitle>
+                  <Clock className="h-5 w-5 text-info" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-info">
+                    {stats.izin}
+                  </div>
+                  <p className="text-xs text-muted-foreground">mahasiswa</p>
+                </CardContent>
+              </Card>
 
-            <Card className="border-0 shadow-xl bg-linear-to-br from-warning/5 to-warning/10 dark:from-warning/10 dark:to-warning/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Sakit</CardTitle>
-                <AlertCircle className="h-5 w-5 text-warning" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-warning">
-                  {stats.sakit}
-                </div>
-                <p className="text-xs text-muted-foreground">mahasiswa</p>
-              </CardContent>
-            </Card>
+              <Card className="border-0 shadow-xl bg-linear-to-br from-warning/5 to-warning/10 dark:from-warning/10 dark:to-warning/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Sakit</CardTitle>
+                  <AlertCircle className="h-5 w-5 text-warning" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-warning">
+                    {stats.sakit}
+                  </div>
+                  <p className="text-xs text-muted-foreground">mahasiswa</p>
+                </CardContent>
+              </Card>
 
-            <Card className="border-0 shadow-xl bg-linear-to-br from-danger/5 to-danger/10 dark:from-danger/10 dark:to-danger/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Alpha</CardTitle>
-                <XCircle className="h-5 w-5 text-danger" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-danger">
-                  {stats.alpha}
-                </div>
-                <p className="text-xs text-muted-foreground">mahasiswa</p>
-              </CardContent>
-            </Card>
+              <Card className="border-0 shadow-xl bg-linear-to-br from-danger/5 to-danger/10 dark:from-danger/10 dark:to-danger/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Alpha</CardTitle>
+                  <XCircle className="h-5 w-5 text-danger" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-danger">
+                    {stats.alpha}
+                  </div>
+                  <p className="text-xs text-muted-foreground">mahasiswa</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         )}
@@ -1350,9 +1351,9 @@ export default function DosenKehadiranPage() {
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        Pilih mata kuliah dulu untuk input atau edit kehadiran.
+                        Pilih mata kuliah dulu untuk input atau edit presensi.
                         Jika hanya ingin mengecek apakah kelas ini sudah pernah
-                        diabsen, buka tab Riwayat.
+                        dicatat, buka tab Riwayat.
                       </AlertDescription>
                     </Alert>
                   ) : loading ? (
@@ -1508,9 +1509,9 @@ export default function DosenKehadiranPage() {
                   Pilih Kelas untuk Cek Riwayat
                 </h3>
                 <p className="text-muted-foreground text-center max-w-md">
-                  Untuk melihat apakah kehadiran sudah pernah dibuat, cukup
-                  pilih kelas. Mata kuliah baru wajib dipilih saat input atau
-                  edit presensi.
+                  Untuk melihat apakah presensi sudah pernah dibuat, cukup pilih
+                  kelas. Mata kuliah wajib dipilih saat input atau edit presensi
+                  detail.
                 </p>
               </CardContent>
             </Card>
@@ -1530,7 +1531,7 @@ export default function DosenKehadiranPage() {
               <CardContent>
                 <div className="rounded-2xl bg-primary/5 p-4 text-sm text-muted-foreground">
                   Pilih <strong>kelas</strong> untuk melihat tanggal yang sudah
-                  pernah diisi. Klik riwayatnya untuk otomatis membuka mata
+                  pernah dicatat. Klik riwayatnya untuk otomatis membuka mata
                   kuliah dan tanggal yang sesuai.
                 </div>
               </CardContent>

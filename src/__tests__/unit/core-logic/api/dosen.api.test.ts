@@ -175,11 +175,31 @@ describe("Dosen API - Dashboard Stats", () => {
       const jadwalBuilder = mockQueryBuilder();
       jadwalBuilder._setResolveValue({
         data: [
-          { kelas_id: "kelas-1", status: "approved", tanggal_praktikum: "2099-01-10" },
-          { kelas_id: "kelas-2", status: "approved", tanggal_praktikum: "2099-01-10" },
-          { kelas_id: "kelas-3", status: "approved", tanggal_praktikum: "2099-01-10" },
-          { kelas_id: "kelas-4", status: "approved", tanggal_praktikum: "2099-01-10" },
-          { kelas_id: "kelas-5", status: "approved", tanggal_praktikum: "2099-01-10" },
+          {
+            kelas_id: "kelas-1",
+            status: "approved",
+            tanggal_praktikum: "2099-01-10",
+          },
+          {
+            kelas_id: "kelas-2",
+            status: "approved",
+            tanggal_praktikum: "2099-01-10",
+          },
+          {
+            kelas_id: "kelas-3",
+            status: "approved",
+            tanggal_praktikum: "2099-01-10",
+          },
+          {
+            kelas_id: "kelas-4",
+            status: "approved",
+            tanggal_praktikum: "2099-01-10",
+          },
+          {
+            kelas_id: "kelas-5",
+            status: "approved",
+            tanggal_praktikum: "2099-01-10",
+          },
         ],
         error: null,
       });

@@ -102,6 +102,17 @@ export const normalizePhone = (phone: string): string => {
 };
 
 /**
+ * Normalize numeric identifier - remove spaces and non-digit chars
+ * @example
+ * normalizeNumericIdentifier("1980 0101 2020") -> "198001012020"
+ */
+export const normalizeNumericIdentifier = (value: string): string => {
+  if (!value) return "";
+
+  return value.trim().replace(/\s+/g, "").replace(/[^\d]/g, "");
+};
+
+/**
  * Normalize program studi - Title Case
  * @example
  * normalizeProgramStudi("kebidanan") → "Kebidanan"
@@ -167,6 +178,7 @@ export const normalize = {
   kelasNama: normalizeKelasNama,
   kodeKelas: normalizeKodeKelas,
   phone: normalizePhone,
+  numericIdentifier: normalizeNumericIdentifier,
   programStudi: normalizeProgramStudi,
   dosenNama: normalizeDosenNama,
   mataKuliahNama: normalizeMataKuliahNama,

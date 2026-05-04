@@ -172,6 +172,7 @@ describe("fetch-with-timeout", () => {
       });
 
       const result = retryWithBackoff(fn, 3, 10); // Slightly longer delays for testing
+      const rejectionAssertion = expect(result).rejects.toThrow("Always fails");
 
       // Advance timers for all retries: 10 + 20 + 40 = 70ms
       await vi.advanceTimersByTimeAsync(10); // First retry
@@ -181,7 +182,7 @@ describe("fetch-with-timeout", () => {
       // Wait a bit more to ensure all async operations complete
       await vi.advanceTimersByTimeAsync(1);
 
-      await expect(result).rejects.toThrow("Always fails");
+      await rejectionAssertion;
       expect(fn).toHaveBeenCalledTimes(3);
 
       // Restore original unhandled rejection handlers

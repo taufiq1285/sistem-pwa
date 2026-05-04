@@ -957,7 +957,12 @@ export function QuizAttempt({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className={cn("flex items-start justify-between gap-4", isLaporanMode && "flex-col gap-5")}>
+      <div
+        className={cn(
+          "flex items-start justify-between gap-4",
+          isLaporanMode && "flex-col gap-5",
+        )}
+      >
         <div className="flex-1">
           <h1
             className={cn(
@@ -1033,7 +1038,13 @@ export function QuizAttempt({
         )}
       >
         {/* Question Area */}
-        <div className={cn("space-y-6", !isLaporanMode && "lg:col-span-2", isLaporanMode && "mx-auto w-full max-w-[980px]")}>
+        <div
+          className={cn(
+            "space-y-6",
+            !isLaporanMode && "lg:col-span-2",
+            isLaporanMode && "mx-auto w-full max-w-[980px]",
+          )}
+        >
           {/* Question Card */}
           <Card
             className={cn(
@@ -1041,10 +1052,17 @@ export function QuizAttempt({
                 "overflow-hidden rounded-[28px] border-slate-200/80 bg-white/95 shadow-[0_20px_60px_-28px_rgba(15,23,42,0.25)] backdrop-blur",
             )}
           >
-            <CardHeader className={cn(isLaporanMode && "px-6 pb-0 pt-6 sm:px-7 sm:pt-7")}>
+            <CardHeader
+              className={cn(isLaporanMode && "px-6 pb-0 pt-6 sm:px-7 sm:pt-7")}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <div className={cn("mb-2 flex items-center gap-2", isLaporanMode && "mb-3 flex-wrap gap-2.5")}>
+                  <div
+                    className={cn(
+                      "mb-2 flex items-center gap-2",
+                      isLaporanMode && "mb-3 flex-wrap gap-2.5",
+                    )}
+                  >
                     <Badge
                       variant="outline"
                       className={cn(
@@ -1106,7 +1124,12 @@ export function QuizAttempt({
               </div>
             </CardHeader>
 
-            <CardContent className={cn("space-y-4", isLaporanMode && "space-y-5 px-6 pb-8 pt-5 sm:px-7 sm:pb-9")}>
+            <CardContent
+              className={cn(
+                "space-y-4",
+                isLaporanMode && "space-y-5 px-6 pb-8 pt-5 sm:px-7 sm:pb-9",
+              )}
+            >
               {/* Answer Input based on question type */}
               {currentQuestion?.tipe_soal === TIPE_SOAL.PILIHAN_GANDA && (
                 <RadioGroup
@@ -1333,9 +1356,11 @@ export function QuizAttempt({
                   Perangkat sedang offline.
                   <br />
                   <br />
-                  Jika Anda lanjutkan, {isLaporanMode ? "laporan" : "tugas"} akan disimpan sebagai sudah
-                  dikumpulkan di perangkat ini dan otomatis disinkronkan saat
-                  koneksi kembali.
+                  Jika Anda lanjutkan, {isLaporanMode
+                    ? "laporan"
+                    : "tugas"}{" "}
+                  akan disimpan sebagai sudah dikumpulkan di perangkat ini dan
+                  otomatis disinkronkan saat koneksi kembali.
                 </>
               ) : isLaporanMode ? (
                 <>
@@ -1378,7 +1403,11 @@ export function QuizAttempt({
                   {isLaporanMode ? "Mengirim..." : "Submitting..."}
                 </>
               ) : navigator.onLine ? (
-                isLaporanMode ? "Ya, Kirim" : "Ya, Submit"
+                isLaporanMode ? (
+                  "Ya, Kirim"
+                ) : (
+                  "Ya, Submit"
+                )
               ) : (
                 "Ya, Simpan Offline"
               )}

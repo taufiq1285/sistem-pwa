@@ -831,24 +831,27 @@ describe("Reports API", () => {
   describe("getLabUtilization - Valid Cases", () => {
     it("should aggregate lab utilization data", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "lab-1",
             jam_mulai: "08:00",
             jam_selesai: "10:00",
+            status: "approved",
             laboratorium: { kode_lab: "LAB1", nama_lab: "Lab 1" },
           },
           {
             laboratorium_id: "lab-1",
             jam_mulai: "14:00",
             jam_selesai: "16:00",
+            status: "scheduled",
             laboratorium: { kode_lab: "LAB1", nama_lab: "Lab 1" },
           },
           {
             laboratorium_id: "lab-2",
             jam_mulai: "09:00",
             jam_selesai: "11:00",
+            status: "published",
             laboratorium: { kode_lab: "LAB2", nama_lab: "Lab 2" },
           },
         ],
@@ -868,12 +871,13 @@ describe("Reports API", () => {
 
     it("should calculate utilization percentage based on 40 hours", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "lab-1",
             jam_mulai: "08:00",
             jam_selesai: "16:00", // 8 hours
+            status: "approved",
             laboratorium: { kode_lab: "LAB1", nama_lab: "Lab 1" },
           },
         ],
@@ -888,24 +892,27 @@ describe("Reports API", () => {
 
     it("should cap utilization at 100%", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "lab-1",
             jam_mulai: "08:00",
             jam_selesai: "20:00", // 12 hours
+            status: "approved",
             laboratorium: { kode_lab: "LAB1", nama_lab: "Lab 1" },
           },
           {
             laboratorium_id: "lab-1",
             jam_mulai: "08:00",
             jam_selesai: "20:00", // Another 12 hours
+            status: "scheduled",
             laboratorium: { kode_lab: "LAB1", nama_lab: "Lab 1" },
           },
           {
             laboratorium_id: "lab-1",
             jam_mulai: "08:00",
             jam_selesai: "20:00", // Another 12 hours
+            status: "published",
             laboratorium: { kode_lab: "LAB1", nama_lab: "Lab 1" },
           },
         ],
@@ -921,24 +928,27 @@ describe("Reports API", () => {
 
     it("should sort by total_schedules descending", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "lab-1",
             jam_mulai: "08:00",
             jam_selesai: "10:00",
+            status: "approved",
             laboratorium: { kode_lab: "LAB1", nama_lab: "Lab 1" },
           },
           {
             laboratorium_id: "lab-2",
             jam_mulai: "08:00",
             jam_selesai: "10:00",
+            status: "approved",
             laboratorium: { kode_lab: "LAB2", nama_lab: "Lab 2" },
           },
           {
             laboratorium_id: "lab-2",
             jam_mulai: "14:00",
             jam_selesai: "16:00",
+            status: "scheduled",
             laboratorium: { kode_lab: "LAB2", nama_lab: "Lab 2" },
           },
         ],
@@ -954,12 +964,13 @@ describe("Reports API", () => {
 
     it("should handle missing laboratorium data", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "lab-1",
             jam_mulai: "08:00",
             jam_selesai: "10:00",
+            status: "approved",
             laboratorium: null,
           },
         ],
@@ -975,12 +986,13 @@ describe("Reports API", () => {
 
     it("should handle empty time strings", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "lab-1",
             jam_mulai: "",
             jam_selesai: "",
+            status: "approved",
             laboratorium: { kode_lab: "LAB1", nama_lab: "Lab 1" },
           },
         ],
@@ -995,12 +1007,13 @@ describe("Reports API", () => {
 
     it("should handle null time values", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "lab-1",
             jam_mulai: null,
             jam_selesai: null,
+            status: "approved",
             laboratorium: { kode_lab: "LAB1", nama_lab: "Lab 1" },
           },
         ],
@@ -1015,7 +1028,7 @@ describe("Reports API", () => {
 
     it("should handle empty data", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [],
         error: null,
       });
@@ -1034,7 +1047,7 @@ describe("Reports API", () => {
     it("should handle database error", async () => {
       const builder = mockQueryBuilder();
       const dbError = new Error("Query failed");
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: null,
         error: dbError,
       });
@@ -1080,7 +1093,7 @@ describe("Reports API", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe("borrowing");
-      expect(result[0].description).toContain("requested to borrow");
+      expect(result[0].description).toContain("mengajukan peminjaman");
       expect(result[0].timestamp).toBe("2024-01-01T10:00:00Z");
     });
 
@@ -1111,7 +1124,7 @@ describe("Reports API", () => {
       const result = await getRecentActivities(20);
 
       expect(result[0].type).toBe("return");
-      expect(result[0].description).toContain("returned");
+      expect(result[0].description).toContain("mengembalikan");
       expect(result[0].timestamp).toBe("2024-01-02T15:00:00Z");
     });
 
@@ -1142,7 +1155,7 @@ describe("Reports API", () => {
       const result = await getRecentActivities(20);
 
       expect(result[0].type).toBe("approval");
-      expect(result[0].description).toContain("approved");
+      expect(result[0].description).toContain("disetujui");
       expect(result[0].timestamp).toBe("2024-01-01T11:00:00Z");
     });
 
@@ -1173,7 +1186,7 @@ describe("Reports API", () => {
       const result = await getRecentActivities(20);
 
       expect(result[0].type).toBe("rejection");
-      expect(result[0].description).toContain("rejected");
+      expect(result[0].description).toContain("ditolak");
     });
 
     it("should handle missing dosen_id", async () => {
@@ -1441,24 +1454,27 @@ describe("Reports API", () => {
     describe("getLabUtilization branches", () => {
       it("should branch: time calculation (valid vs null/empty)", async () => {
         const builder = mockQueryBuilder();
-        builder.eq.mockResolvedValue({
+        builder.in.mockResolvedValue({
           data: [
             {
               laboratorium_id: "1",
               jam_mulai: "08:00",
               jam_selesai: "10:00",
+              status: "approved",
               laboratorium: {},
             },
             {
               laboratorium_id: "2",
               jam_mulai: null,
               jam_selesai: null,
+              status: "scheduled",
               laboratorium: {},
             },
             {
               laboratorium_id: "3",
               jam_mulai: "",
               jam_selesai: "",
+              status: "published",
               laboratorium: {},
             },
           ],
@@ -1664,24 +1680,27 @@ describe("Reports API", () => {
     describe("getLabUtilization calculation paths", () => {
       it("should path: aggregate by lab, calculate hours, percentage, sort", async () => {
         const builder = mockQueryBuilder();
-        builder.eq.mockResolvedValue({
+        builder.in.mockResolvedValue({
           data: [
             {
               laboratorium_id: "1",
               jam_mulai: "08:00",
               jam_selesai: "10:00",
+              status: "approved",
               laboratorium: { kode_lab: "A", nama_lab: "Lab A" },
             },
             {
               laboratorium_id: "1",
               jam_mulai: "14:00",
               jam_selesai: "16:00",
+              status: "scheduled",
               laboratorium: { kode_lab: "A", nama_lab: "Lab A" },
             },
             {
               laboratorium_id: "2",
               jam_mulai: "09:00",
               jam_selesai: "11:00",
+              status: "published",
               laboratorium: { kode_lab: "B", nama_lab: "Lab B" },
             },
           ],
@@ -1792,12 +1811,13 @@ describe("Reports API", () => {
 
     it("should execute all time parsing statements in getLabUtilization", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "1",
             jam_mulai: "08:00",
             jam_selesai: "10:00",
+            status: "approved",
             laboratorium: { kode_lab: "A", nama_lab: "Lab" },
           },
         ],
@@ -1840,12 +1860,13 @@ describe("Reports API", () => {
 
     it("should handle midnight times in getLabUtilization", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "1",
             jam_mulai: "00:00",
             jam_selesai: "01:00",
+            status: "approved",
             laboratorium: {},
           },
         ],
@@ -1858,12 +1879,13 @@ describe("Reports API", () => {
 
     it("should handle 23:00 times in getLabUtilization", async () => {
       const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({
+      builder.in.mockResolvedValue({
         data: [
           {
             laboratorium_id: "1",
             jam_mulai: "22:00",
             jam_selesai: "23:00",
+            status: "approved",
             laboratorium: {},
           },
         ],

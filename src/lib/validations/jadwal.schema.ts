@@ -56,25 +56,9 @@ export const jadwalSchema = z
 
     topik: z
       .string()
-      .min(
-        10,
-        "Topik minimal 10 karakter untuk menjelaskan materi praktikum dengan jelas",
-      )
-      .max(200, "Topik maksimal 200 karakter")
       .trim()
-      .optional()
-      .or(z.literal(""))
-      .refine(
-        (val) => !val || val.length >= 10,
-        'Jika diisi, topik harus minimal 10 karakter (contoh: "Praktikum ANC: Pemeriksaan Leopold I-IV")',
-      ),
-
-    catatan: z
-      .string()
-      .max(500, "Catatan maksimal 500 karakter")
-      .trim()
-      .optional()
-      .or(z.literal("")),
+      .min(1, "Topik harus diisi")
+      .max(200, "Topik maksimal 200 karakter"),
 
     is_active: z.boolean().optional().default(true),
   })

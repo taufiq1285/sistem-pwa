@@ -32,6 +32,7 @@ export type EquipmentCondition =
 export type BorrowingStatus =
   | "pending"
   | "approved"
+  | "return_requested"
   | "rejected"
   | "returned"
   | "overdue";
@@ -60,10 +61,10 @@ export interface Peminjaman extends PeminjamanTable {
 }
 
 export interface CreatePeminjamanData {
-  inventaris_id: string;
+  inventaris_id?: string;
   peminjam_id: string;
   dosen_id?: string;
-  jumlah_pinjam: number;
+  jumlah_pinjam?: number;
   keperluan: string;
   tanggal_pinjam: string;
   tanggal_kembali_rencana: string;

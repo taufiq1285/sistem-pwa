@@ -32,6 +32,7 @@ export interface AuthUser extends UserTable {
     id: string; // ✅ ADDED: dosen table id
     nip: string;
     nidn?: string;
+    nuptk?: string;
     gelar_depan?: string;
     gelar_belakang?: string;
     fakultas?: string;
@@ -82,6 +83,7 @@ export interface RegisterData {
   nim?: string;
   nip?: string;
   nidn?: string;
+  nuptk?: string;
   program_studi?: string;
   angkatan?: number;
   semester?: number;

@@ -89,7 +89,11 @@ import {
 } from "@/lib/api/laboran.api";
 import type { Laboratorium } from "@/lib/api/laboran.api";
 import { formatDate } from "@/lib/utils/format";
-import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCachePatternSync,
+} from "@/lib/offline/api-cache";
 
 type FormMode = "create" | "edit" | null;
 
@@ -210,6 +214,11 @@ export default function LaboratoriumPage() {
     toast.success("Data diperbarui");
   };
 
+  const refreshLaboratoriumData = async () => {
+    await invalidateCachePatternSync("laboran_laboratorium_");
+    await loadLaboratories(true);
+  };
+
   // ============================================================================
   // CREATE / EDIT HANDLERS
   // ============================================================================
@@ -275,7 +284,7 @@ export default function LaboratoriumPage() {
       }
 
       setFormDialogOpen(false);
-      loadLaboratories();
+      await refreshLaboratoriumData();
     } catch (error: any) {
       console.error("Error submitting form:", error);
       toast.error(
@@ -304,7 +313,7 @@ export default function LaboratoriumPage() {
       await deleteLaboratorium(labToDelete.id);
       toast.success("Laboratorium berhasil dihapus");
       setDeleteDialogOpen(false);
-      loadLaboratories();
+      await refreshLaboratoriumData();
     } catch (error: any) {
       console.error("Error deleting laboratorium:", error);
       toast.error(error.message || "Gagal menghapus laboratorium");
@@ -342,10 +351,11 @@ export default function LaboratoriumPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    Laboratorium
+                    Data Laboratorium
                   </h1>
                   <p className="text-muted-foreground">
-                    Kelola informasi laboratorium dan fasilitas.
+                    Kelola data laboratorium, kapasitas, dan fasilitas pendukung
+                    untuk kebutuhan operasional praktikum.
                   </p>
                 </div>
               </div>
@@ -353,7 +363,7 @@ export default function LaboratoriumPage() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button variant="outline" onClick={handleRefresh}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
+                Muat Ulang
               </Button>
               <Button onClick={handleCreate}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -432,9 +442,9 @@ export default function LaboratoriumPage() {
           className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <CardHeader className="px-0 pt-0">
-            <CardTitle>Daftar Laboratorium</CardTitle>
+            <CardTitle>Daftar Data Laboratorium</CardTitle>
             <CardDescription>
-              Kelola data laboratorium praktikum
+              Ringkasan laboratorium praktikum yang aktif dan siap dikelola.
             </CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
@@ -604,7 +614,7 @@ export default function LaboratoriumPage() {
                 <CardContent>
                   {loadingDetail ? (
                     <div className="py-4 text-center text-muted-foreground">
-                      Loading...
+                      Memuat data...
                     </div>
                   ) : labSchedule.length === 0 ? (
                     <div className="py-4 text-center text-muted-foreground">
@@ -654,7 +664,7 @@ export default function LaboratoriumPage() {
                 <CardContent>
                   {loadingDetail ? (
                     <div className="py-4 text-center text-muted-foreground">
-                      Loading...
+                      Memuat data...
                     </div>
                   ) : labEquipment.length === 0 ? (
                     <div className="py-4 text-center text-muted-foreground">

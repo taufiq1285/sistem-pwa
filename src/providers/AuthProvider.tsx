@@ -17,13 +17,14 @@ import type {
 import * as authApi from "@/lib/supabase/auth";
 import {
   offlineLogin,
+  secureOfflineLogin,
   storeOfflineCredentials,
-  clearOfflineCredentials,
   storeOfflineSession,
   storeUserData,
   clearOfflineSession,
   restoreOfflineSession,
   recordOnlineLogin,
+  isOfflineLoginAvailable,
 } from "@/lib/offline/offline-auth";
 import { cleanupAllCache } from "@/lib/utils/cache-cleaner";
 
@@ -38,6 +39,7 @@ interface AuthProviderProps {
 const AUTH_CACHE_KEY = "auth_cache";
 const LOGOUT_FLAG_KEY = "auth_logout_flag";
 const CACHE_VERSION = "v1";
+const ONLINE_LOGIN_TIMEOUT_MS = 12000;
 
 interface AuthCache {
   version: string;
@@ -141,6 +143,57 @@ function clearLogoutFlag() {
     console.log("✅ Logout flag cleared (user logged in)");
   } catch (error) {
     console.warn("Failed to clear logout flag:", error);
+  }
+}
+
+function createNetworkTimeoutError() {
+  const error = new Error(
+    "Login online melebihi batas waktu. Kemungkinan koneksi sedang tidak stabil.",
+  );
+  error.name = "AuthNetworkTimeoutError";
+  return error;
+}
+
+function isNetworkLikeLoginError(error: unknown): boolean {
+  const message = (
+    error instanceof Error ? error.message : String(error || "")
+  ).toLowerCase();
+
+  return [
+    "timeout",
+    "timed out",
+    "failed to fetch",
+    "fetch",
+    "network",
+    "network request failed",
+    "connection",
+    "internet",
+    "unreachable",
+    "abort",
+    "gateway",
+    "dns",
+    "econn",
+    "enotfound",
+    "too long to respond",
+  ].some((keyword) => message.includes(keyword));
+}
+
+async function loginOnlineWithTimeout(credentials: LoginCredentials) {
+  let timeoutId: number | null = null;
+
+  try {
+    return await Promise.race([
+      authApi.login(credentials),
+      new Promise<never>((_, reject) => {
+        timeoutId = window.setTimeout(() => {
+          reject(createNetworkTimeoutError());
+        }, ONLINE_LOGIN_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
   }
 }
 
@@ -355,66 +408,84 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (isOnline) {
           // Online login
           logger.auth("Online login attempt...");
-
-          // Clear stale auth state before starting a fresh login.
-          // This prevents old logout flags / persisted sessions from
-          // interfering with the next SIGNED_IN event.
-          // ✅ CATATAN: Tidak perlu signOut() di sini — sudah dilakukan saat logout sebelumnya.
-          // Memanggil signOut() sebelum login justru memperlambat karena menghapus semua
-          // sb-* keys dari localStorage sehingga Supabase client harus re-init dari awal.
-          clearCachedAuth();
-          clearLogoutFlag();
-          await clearOfflineSession().catch((error) => {
-            logger.warn("Pre-login offline session cleanup failed:", error);
-          });
-
-          const response = await authApi.login(credentials);
-
-          // Check if login was successful
-          if (!response.success) {
-            throw new Error(
-              response.error || "Login gagal. Periksa email dan password Anda.",
-            );
-          }
-
-          // Check if we have user and session data
-          if (!response.user || !response.session) {
-            throw new Error("Login response missing user or session data");
-          }
-
-          // Store credentials and session for offline use
           try {
-            await storeOfflineCredentials(
+            const response = await loginOnlineWithTimeout(credentials);
+
+            if (!response.success) {
+              throw new Error(
+                response.error ||
+                  "Login gagal. Periksa email dan password Anda.",
+              );
+            }
+
+            if (!response.user || !response.session) {
+              throw new Error("Login response missing user or session data");
+            }
+
+            try {
+              await storeOfflineCredentials(
+                credentials.email,
+                credentials.password,
+                response.user,
+              );
+              await storeOfflineSession(response.user, response.session);
+              await storeUserData(response.user);
+              await recordOnlineLogin(response.user, response.session);
+              logger.auth("Offline credentials stored successfully");
+
+              if (navigator.storage && navigator.storage.persist) {
+                navigator.storage.persist().then((granted) => {
+                  logger.auth(
+                    granted
+                      ? "Persistent storage granted"
+                      : "Persistent storage not granted (browser may evict data)",
+                  );
+                });
+              }
+            } catch (storageError) {
+              console.warn(
+                "Failed to store offline credentials:",
+                storageError,
+              );
+            }
+
+            clearLogoutFlag();
+            updateAuthState(response.user, response.session);
+            setInitialized(true);
+          } catch (onlineError) {
+            const canFallback =
+              isNetworkLikeLoginError(onlineError) &&
+              (await isOfflineLoginAvailable(credentials.email));
+
+            if (!canFallback) {
+              if (isNetworkLikeLoginError(onlineError)) {
+                throw new Error(
+                  "Koneksi ke server sedang bermasalah, dan login offline belum tersedia untuk akun ini. Silakan login online minimal 1x di perangkat ini.",
+                );
+              }
+
+              throw onlineError;
+            }
+
+            logger.auth(
+              "Online login failed because of network issues, trying offline fallback...",
+            );
+
+            const offlineResponse = await secureOfflineLogin(
               credentials.email,
               credentials.password,
-              response.user,
             );
-            await storeOfflineSession(response.user, response.session);
-            await storeUserData(response.user);
-            // Record that user has logged in online (required for offline access)
-            await recordOnlineLogin(response.user, response.session);
-            logger.auth("Offline credentials stored successfully");
 
-            // Request persistent storage so browser doesn't evict IndexedDB data
-            if (navigator.storage && navigator.storage.persist) {
-              navigator.storage.persist().then((granted) => {
-                logger.auth(
-                  granted
-                    ? "Persistent storage granted"
-                    : "Persistent storage not granted (browser may evict data)",
-                );
-              });
+            if (!offlineResponse?.user || !offlineResponse.session) {
+              throw new Error(
+                "Login offline tidak tersedia. Silakan coba lagi saat koneksi membaik.",
+              );
             }
-          } catch (storageError) {
-            console.warn("Failed to store offline credentials:", storageError);
-            // Continue with login even if offline storage fails
+
+            clearLogoutFlag();
+            updateAuthState(offlineResponse.user, offlineResponse.session);
+            setInitialized(true);
           }
-
-          // ✅ PERBAIKAN: Clear logout flag saat login berhasil
-          clearLogoutFlag();
-
-          updateAuthState(response.user, response.session);
-          setInitialized(true); // ✅ FORCE INITIALIZED AFTER SUCCESSFUL ONLINE LOGIN
         } else {
           // Offline login — error spesifik dilempar langsung dari offlineLogin()
           logger.auth("Offline mode detected - attempting offline login...");

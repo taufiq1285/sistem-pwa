@@ -328,7 +328,7 @@ export async function getNilaiByMahasiswa(
 
     if (error) throw handleError(error);
 
-    const nilaiList = ((data || []) as Nilai[]) || [];
+    const nilaiList = ((data || []) as unknown as Nilai[]) || [];
     if (nilaiList.length === 0) {
       return [];
     }
@@ -620,7 +620,8 @@ async function updateNilaiImpl(
             mahasiswaId,
             kelasId,
             mataKuliahId: resolvedMataKuliahId,
-          })) || (await findAnyNilaiRecordForMahasiswaKelas(mahasiswaId, kelasId));
+          })) ||
+          (await findAnyNilaiRecordForMahasiswaKelas(mahasiswaId, kelasId));
 
         if (fallbackCurrent?.id) {
           const retryPayload = {
@@ -765,7 +766,10 @@ export async function getNilaiHistoryByDosen(
 
     if (error) throw handleError(error);
 
-    const grouped = new Map<string, NilaiHistoryByDosenItem & { total: number }>();
+    const grouped = new Map<
+      string,
+      NilaiHistoryByDosenItem & { total: number }
+    >();
 
     for (const item of data || []) {
       if (!item?.kelas_id || !item?.mata_kuliah_id) continue;

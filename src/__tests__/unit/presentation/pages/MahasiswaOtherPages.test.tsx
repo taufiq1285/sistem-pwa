@@ -396,6 +396,9 @@ describe("Mahasiswa PresensiPage", () => {
   it("menampilkan tabel presensi umum tanpa kolom lab", async () => {
     wrap(<PresensiPage />);
 
+    await waitFor(() => screen.getByRole("button", { name: /Anatomi/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Anatomi/i }));
+
     await waitFor(() => {
       expect(screen.getByText("Waktu Dicatat")).toBeInTheDocument();
       expect(screen.getByText("Topik/Keterangan")).toBeInTheDocument();
@@ -406,9 +409,23 @@ describe("Mahasiswa PresensiPage", () => {
   it("menampilkan waktu dicatat dan keterangan dari record kehadiran", async () => {
     wrap(<PresensiPage />);
 
+    await waitFor(() => screen.getByRole("button", { name: /Anatomi/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Anatomi/i }));
+
     await waitFor(() => {
       expect(screen.getByText("Presensi awal semester")).toBeInTheDocument();
       expect(screen.getByText(/08[.:]15/)).toBeInTheDocument();
+    });
+  });
+
+  it("mengelompokkan riwayat presensi per mata kuliah", async () => {
+    wrap(<PresensiPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Anatomi")).toBeInTheDocument();
+      expect(screen.getByText(/2 pertemuan tercatat/i)).toBeInTheDocument();
+      expect(screen.getByText(/Hadir 1/i)).toBeInTheDocument();
+      expect(screen.getByText(/Alpha 1/i)).toBeInTheDocument();
     });
   });
 

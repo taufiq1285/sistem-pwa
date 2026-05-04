@@ -838,7 +838,10 @@ describe("Nilai API - Statistics", () => {
     });
 
     it("should update nilai ketika existing record ditemukan", async () => {
-      const fetchBuilder = mockQueryBuilder()._setResolveValue({ data: [mockNilai], error: null });
+      const fetchBuilder = mockQueryBuilder()._setResolveValue({
+        data: [mockNilai],
+        error: null,
+      });
       const updateBuilder = mockQueryBuilder()._setResolveValue({
         data: { ...mockNilai, nilai_kuis: 88 },
         error: null,
@@ -863,9 +866,15 @@ describe("Nilai API - Statistics", () => {
         nilai_akhir: 70,
         nilai_huruf: "B",
       };
-      const fetchBuilder = mockQueryBuilder()._setResolveValue({ data: [], error: null });
-      const insertBuilder = mockQueryBuilder()._setResolveValue({ data: freshNilai, error: null });
-      
+      const fetchBuilder = mockQueryBuilder()._setResolveValue({
+        data: [],
+        error: null,
+      });
+      const insertBuilder = mockQueryBuilder()._setResolveValue({
+        data: freshNilai,
+        error: null,
+      });
+
       (supabase.from as any)
         .mockReturnValueOnce(fetchBuilder)
         .mockReturnValueOnce(insertBuilder);
@@ -878,23 +887,34 @@ describe("Nilai API - Statistics", () => {
     });
 
     it("should fail batch update when one item fails", async () => {
-      const firstFetchBuilder = mockQueryBuilder()._setResolveValue({ data: [mockNilai], error: null });
-      const firstUpdateBuilder = mockQueryBuilder()._setResolveValue({ data: mockNilai, error: null });
-      const secondFetchBuilder = mockQueryBuilder()._setResolveValue({ data: null, error: new Error("fail") });
+      const firstFetchBuilder = mockQueryBuilder()._setResolveValue({
+        data: [mockNilai],
+        error: null,
+      });
+      const firstUpdateBuilder = mockQueryBuilder()._setResolveValue({
+        data: mockNilai,
+        error: null,
+      });
+      const secondFetchBuilder = mockQueryBuilder()._setResolveValue({
+        data: null,
+        error: new Error("fail"),
+      });
 
       (supabase.from as any)
         .mockReturnValueOnce(firstFetchBuilder)
         .mockReturnValueOnce(firstUpdateBuilder)
         .mockReturnValueOnce(secondFetchBuilder);
 
-      await expect(batchUpdateNilai({
-        kelas_id: "kelas-1",
-        mata_kuliah_id: "mk-1",
-        nilai_list: [
-          { mahasiswa_id: "mhs-1", nilai_kuis: 80 },
-          { mahasiswa_id: "mhs-2", nilai_kuis: 90 },
-        ],
-      })).rejects.toThrow("1 dari 2 nilai gagal tersimpan");
+      await expect(
+        batchUpdateNilai({
+          kelas_id: "kelas-1",
+          mata_kuliah_id: "mk-1",
+          nilai_list: [
+            { mahasiswa_id: "mhs-1", nilai_kuis: 80 },
+            { mahasiswa_id: "mhs-2", nilai_kuis: 90 },
+          ],
+        }),
+      ).rejects.toThrow("1 dari 2 nilai gagal tersimpan");
     });
 
     it("should sync nilai praktikum from graded attempts", async () => {
@@ -920,7 +940,10 @@ describe("Nilai API - Statistics", () => {
         error: null,
       });
 
-      const nilaiFetchBuilder = mockQueryBuilder()._setResolveValue({ data: [mockNilai], error: null });
+      const nilaiFetchBuilder = mockQueryBuilder()._setResolveValue({
+        data: [mockNilai],
+        error: null,
+      });
       const nilaiUpdateBuilder = mockQueryBuilder()._setResolveValue({
         data: { ...mockNilai, nilai_praktikum: 85 },
         error: null,

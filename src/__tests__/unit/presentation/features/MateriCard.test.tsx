@@ -67,9 +67,9 @@ describe("MateriCard", () => {
       expect(screen.getByText("Pengenalan anatomi dasar")).toBeInTheDocument();
     });
 
-    it("menampilkan badge Published", () => {
+    it("menampilkan badge materi tersedia", () => {
       render(<MateriCard materi={makeMateiri()} />);
-      expect(screen.getByText("Published")).toBeInTheDocument();
+      expect(screen.getByText("Materi tersedia")).toBeInTheDocument();
     });
 
     it("menampilkan nama mata kuliah", () => {
@@ -86,7 +86,7 @@ describe("MateriCard", () => {
 
     it("menampilkan nama kelas", () => {
       render(<MateriCard materi={makeMateiri()} />);
-      expect(screen.getByText("Kelas A")).toBeInTheDocument();
+      expect(screen.getByText(/Kelas A/)).toBeInTheDocument();
     });
   });
 

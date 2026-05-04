@@ -27,7 +27,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, BookOpen, CheckCircle2, MessageSquareText } from "lucide-react";
+import {
+  Search,
+  BookOpen,
+  CheckCircle2,
+  MessageSquareText,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface AddFromBankDialogProps {
@@ -217,8 +222,7 @@ export function AddFromBankDialog({
               {questions.map((q) => {
                 const isSelected = selectedIds.includes(q.id);
                 const isOwnQuestion = q.dosen_id === dosenId;
-                const ownerName =
-                  q.dosen?.user?.full_name || "Dosen lain";
+                const ownerName = q.dosen?.user?.full_name || "Dosen lain";
 
                 return (
                   <div

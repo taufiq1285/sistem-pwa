@@ -120,7 +120,8 @@ describe("Mahasiswa API", () => {
         }
         if (table === "kelas_mahasiswa") {
           return createSafeMockBuilder({
-            then: (resolve: any) => resolve({ data: mockKelasMahasiswa, error: null }),
+            then: (resolve: any) =>
+              resolve({ data: mockKelasMahasiswa, error: null }),
           });
         }
         if (table === "kelas") {
@@ -819,10 +820,14 @@ describe("Mahasiswa API", () => {
                 gte: vi.fn().mockReturnValue({
                   lte: vi.fn().mockReturnValue({
                     eq: vi.fn().mockReturnValue({
-                      order: vi.fn().mockReturnValue({
+                      eq: vi.fn().mockReturnValue({
                         order: vi.fn().mockReturnValue({
-                          data: mockJadwal,
-                          error: null,
+                          order: vi.fn().mockReturnValue({
+                            limit: vi.fn().mockResolvedValue({
+                              data: mockJadwal,
+                              error: null,
+                            }),
+                          }),
                         }),
                       }),
                     }),
@@ -966,9 +971,11 @@ describe("Mahasiswa API", () => {
                 gte: vi.fn().mockReturnValue({
                   lte: vi.fn().mockReturnValue({
                     eq: vi.fn().mockReturnValue({
-                      order: vi.fn().mockReturnValue({
+                      eq: vi.fn().mockReturnValue({
                         order: vi.fn().mockReturnValue({
-                          limit: limitMock,
+                          order: vi.fn().mockReturnValue({
+                            limit: limitMock,
+                          }),
                         }),
                       }),
                     }),

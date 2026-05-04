@@ -289,7 +289,10 @@ export function FileUpload({
 
           {/* File Info */}
           <div className="flex-1 min-w-0">
-            <p className="truncate font-semibold text-slate-900" title={value.name}>
+            <p
+              className="truncate font-semibold text-slate-900"
+              title={value.name}
+            >
               {value.name}
             </p>
             <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -371,9 +374,7 @@ export function FileUpload({
             <div>
               <p className="font-semibold text-slate-900">Mengupload file...</p>
               <Progress value={uploadProgress} className="mt-2 h-2" />
-              <p className="mt-1 text-sm text-slate-500">
-                {uploadProgress}%
-              </p>
+              <p className="mt-1 text-sm text-slate-500">{uploadProgress}%</p>
             </div>
           </div>
         ) : (

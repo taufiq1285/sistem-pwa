@@ -275,7 +275,11 @@ export function QuizCardCBT({
                           : undefined,
                     }}
                   />
-                  {isPublished ? "Aktif" : quizStatus === "draft" ? "Draft" : statusLabel}
+                  {isPublished
+                    ? "Aktif"
+                    : quizStatus === "draft"
+                      ? "Draft"
+                      : statusLabel}
                 </span>
 
                 <span

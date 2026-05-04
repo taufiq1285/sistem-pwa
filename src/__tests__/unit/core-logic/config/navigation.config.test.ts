@@ -9,6 +9,7 @@ import {
   getCurrentNavigationItem,
   getBreadcrumbs,
 } from "@/config/navigation.config";
+import { ROUTES } from "@/config/routes.config";
 import type { UserRole } from "@/types/auth.types";
 
 const roles: UserRole[] = ["mahasiswa", "dosen", "admin", "laboran"];
@@ -46,6 +47,23 @@ describe("getNavigationItems", () => {
     expect(items.some((i) => i.label === "Bank Soal")).toBe(true);
   });
 
+  it("menu dosen memakai route kontrak yang sama dengan router", () => {
+    const items = getNavigationItems("dosen");
+    const hrefs = items.map((item) => item.href);
+
+    expect(hrefs).toContain(ROUTES.DOSEN.DASHBOARD);
+    expect(hrefs).toContain(ROUTES.DOSEN.JADWAL);
+    expect(hrefs).toContain(ROUTES.DOSEN.KUIS.LIST);
+    expect(hrefs).toContain(ROUTES.DOSEN.BANK_SOAL);
+    expect(hrefs).toContain(ROUTES.DOSEN.LOGBOOK_REVIEW);
+    expect(hrefs).toContain(ROUTES.DOSEN.PEMINJAMAN);
+    expect(hrefs).toContain(ROUTES.DOSEN.KEHADIRAN);
+    expect(hrefs).toContain(ROUTES.DOSEN.MATERI);
+    expect(hrefs).toContain(ROUTES.DOSEN.PENILAIAN);
+    expect(hrefs).toContain(ROUTES.DOSEN.NOTIFIKASI);
+    expect(hrefs).toContain(ROUTES.DOSEN.OFFLINE_SYNC);
+  });
+
   it("admin memiliki menu User Management", () => {
     const items = getNavigationItems("admin");
     expect(items.some((i) => i.label === "User Management")).toBe(true);
@@ -54,6 +72,21 @@ describe("getNavigationItems", () => {
   it("laboran memiliki menu Inventaris", () => {
     const items = getNavigationItems("laboran");
     expect(items.some((i) => i.label === "Inventaris")).toBe(true);
+  });
+
+  it("menu laboran memakai route kontrak yang sama dengan router", () => {
+    const items = getNavigationItems("laboran");
+    const hrefs = items.map((item) => item.href);
+
+    expect(hrefs).toContain(ROUTES.LABORAN.DASHBOARD);
+    expect(hrefs).toContain(ROUTES.LABORAN.INVENTARIS);
+    expect(hrefs).toContain(ROUTES.LABORAN.PEMINJAMAN);
+    expect(hrefs).toContain(ROUTES.LABORAN.LABORATORIUM);
+    expect(hrefs).toContain(ROUTES.LABORAN.JADWAL);
+    expect(hrefs).toContain(ROUTES.LABORAN.LAPORAN);
+    expect(hrefs).toContain(ROUTES.LABORAN.NOTIFIKASI);
+    expect(hrefs).toContain(ROUTES.LABORAN.PROFILE);
+    expect(hrefs).toContain(ROUTES.LABORAN.OFFLINE_SYNC);
   });
 });
 

@@ -117,33 +117,28 @@ async function getAssignmentDependencySummary(
   mataKuliahId: string,
   kelasId: string,
 ): Promise<AssignmentDependencySummary> {
-  const [
-    kehadiranCount,
-    logbookCount,
-    materiCount,
-    kuisCount,
-    nilaiCount,
-  ] = await Promise.all([
-    countRows("kehadiran", [
-      { column: "jadwal_id", operator: "in", value: jadwalIds },
-    ]),
-    countRows("logbook_entries", [
-      { column: "jadwal_id", operator: "in", value: jadwalIds },
-    ]),
-    countRows("materi", [
-      { column: "kelas_id", operator: "eq", value: kelasId },
-      { column: "dosen_id", operator: "eq", value: dosenId },
-    ]),
-    countRows("kuis", [
-      { column: "kelas_id", operator: "eq", value: kelasId },
-      { column: "dosen_id", operator: "eq", value: dosenId },
-      { column: "mata_kuliah_id", operator: "eq", value: mataKuliahId },
-    ]),
-    countRows("nilai", [
-      { column: "kelas_id", operator: "eq", value: kelasId },
-      { column: "mata_kuliah_id", operator: "eq", value: mataKuliahId },
-    ]),
-  ]);
+  const [kehadiranCount, logbookCount, materiCount, kuisCount, nilaiCount] =
+    await Promise.all([
+      countRows("kehadiran", [
+        { column: "jadwal_id", operator: "in", value: jadwalIds },
+      ]),
+      countRows("logbook_entries", [
+        { column: "jadwal_id", operator: "in", value: jadwalIds },
+      ]),
+      countRows("materi", [
+        { column: "kelas_id", operator: "eq", value: kelasId },
+        { column: "dosen_id", operator: "eq", value: dosenId },
+      ]),
+      countRows("kuis", [
+        { column: "kelas_id", operator: "eq", value: kelasId },
+        { column: "dosen_id", operator: "eq", value: dosenId },
+        { column: "mata_kuliah_id", operator: "eq", value: mataKuliahId },
+      ]),
+      countRows("nilai", [
+        { column: "kelas_id", operator: "eq", value: kelasId },
+        { column: "mata_kuliah_id", operator: "eq", value: mataKuliahId },
+      ]),
+    ]);
 
   return {
     kehadiranCount,

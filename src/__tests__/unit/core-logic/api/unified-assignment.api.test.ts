@@ -1659,14 +1659,22 @@ describe("Unified Assignment API - Master-Detail Management", () => {
           jadwalCallCount++;
           // Calls 1-2: getUnifiedAssignments
           if (jadwalCallCount === 1) {
-            return { select: vi.fn().mockReturnValue(createThenableQuery(mockAssignments)) };
+            return {
+              select: vi
+                .fn()
+                .mockReturnValue(createThenableQuery(mockAssignments)),
+            };
           }
           if (jadwalCallCount === 2) {
             return { select: vi.fn().mockReturnValue(createThenableQuery([])) };
           }
           // Calls 3-5: deleteAssignmentCascade
           if (jadwalCallCount === 3) {
-            return { select: vi.fn().mockReturnValue(createThenableQuery(jadwalToDelete)) };
+            return {
+              select: vi
+                .fn()
+                .mockReturnValue(createThenableQuery(jadwalToDelete)),
+            };
           }
           if (jadwalCallCount === 4) {
             // Delete jadwal

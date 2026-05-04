@@ -261,6 +261,23 @@ export default function JadwalApprovalPage() {
         });
       }
 
+      const mahasiswaIds = await getMahasiswaIds(selectedJadwal.kelas_id);
+      if (mahasiswaIds.length > 0) {
+        notifyMahasiswaJadwalChange(
+          mahasiswaIds,
+          getMataKuliahNameForJadwal(selectedJadwal),
+          (selectedJadwal.kelas as any)?.nama_kelas || "-",
+          selectedJadwal.tanggal_praktikum || todayDate,
+          "baru",
+          "Jadwal telah disetujui laboran dan resmi aktif.",
+        ).catch((error) => {
+          console.error(
+            "Failed to notify mahasiswa about jadwal approval:",
+            error,
+          );
+        });
+      }
+
       toast.success("Jadwal praktikum berhasil disetujui", {
         description: `Lab ${selectedJadwal.laboratorium?.nama_lab} telah di-booking untuk jadwal ini.`,
       });
@@ -312,23 +329,6 @@ export default function JadwalApprovalPage() {
         ).catch((error) => {
           console.error(
             "Failed to notify dosen about jadwal rejection:",
-            error,
-          );
-        });
-      }
-
-      const mahasiswaIds = await getMahasiswaIds(selectedJadwal.kelas_id);
-      if (mahasiswaIds.length > 0) {
-        notifyMahasiswaJadwalChange(
-          mahasiswaIds,
-          getMataKuliahNameForJadwal(selectedJadwal),
-          (selectedJadwal.kelas as any)?.nama_kelas || "-",
-          selectedJadwal.tanggal_praktikum || todayDate,
-          "dibatalkan",
-          `Jadwal tidak jadi dilaksanakan karena ditolak laboran. Alasan: ${rejectionReason.trim()}`,
-        ).catch((error) => {
-          console.error(
-            "Failed to notify mahasiswa about jadwal rejection:",
             error,
           );
         });
@@ -536,22 +536,22 @@ export default function JadwalApprovalPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    Kelola Jadwal Praktikum
+                    Persetujuan Jadwal Praktikum
                   </h1>
                   <p className="text-muted-foreground">
-                    Approve jadwal praktikum dosen termasuk booking laboratorium
-                    otomatis.
+                    Tinjau dan putuskan jadwal praktikum dosen beserta pemakaian
+                    laboratorium yang sudah terhubung otomatis.
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Praktikum yang sudah lewat otomatis menjadi riwayat tetap
-                    dan tidak dapat diproses ulang.
+                    Jadwal yang sudah lewat otomatis dipindahkan ke riwayat dan
+                    tidak diproses ulang.
                   </p>
                 </div>
               </div>
             </div>
             <Button onClick={refreshAll} variant="outline" size="sm">
               <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
+              Muat Ulang
             </Button>
           </div>
         </GlassCard>
@@ -564,7 +564,7 @@ export default function JadwalApprovalPage() {
             color="amber"
           />
           <DashboardCard
-            title="Jadwal Disetujui"
+            title="Disetujui"
             value={stats.approved}
             icon={CheckCircle2}
             color="green"
@@ -599,7 +599,7 @@ export default function JadwalApprovalPage() {
             </div>
             <Button onClick={refreshAll} variant="outline" size="sm">
               <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
+              Muat Ulang
             </Button>
           </div>
         </GlassCard>
@@ -613,7 +613,7 @@ export default function JadwalApprovalPage() {
             </TabsTrigger>
             <TabsTrigger value="active" className="gap-2">
               <Calendar className="h-4 w-4" />
-              Jadwal Disetujui ({stats.approved})
+              Disetujui ({stats.approved})
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <History className="h-4 w-4" />
@@ -630,7 +630,7 @@ export default function JadwalApprovalPage() {
                 <div className="py-12 text-center">
                   <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">
-                    Tidak ada jadwal menunggu
+                    Tidak ada jadwal yang menunggu persetujuan
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Belum ada jadwal praktikum yang menunggu persetujuan
@@ -745,7 +745,7 @@ export default function JadwalApprovalPage() {
                 <div className="py-12 text-center">
                   <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">
-                    Tidak ada jadwal disetujui
+                    Tidak ada jadwal disetujui yang aktif
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Belum ada jadwal praktikum hari ini atau mendatang yang
@@ -1087,7 +1087,7 @@ export default function JadwalApprovalPage() {
             <DialogHeader>
               <DialogTitle>Aktifkan Kembali Jadwal</DialogTitle>
               <DialogDescription>
-                Jadwal yang dibatalkan akan diaktifkan kembali
+                Jadwal yang dibatalkan akan dikembalikan ke status aktif
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

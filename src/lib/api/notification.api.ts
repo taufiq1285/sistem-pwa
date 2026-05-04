@@ -140,16 +140,14 @@ export async function createNotification(
   data: CreateNotificationData,
 ): Promise<Notification | null> {
   try {
-    const { error } = await supabase
-      .from("notifications")
-      .insert({
-        user_id: data.user_id,
-        title: data.title,
-        message: data.message,
-        type: data.type,
-        data: data.data || {},
-        is_read: false,
-      });
+    const { error } = await supabase.from("notifications").insert({
+      user_id: data.user_id,
+      title: data.title,
+      message: data.message,
+      type: data.type,
+      data: data.data || {},
+      is_read: false,
+    });
 
     if (error) {
       console.error("createNotification error:", error);
@@ -191,18 +189,16 @@ export async function createBulkNotifications(
   notifications: CreateNotificationData[],
 ): Promise<Notification[]> {
   try {
-    const { error } = await supabase
-      .from("notifications")
-      .insert(
-        notifications.map((n) => ({
-          user_id: n.user_id,
-          title: n.title,
-          message: n.message,
-          type: n.type,
-          data: n.data || {},
-          is_read: false,
-        })),
-      );
+    const { error } = await supabase.from("notifications").insert(
+      notifications.map((n) => ({
+        user_id: n.user_id,
+        title: n.title,
+        message: n.message,
+        type: n.type,
+        data: n.data || {},
+        is_read: false,
+      })),
+    );
 
     if (error) {
       console.error("createBulkNotifications error:", error);
@@ -525,7 +521,7 @@ export async function notifyLaboranPeminjamanBaru(
     (laboranId) => ({
       user_id: laboranId,
       title: "Pengajuan Peminjaman Baru",
-      message: `${dosenNama} mengajukan peminjaman ${jumlahPinjam}x "${namaBarang}" untuk ${tanggalPinjam}. Keperluan: ${keperluan}`,
+      message: `${dosenNama} mengajukan peminjaman ${jumlahPinjam}x "${namaBarang}" untuk praktikum pada ${tanggalPinjam}. Konteks praktikum: ${keperluan}`,
       type: "peminjaman_baru",
       data: {
         dosen: dosenNama,
@@ -580,6 +576,58 @@ export async function notifyDosenPeminjamanDitolak(
     data: {
       barang: namaBarang,
       alasan: alasan,
+    },
+  });
+}
+
+/**
+ * Notify laboran when dosen submits return request
+ */
+export async function notifyLaboranPengembalianDiajukan(
+  laboranUserIds: string[],
+  dosenNama: string,
+  namaBarang: string,
+  jumlahPinjam: number,
+  tanggalKembaliRencana: string,
+  keteranganKembali?: string | null,
+): Promise<Notification[]> {
+  const notifications: CreateNotificationData[] = laboranUserIds.map(
+    (laboranId) => ({
+      user_id: laboranId,
+      title: "Pengembalian Alat Diajukan",
+      message: `${dosenNama} mengajukan pengembalian ${jumlahPinjam}x "${namaBarang}". Target kembali: ${tanggalKembaliRencana}.${keteranganKembali ? ` Catatan: ${keteranganKembali}` : ""}`,
+      type: "peminjaman_pengembalian_diajukan",
+      data: {
+        dosen: dosenNama,
+        barang: namaBarang,
+        jumlah: jumlahPinjam,
+        tanggal_kembali: tanggalKembaliRencana,
+        keterangan_kembali: keteranganKembali || null,
+      },
+    }),
+  );
+
+  return createBulkNotifications(notifications);
+}
+
+/**
+ * Notify dosen when laboran verifies final return
+ */
+export async function notifyDosenPengembalianDiverifikasi(
+  dosenUserId: string,
+  namaBarang: string,
+  tanggalKembaliAktual: string,
+  kondisiKembali: string,
+): Promise<Notification> {
+  return createNotification({
+    user_id: dosenUserId,
+    title: "Pengembalian Diverifikasi",
+    message: `Pengembalian "${namaBarang}" telah diverifikasi laboran pada ${tanggalKembaliAktual}. Kondisi akhir: ${kondisiKembali}.`,
+    type: "peminjaman_pengembalian_diverifikasi",
+    data: {
+      barang: namaBarang,
+      tanggal_kembali_aktual: tanggalKembaliAktual,
+      kondisi_kembali: kondisiKembali,
     },
   });
 }

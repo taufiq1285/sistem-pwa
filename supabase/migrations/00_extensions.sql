@@ -73,7 +73,7 @@ END $$;
 
 -- Borrowing status
 DO $$ BEGIN
-    CREATE TYPE borrowing_status AS ENUM ('pending', 'approved', 'rejected', 'returned', 'overdue');
+    CREATE TYPE borrowing_status AS ENUM ('pending', 'approved', 'return_requested', 'rejected', 'returned', 'overdue');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;

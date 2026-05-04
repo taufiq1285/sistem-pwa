@@ -280,7 +280,10 @@ export async function getPermintaanPendingForDosen(
     }
 
     const byId = new Map<string, unknown>();
-    for (const item of [...((targetedData || []) as unknown[]), ...legacyData]) {
+    for (const item of [
+      ...((targetedData || []) as unknown[]),
+      ...legacyData,
+    ]) {
       const id = (item as { id?: string }).id;
       if (id) byId.set(id, item);
     }
@@ -425,6 +428,7 @@ async function createPermintaanImpl(
       .single();
 
     if (!requestInfoError && requestInfo) {
+      const typedRequestInfo = requestInfo as any;
       // Get mahasiswa info
       const { data: mahasiswaInfo } = await supabase
         .from("mahasiswa")
@@ -435,11 +439,11 @@ async function createPermintaanImpl(
       // Notify dosen (best effort - don't fail if notification fails)
       try {
         const dosenUserId =
-          requestInfo.target_dosen?.user?.id ||
-          requestInfo.kelas?.dosen?.user?.id;
+          typedRequestInfo.target_dosen?.user?.id ||
+          typedRequestInfo.kelas?.dosen?.user?.id;
         const mataKuliahName =
-          requestInfo.mata_kuliah?.nama_mk ||
-          requestInfo.kelas?.mata_kuliah?.nama_mk ||
+          typedRequestInfo.mata_kuliah?.nama_mk ||
+          typedRequestInfo.kelas?.mata_kuliah?.nama_mk ||
           "mata kuliah";
         if (dosenUserId) {
           await createNotification({

@@ -13,6 +13,7 @@ import {
   remove,
   withApiResponse,
 } from "./base.api";
+import { invalidateCachePatternSync } from "@/lib/offline/api-cache";
 import type {
   Jadwal,
   CreateJadwalData,
@@ -31,6 +32,40 @@ import { logger } from "@/lib/utils/logger";
 // Debug logging (disabled in tests and production)
 const DEBUG_JADWAL_LOGS =
   import.meta.env.DEV && import.meta.env.MODE !== "test";
+
+async function invalidateJadwalCaches(): Promise<void> {
+  await Promise.allSettled([
+    invalidateCachePatternSync("*query_filtered_jadwal_praktikum*"),
+    invalidateCachePatternSync("*query_jadwal_praktikum*"),
+    invalidateCachePatternSync("*dosen_jadwal_list_*"),
+    invalidateCachePatternSync("*dosen_jadwal_events_*"),
+    invalidateCachePatternSync("*mahasiswa_jadwal_full_*"),
+    invalidateCachePatternSync("*mahasiswa_logbook_jadwal_*"),
+    invalidateCachePatternSync("*mahasiswa_stats*"),
+  ]);
+}
+
+function dispatchJadwalChanged(
+  action:
+    | "created"
+    | "updated"
+    | "deleted"
+    | "approved"
+    | "rejected"
+    | "cancelled"
+    | "reactivated",
+  jadwalId: string,
+): void {
+  try {
+    window.dispatchEvent(
+      new CustomEvent("jadwal:changed", {
+        detail: { action, jadwalId },
+      }),
+    );
+  } catch (error) {
+    console.warn("Failed to dispatch jadwal:changed event:", error);
+  }
+}
 
 // ============================================================================
 // QUERY OPERATIONS
@@ -621,6 +656,8 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
     // ✅ HYBRID APPROVAL: Auto-approve if no conflict (conflict already checked above)
     const result = await insert<Jadwal>("jadwal_praktikum", insertData);
+    await invalidateJadwalCaches();
+    dispatchJadwalChanged("created", result.id);
     console.log("✅ DEBUG: Insert success:", result);
     return result;
   } catch (error) {
@@ -738,7 +775,10 @@ async function updateJadwalImpl(
     }
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    return await update<Jadwal>("jadwal_praktikum", id, updateData);
+    const result = await update<Jadwal>("jadwal_praktikum", id, updateData);
+    await invalidateJadwalCaches();
+    dispatchJadwalChanged("updated", id);
+    return result;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `updateJadwal:${id}`);
@@ -766,7 +806,10 @@ export const updateJadwal = requirePermissionAndOwnership(
 async function deleteJadwalImpl(id: string): Promise<boolean> {
   try {
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    return await remove("jadwal_praktikum", id);
+    const result = await remove("jadwal_praktikum", id);
+    await invalidateJadwalCaches();
+    dispatchJadwalChanged("deleted", id);
+    return result;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `deleteJadwal:${id}`);
@@ -798,6 +841,8 @@ async function approveJadwalImpl(id: string): Promise<Jadwal> {
     const updated = await update<Jadwal>("jadwal_praktikum", id, {
       status: "approved",
     });
+    await invalidateJadwalCaches();
+    dispatchJadwalChanged("approved", id);
 
     console.log("✅ Jadwal approved successfully:", id);
     return updated;
@@ -828,6 +873,8 @@ async function rejectJadwalImpl(id: string, reason?: string): Promise<Jadwal> {
       status: "rejected", // ✅ WORKFLOW: Laboran rejects the booking
       cancellation_reason: reason || "Ditolak oleh laboran",
     });
+    await invalidateJadwalCaches();
+    dispatchJadwalChanged("rejected", id);
 
     console.log("❌ Jadwal rejected successfully:", id);
     return updated;
@@ -877,6 +924,8 @@ async function cancelJadwalImpl(
       jadwalId,
       reason,
     });
+    await invalidateJadwalCaches();
+    dispatchJadwalChanged("cancelled", jadwalId);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `cancelJadwal:${jadwalId}`);
@@ -914,6 +963,8 @@ async function reactivateJadwalImpl(jadwalId: string): Promise<void> {
     }
 
     logger.info(`Jadwal ${jadwalId} reactivated successfully`, { jadwalId });
+    await invalidateJadwalCaches();
+    dispatchJadwalChanged("reactivated", jadwalId);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `reactivateJadwal:${jadwalId}`);
@@ -1196,11 +1247,56 @@ export async function getJadwalPraktikumMahasiswa(
     void userId; // Acknowledge unused parameter
 
     // Build query filters
+    const mahasiswaResult = await supabase
+      .from("mahasiswa")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (mahasiswaResult.error) {
+      throw mahasiswaResult.error;
+    }
+
+    const mahasiswaId = mahasiswaResult.data?.id;
+    if (!mahasiswaId) {
+      return [];
+    }
+
+    const { data: enrollmentData, error: enrollmentError } = await supabase
+      .from("kelas_mahasiswa")
+      .select("kelas_id")
+      .eq("mahasiswa_id", mahasiswaId)
+      .eq("is_active", true);
+
+    if (enrollmentError) {
+      throw enrollmentError;
+    }
+
+    const kelasIds = (enrollmentData || [])
+      .map((item: any) => item.kelas_id)
+      .filter(
+        (id: any): id is string => typeof id === "string" && id.length > 0,
+      );
+
+    if (kelasIds.length === 0) {
+      return [];
+    }
+
     const filters: any[] = [
       {
         column: "is_active",
         operator: "eq" as const,
         value: true,
+      },
+      {
+        column: "status",
+        operator: "eq" as const,
+        value: "approved",
+      },
+      {
+        column: "kelas_id",
+        operator: "in" as const,
+        value: kelasIds,
       },
     ];
 

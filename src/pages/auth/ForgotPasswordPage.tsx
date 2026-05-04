@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/hooks/useAuth";
 import akbidLogo from "@/assets/akbid-logo-asli.png";
 import {
   Card,
@@ -31,6 +31,7 @@ import {
 import { ROUTES } from "@/config/routes.config";
 
 export function ForgotPasswordPage() {
+  const { resetPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,17 +49,12 @@ export function ForgotPasswordPage() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-
+      await resetPassword(email);
       setSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Password reset error:", err);
       setError(
-        err.message ||
+        (err instanceof Error ? err.message : null) ||
           "Gagal mengirim email reset password. Silakan coba lagi.",
       );
     } finally {

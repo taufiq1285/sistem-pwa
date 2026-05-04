@@ -97,6 +97,12 @@ describe("AuthProvider", () => {
     vi.mocked(offlineAuth.storeUserData).mockResolvedValue(undefined);
     vi.mocked(offlineAuth.clearOfflineSession).mockResolvedValue(undefined);
     vi.mocked(offlineAuth.restoreOfflineSession).mockResolvedValue(null);
+    vi.mocked(offlineAuth.isOfflineLoginAvailable).mockResolvedValue(true);
+    vi.mocked(offlineAuth.secureOfflineLogin).mockResolvedValue({
+      user: mockUser,
+      session: mockSession,
+    });
+    navigator.onLine = true;
   });
 
   afterEach(() => {
@@ -526,6 +532,12 @@ describe("AuthProvider edge cases", () => {
     vi.mocked(offlineAuth.storeUserData).mockResolvedValue(undefined);
     vi.mocked(offlineAuth.clearOfflineSession).mockResolvedValue(undefined);
     vi.mocked(offlineAuth.restoreOfflineSession).mockResolvedValue(null);
+    vi.mocked(offlineAuth.isOfflineLoginAvailable).mockResolvedValue(true);
+    vi.mocked(offlineAuth.secureOfflineLogin).mockResolvedValue({
+      user: mockUser,
+      session: mockSession,
+    });
+    navigator.onLine = true;
   });
 
   afterEach(() => {
@@ -583,5 +595,95 @@ describe("AuthProvider edge cases", () => {
       },
       { timeout: 3000 },
     );
+  });
+
+  it("should fallback to offline login when online login fails because of network issues", async () => {
+    vi.mocked(authApi.login).mockResolvedValue({
+      success: false,
+      error: "Failed to fetch",
+    });
+
+    function TestComponent() {
+      const value = React.useContext(AuthContext);
+
+      return (
+        <div>
+          <div data-testid="user-email">{value.user?.email || "null"}</div>
+          <div data-testid="is-authenticated">
+            {value.isAuthenticated ? "true" : "false"}
+          </div>
+          <button
+            data-testid="login-btn"
+            onClick={() => value.login(mockCredentials)}
+          >
+            Login
+          </button>
+        </div>
+      );
+    }
+
+    renderWithAuthProvider(<TestComponent />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("login-btn")).toBeInTheDocument();
+    });
+
+    screen.getByTestId("login-btn").click();
+
+    await waitFor(() => {
+      expect(offlineAuth.secureOfflineLogin).toHaveBeenCalledWith(
+        mockCredentials.email,
+        mockCredentials.password,
+      );
+      expect(screen.getByTestId("user-email")).toHaveTextContent(
+        mockUser.email,
+      );
+      expect(screen.getByTestId("is-authenticated")).toHaveTextContent("true");
+    });
+  });
+
+  it("should not fallback to offline login when credentials are invalid", async () => {
+    vi.mocked(authApi.login).mockResolvedValue({
+      success: false,
+      error: "Invalid credentials",
+    });
+
+    function TestComponent() {
+      const value = React.useContext(AuthContext);
+      const [error, setError] = React.useState<string | null>(null);
+
+      const handleLogin = async () => {
+        try {
+          await value.login(mockCredentials);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "error");
+        }
+      };
+
+      return (
+        <div>
+          <div data-testid="error">{error || "null"}</div>
+          <button data-testid="login-btn" onClick={handleLogin}>
+            Login
+          </button>
+        </div>
+      );
+    }
+
+    renderWithAuthProvider(<TestComponent />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("login-btn")).toBeInTheDocument();
+    });
+
+    screen.getByTestId("login-btn").click();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("error")).toHaveTextContent(
+        "Invalid credentials",
+      );
+    });
+
+    expect(offlineAuth.secureOfflineLogin).not.toHaveBeenCalled();
   });
 });

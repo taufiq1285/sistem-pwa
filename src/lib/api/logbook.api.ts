@@ -655,8 +655,7 @@ export const logbookApi = {
 
   getLogbookStats: (
     filters?: Pick<LogbookFilters, "kelas_id" | "mata_kuliah_id" | "dosen_id">,
-  ) =>
-    withApiResponse(() => getLogbookStats(filters)),
+  ) => withApiResponse(() => getLogbookStats(filters)),
 
   // Mahasiswa operations
   createLogbook: (data: CreateLogbookData) =>

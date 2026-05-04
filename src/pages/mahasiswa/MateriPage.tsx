@@ -305,7 +305,9 @@ export default function MahasiswaMateriPage() {
           const { id, nama, kode } = getMateriMataKuliahInfo(m);
           return id && nama ? [id, { id, nama, kode }] : null;
         })
-        .filter(Boolean) as Array<[string, { id: string; nama: string; kode?: string }]>,
+        .filter(Boolean) as Array<
+        [string, { id: string; nama: string; kode?: string }]
+      >,
     ).values(),
   );
   const uniqueMataKuliah = uniqueMataKuliahOptions.map((mk) => mk.nama);

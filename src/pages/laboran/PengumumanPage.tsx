@@ -4,7 +4,7 @@ export default function LaboranPengumumanPage() {
   return (
     <RoleNotificationCenter
       role="laboran"
-      description="Pengajuan laboratorium, peminjaman alat, dan pengumuman resmi untuk laboran."
+      description="Pengumuman resmi laboran, termasuk informasi operasional laboratorium dan peminjaman alat."
     />
   );
 }

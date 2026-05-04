@@ -11,6 +11,7 @@ export const ROUTES = {
   LOGIN: "/login",
   REGISTER: "/register",
   FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
   NOT_FOUND: "/404",
   UNAUTHORIZED: "/403",
 
@@ -23,8 +24,11 @@ export const ROUTES = {
     LABORATORIES: "/admin/laboratories",
     EQUIPMENTS: "/admin/equipments",
     ANNOUNCEMENTS: "/admin/announcements",
+    NOTIFIKASI: "/admin/notifikasi",
     ANALYTICS: "/admin/analytics",
     SYNC_MANAGEMENT: "/admin/sync-management",
+    PROFILE: "/admin/profil",
+    OFFLINE_SYNC: "/admin/offline-sync",
   },
 
   // Dosen routes
@@ -33,6 +37,7 @@ export const ROUTES = {
     DASHBOARD: "/dosen/dashboard",
     MATA_KULIAH: "/dosen/mata-kuliah",
     JADWAL: "/dosen/jadwal",
+    BANK_SOAL: "/dosen/bank-soal",
     KUIS: {
       LIST: "/dosen/kuis",
       CREATE: "/dosen/kuis/create",
@@ -45,6 +50,10 @@ export const ROUTES = {
     MATERI: "/dosen/materi",
     PENILAIAN: "/dosen/penilaian",
     LOGBOOK_REVIEW: "/dosen/logbook-review",
+    NOTIFIKASI: "/dosen/notifikasi",
+    PENGUMUMAN: "/dosen/pengumuman",
+    PROFILE: "/dosen/profil",
+    OFFLINE_SYNC: "/dosen/offline-sync",
   },
 
   // Mahasiswa routes
@@ -60,8 +69,9 @@ export const ROUTES = {
     MATERI: "/mahasiswa/materi",
     NILAI: "/mahasiswa/nilai",
     PRESENSI: "/mahasiswa/presensi",
+    NOTIFIKASI: "/mahasiswa/notifikasi",
     PENGUMUMAN: "/mahasiswa/pengumuman",
-    PROFILE: "/mahasiswa/profile",
+    PROFILE: "/mahasiswa/profil",
     OFFLINE_SYNC: "/mahasiswa/offline-sync",
     LOGBOOK: "/mahasiswa/logbook",
   },
@@ -74,7 +84,11 @@ export const ROUTES = {
     PEMINJAMAN: "/laboran/peminjaman",
     PERSETUJUAN: "/laboran/persetujuan",
     LABORATORIUM: "/laboran/laboratorium",
+    JADWAL: "/laboran/jadwal",
     LAPORAN: "/laboran/laporan",
+    NOTIFIKASI: "/laboran/notifikasi",
+    PROFILE: "/laboran/profil",
+    OFFLINE_SYNC: "/laboran/offline-sync",
   },
 } as const;
 
@@ -123,6 +137,51 @@ export const getRoleDashboard = (role: string): string => {
       return ROUTES.MAHASISWA.DASHBOARD;
     case "laboran":
       return ROUTES.LABORAN.DASHBOARD;
+    default:
+      return ROUTES.HOME;
+  }
+};
+
+export const getRoleProfilePath = (role: string): string => {
+  switch (role) {
+    case "admin":
+      return ROUTES.ADMIN.PROFILE;
+    case "dosen":
+      return ROUTES.DOSEN.PROFILE;
+    case "mahasiswa":
+      return ROUTES.MAHASISWA.PROFILE;
+    case "laboran":
+      return ROUTES.LABORAN.PROFILE;
+    default:
+      return ROUTES.HOME;
+  }
+};
+
+export const getRoleNotificationPath = (role: string): string => {
+  switch (role) {
+    case "admin":
+      return ROUTES.ADMIN.NOTIFIKASI;
+    case "dosen":
+      return ROUTES.DOSEN.NOTIFIKASI;
+    case "mahasiswa":
+      return ROUTES.MAHASISWA.NOTIFIKASI;
+    case "laboran":
+      return ROUTES.LABORAN.NOTIFIKASI;
+    default:
+      return ROUTES.HOME;
+  }
+};
+
+export const getRoleOfflineSyncPath = (role: string): string => {
+  switch (role) {
+    case "admin":
+      return ROUTES.ADMIN.OFFLINE_SYNC;
+    case "dosen":
+      return ROUTES.DOSEN.OFFLINE_SYNC;
+    case "mahasiswa":
+      return ROUTES.MAHASISWA.OFFLINE_SYNC;
+    case "laboran":
+      return ROUTES.LABORAN.OFFLINE_SYNC;
     default:
       return ROUTES.HOME;
   }

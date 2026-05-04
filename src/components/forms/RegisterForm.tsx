@@ -162,7 +162,15 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             : undefined,
         }),
         ...(pendingData.role === "dosen" && {
-          nip: pendingData.nip ? normalize.nim(pendingData.nip) : undefined,
+          nidn: pendingData.nidn
+            ? normalize.numericIdentifier(pendingData.nidn)
+            : undefined,
+          nuptk: pendingData.nuptk
+            ? normalize.numericIdentifier(pendingData.nuptk)
+            : undefined,
+          nip: pendingData.nip
+            ? normalize.numericIdentifier(pendingData.nip)
+            : undefined,
         }),
       };
 

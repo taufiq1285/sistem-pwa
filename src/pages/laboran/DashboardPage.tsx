@@ -1,8 +1,8 @@
 /**
  * Laboran Dashboard Page
  * Main dashboard for Laboran role showing:
- * - Stats (Total Lab, Total Alat, Pending Approvals, Low Stock)
- * - Pending Approvals (dengan tombol approve/reject)
+ * - Stats (Total Lab, Total Alat, Menunggu Persetujuan, Stok Rendah)
+ * - Pending approvals (dengan tombol approve/reject)
  * - Inventory Alerts (stok rendah)
  * - Lab Schedule Today
  */
@@ -67,6 +67,7 @@ import {
   type LabScheduleToday,
 } from "@/lib/api/laboran.api";
 import { toast } from "sonner";
+import { ROUTES } from "@/config/routes.config";
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -215,7 +216,7 @@ export function DashboardPage() {
     } catch (err) {
       // Handle offline mode gracefully
       if (!networkDetector.isOnline()) {
-        console.log("ℹ️ Offline mode - showing cached dashboard data");
+        console.log("â„¹ï¸ Offline mode - showing cached dashboard data");
         setError(null); // Don't show error in offline mode
         setIsOfflineData(true);
       } else {
@@ -369,15 +370,16 @@ export function DashboardPage() {
                 <div className="space-y-2">
                   <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                     <Sparkles className="h-3.5 w-3.5" />
-                    Laboran workspace
+                    Pusat kendali laboran
                   </div>
                   <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                      Dashboard Laboran
+                      Dashboard Operasional Laboratorium
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-                      Ringkasan operasional laboratorium, approval, inventaris,
-                      dan praktikum yang perlu ditangani hari ini.
+                      Ringkasan operasional laboratorium untuk memantau
+                      persetujuan, inventaris, dan praktikum yang perlu
+                      ditindaklanjuti hari ini.
                     </p>
                   </div>
                 </div>
@@ -404,14 +406,49 @@ export function DashboardPage() {
             </Alert>
           )}
 
+          <div className="rounded-2xl border border-border/60 bg-background/80 px-4 py-3 shadow-sm">
+            <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+              <div className="flex items-center justify-between gap-3 sm:block">
+                <span className="text-xs uppercase tracking-wide">
+                  Status dashboard
+                </span>
+                <p className="font-semibold text-foreground">
+                  {isOfflineData || !navigator.onLine
+                    ? "Mode Offline"
+                    : "Online"}
+                </p>
+              </div>
+              <div className="flex items-center justify-between gap-3 sm:block">
+                <span className="text-xs uppercase tracking-wide">
+                  Sumber data
+                </span>
+                <p className="font-semibold text-foreground">
+                  {isOfflineData || !navigator.onLine
+                    ? "Snapshot lokal"
+                    : "Data live"}
+                </p>
+              </div>
+              <div className="flex items-center justify-between gap-3 sm:block">
+                <span className="text-xs uppercase tracking-wide">
+                  Pembaruan terakhir
+                </span>
+                <p className="font-semibold text-foreground">
+                  {lastUpdatedLabel || "-"}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {(isOfflineData || !navigator.onLine) && (
             <Alert className="border-warning/40 bg-warning/10">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Dashboard laboran sedang memakai snapshot lokal dari perangkat.
+                Mode Offline aktif. Dashboard laboran sedang memakai Snapshot
+                lokal dari perangkat.
                 {lastUpdatedLabel
                   ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
-                  : ""}
+                  : ""}{" "}
+                Beberapa aksi tetap memerlukan koneksi internet.
               </AlertDescription>
             </Alert>
           )}
@@ -433,7 +470,7 @@ export function DashboardPage() {
               description="Inventaris terpantau"
             />
             <DashboardCard
-              title="Pending Approval"
+              title="Menunggu Persetujuan"
               value={stats?.pendingApprovals || 0}
               icon={ClipboardCheck}
               color="amber"
@@ -463,7 +500,7 @@ export function DashboardPage() {
                   </div>
                   <div className="flex-1">
                     <h2 className="mb-2 text-3xl font-extrabold">
-                      Tetap Siap! 🛡️
+                      Tetap Siap!
                     </h2>
                     <p className="text-lg font-semibold text-primary-foreground/80">
                       {pendingApprovals.length > 0 && (
@@ -472,7 +509,7 @@ export function DashboardPage() {
                           <span className="font-extrabold text-primary-foreground">
                             {pendingApprovals.length} peminjaman
                           </span>{" "}
-                          yang menunggu approval.
+                          yang menunggu persetujuan.
                         </>
                       )}
                       {inventoryAlerts.length > 0 && (
@@ -505,19 +542,19 @@ export function DashboardPage() {
                       <ClipboardCheck className="h-5 w-5" />
                     </div>
                     <CardTitle className="text-xl font-bold text-foreground">
-                      Peminjaman Alat
+                      Persetujuan Peminjaman Alat
                     </CardTitle>
                   </div>
                   <CardDescription className="text-sm font-medium text-muted-foreground sm:text-base">
-                    {stats?.pendingApprovals || 0} permintaan menunggu
-                    persetujuan
+                    {stats?.pendingApprovals || 0} permintaan baru menunggu
+                    keputusan laboran
                   </CardDescription>
                 </div>
                 {pendingApprovals.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate("/laboran/peminjaman")}
+                    onClick={() => navigate(ROUTES.LABORAN.PEMINJAMAN)}
                     className="font-semibold"
                   >
                     Lihat Semua
@@ -530,7 +567,7 @@ export function DashboardPage() {
                   <Alert className="border-border/60 bg-muted/40">
                     <ClipboardCheck className="h-4 w-4" />
                     <AlertDescription className="text-sm text-muted-foreground">
-                      Tidak ada peminjaman yang menunggu approval. Semua
+                      Tidak ada peminjaman yang menunggu persetujuan. Semua
                       peminjaman telah diproses.
                     </AlertDescription>
                   </Alert>
@@ -563,11 +600,11 @@ export function DashboardPage() {
                             {approval.peminjam_nama} ({approval.peminjam_nim})
                           </div>
                           <p className="text-xs font-semibold text-muted-foreground mt-1">
-                            📍 {approval.laboratorium_nama} • Jumlah:{" "}
+                            Lab: {approval.laboratorium_nama} - Jumlah:{" "}
                             {approval.jumlah_pinjam}
                           </p>
                           <p className="text-xs font-semibold text-muted-foreground mt-1">
-                            🗓️ {formatDate(approval.tanggal_pinjam)} -{" "}
+                            Tanggal: {formatDate(approval.tanggal_pinjam)} -{" "}
                             {formatDate(approval.tanggal_kembali_rencana)}
                           </p>
                           {approval.keperluan && (
@@ -626,7 +663,7 @@ export function DashboardPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate("/laboran/inventaris")}
+                    onClick={() => navigate(ROUTES.LABORAN.INVENTARIS)}
                     className="hover:bg-danger/10 font-semibold"
                   >
                     Lihat Semua
@@ -675,7 +712,7 @@ export function DashboardPage() {
                             {alert.kategori}
                           </p>
                           <p className="text-xs font-semibold text-muted-foreground mt-1">
-                            📍 {alert.laboratorium_nama}
+                            Lab: {alert.laboratorium_nama}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
                             <StatusBadge
@@ -718,7 +755,7 @@ export function DashboardPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate("/laboran/laboratorium")}
+                    onClick={() => navigate(ROUTES.LABORAN.JADWAL)}
                     className="font-semibold"
                   >
                     Lihat Semua
@@ -751,7 +788,7 @@ export function DashboardPage() {
                             {schedule.mata_kuliah_nama}
                           </h4>
                           <p className="text-xs font-semibold text-muted-foreground mt-0.5">
-                            {schedule.kelas_nama} • {schedule.dosen_nama}
+                            {schedule.kelas_nama} - {schedule.dosen_nama}
                           </p>
                           <div className="flex items-center gap-2 mt-1 text-xs font-bold text-muted-foreground">
                             <Clock className="h-3 w-3" />
@@ -759,7 +796,7 @@ export function DashboardPage() {
                             {formatTime(schedule.jam_selesai)}
                           </div>
                           <p className="text-xs font-semibold text-muted-foreground mt-1">
-                            📍 {schedule.laboratorium_nama}
+                            Lab: {schedule.laboratorium_nama}
                           </p>
                           {schedule.topik && (
                             <p className="text-xs font-semibold text-muted-foreground mt-1 italic">

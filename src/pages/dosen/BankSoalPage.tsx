@@ -370,7 +370,9 @@ export default function BankSoalPage() {
                   <SelectContent>
                     <SelectItem value="all">Semua Pembahasan</SelectItem>
                     <SelectItem value="with">Ada Pembahasan</SelectItem>
-                    <SelectItem value="without">Belum Ada Pembahasan</SelectItem>
+                    <SelectItem value="without">
+                      Belum Ada Pembahasan
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

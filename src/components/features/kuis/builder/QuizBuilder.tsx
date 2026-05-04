@@ -717,8 +717,8 @@ export function QuizBuilder({
         {currentQuiz && (
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
-              {questions.length}{" "}
-              {effectiveLaporanMode ? "komponen" : "soal"} • {totalPoints} poin
+              {questions.length} {effectiveLaporanMode ? "komponen" : "soal"} •{" "}
+              {totalPoints} poin
             </span>
             {quizStatus === "draft" ? (
               <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 px-4 py-1">
@@ -1082,7 +1082,9 @@ export function QuizBuilder({
                       <p className="font-medium truncate">{q.pertanyaan}</p>
                       <div className="flex gap-2 mt-1">
                         <Badge variant="secondary" className="text-xs">
-                          {effectiveLaporanMode ? "upload laporan" : q.tipe_soal}
+                          {effectiveLaporanMode
+                            ? "upload laporan"
+                            : q.tipe_soal}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
                           {q.poin} poin

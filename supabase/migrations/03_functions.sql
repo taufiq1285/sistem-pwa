@@ -88,7 +88,7 @@ BEGIN
             UPDATE inventaris 
             SET jumlah_tersedia = jumlah_tersedia - NEW.jumlah_pinjam
             WHERE id = NEW.inventaris_id;
-        ELSIF NEW.status = 'returned' AND OLD.status = 'approved' THEN
+        ELSIF NEW.status = 'returned' AND OLD.status = 'return_requested' THEN
             UPDATE inventaris 
             SET jumlah_tersedia = jumlah_tersedia + NEW.jumlah_pinjam
             WHERE id = NEW.inventaris_id;

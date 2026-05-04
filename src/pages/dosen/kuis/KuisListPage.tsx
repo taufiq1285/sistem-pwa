@@ -55,17 +55,18 @@ async function enrichQuizListStats(quizzes: Kuis[]): Promise<Kuis[]> {
 
   const quizIds = quizzes.map((quiz) => quiz.id);
 
-  const [{ data: soalRows, error: soalError }, { data: attemptRows, error: attemptError }] =
-    await Promise.all([
-      supabase
-        .from("soal")
-        .select("id, kuis_id, poin")
-        .in("kuis_id", quizIds),
-      supabase
-        .from("attempt_kuis")
-        .select("id, kuis_id, status, total_poin, jawaban(poin_diperoleh, feedback)")
-        .in("kuis_id", quizIds),
-    ]);
+  const [
+    { data: soalRows, error: soalError },
+    { data: attemptRows, error: attemptError },
+  ] = await Promise.all([
+    supabase.from("soal").select("id, kuis_id, poin").in("kuis_id", quizIds),
+    supabase
+      .from("attempt_kuis")
+      .select(
+        "id, kuis_id, status, total_poin, jawaban(poin_diperoleh, feedback)",
+      )
+      .in("kuis_id", quizIds),
+  ]);
 
   if (soalError) {
     throw soalError;
@@ -95,7 +96,7 @@ async function enrichQuizListStats(quizzes: Kuis[]): Promise<Kuis[]> {
       gradedCount: number;
     }
   >();
-  for (const row of attemptRows || []) {
+  for (const row of (attemptRows || []) as any[]) {
     const current = attemptStats.get(row.kuis_id) || {
       totalAttempts: 0,
       submittedCount: 0,
@@ -108,8 +109,7 @@ async function enrichQuizListStats(quizzes: Kuis[]): Promise<Kuis[]> {
       row.total_poin != null ||
       (row.jawaban || []).some(
         (jawaban: any) =>
-          jawaban.poin_diperoleh != null ||
-          Boolean(jawaban.feedback?.trim?.()),
+          jawaban.poin_diperoleh != null || Boolean(jawaban.feedback?.trim?.()),
       );
 
     if (row.status === "submitted" || row.status === "graded") {
@@ -639,8 +639,8 @@ export default function KuisListPage() {
                         {kelas.mata_kuliah?.nama_mk
                           ? ` - ${kelas.mata_kuliah.nama_mk}`
                           : ""}
-                        {false && kelas.mata_kuliah?.nama_mk
-                          ? ` • ${kelas.mata_kuliah.kode_mk}`
+                        {kelas.mata_kuliah?.kode_mk
+                          ? ` - ${kelas.mata_kuliah.kode_mk}`
                           : ""}
                       </SelectItem>
                     );

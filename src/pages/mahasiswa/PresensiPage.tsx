@@ -13,12 +13,16 @@ import {
   Clock,
   AlertCircle,
   WifiOff,
+  ChevronDown,
+  ChevronUp,
+  BookOpen,
 } from "lucide-react";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -44,6 +48,7 @@ import {
   type KehadiranStatus,
 } from "@/lib/api/kehadiran.api";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function PresensiPage() {
   const { user } = useAuth();
@@ -53,6 +58,7 @@ export default function PresensiPage() {
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
   const [selectedMataKuliah, setSelectedMataKuliah] =
     useState<string>("__all__");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const presensiCacheKey = user?.mahasiswa?.id
     ? `mahasiswa_presensi_${user.mahasiswa.id}`
@@ -161,13 +167,13 @@ export default function PresensiPage() {
   };
 
   const getRecordMataKuliahName = (record: MahasiswaKehadiranRecord) =>
+    (record as any).nama_mk ||
     record.jadwal?.mata_kuliah?.nama_mk ||
     record.jadwal?.kelas?.mata_kuliah?.nama_mk ||
-    (record as any).nama_mk ||
     "Mata kuliah tidak diketahui";
 
   const getRecordMataKuliahKode = (record: MahasiswaKehadiranRecord) =>
-    record.jadwal?.mata_kuliah?.kode_mk || (record as any).kode_mk || "";
+    (record as any).kode_mk || record.jadwal?.mata_kuliah?.kode_mk || "";
 
   const getRecordMataKuliahKey = (record: MahasiswaKehadiranRecord) =>
     record.mata_kuliah_id ||
@@ -205,6 +211,75 @@ export default function PresensiPage() {
       (record) => getRecordMataKuliahKey(record) === selectedMataKuliah,
     );
   }, [records, selectedMataKuliah]);
+
+  const groupedRecords = useMemo(() => {
+    const sortedRecords = [...filteredRecords].sort((a, b) => {
+      const aDate = a.tanggal || a.jadwal?.tanggal_praktikum || "";
+      const bDate = b.tanggal || b.jadwal?.tanggal_praktikum || "";
+      return bDate.localeCompare(aDate);
+    });
+
+    const groups = new Map<
+      string,
+      {
+        id: string;
+        nama: string;
+        kode: string;
+        total: number;
+        hadir: number;
+        izin: number;
+        sakit: number;
+        alpha: number;
+        persentase: number;
+        records: MahasiswaKehadiranRecord[];
+      }
+    >();
+
+    sortedRecords.forEach((record) => {
+      const id = getRecordMataKuliahKey(record);
+      const existing = groups.get(id);
+
+      if (!existing) {
+        groups.set(id, {
+          id,
+          nama: getRecordMataKuliahName(record),
+          kode: getRecordMataKuliahKode(record),
+          total: 0,
+          hadir: 0,
+          izin: 0,
+          sakit: 0,
+          alpha: 0,
+          persentase: 0,
+          records: [],
+        });
+      }
+
+      const group = groups.get(id)!;
+      group.records.push(record);
+      group.total += 1;
+      if (record.status === "hadir") group.hadir += 1;
+      if (record.status === "izin") group.izin += 1;
+      if (record.status === "sakit") group.sakit += 1;
+      if (record.status === "alpha") group.alpha += 1;
+    });
+
+    return Array.from(groups.values())
+      .map((group) => ({
+        ...group,
+        persentase:
+          group.total > 0 ? Math.round((group.hadir / group.total) * 100) : 0,
+      }))
+      .sort((a, b) => a.nama.localeCompare(b.nama));
+  }, [filteredRecords]);
+
+  useEffect(() => {
+    if (selectedMataKuliah === "__all__") {
+      setExpandedGroups(new Set());
+      return;
+    }
+
+    setExpandedGroups(new Set([selectedMataKuliah]));
+  }, [selectedMataKuliah]);
 
   const calculateStats = () => {
     const total = filteredRecords.length;
@@ -288,6 +363,18 @@ export default function PresensiPage() {
     });
   }, [lastUpdatedAt]);
 
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
+
   if (loading) {
     return (
       <div className="app-container py-4 sm:py-6 lg:py-8">
@@ -318,8 +405,8 @@ export default function PresensiPage() {
                     Presensi Kehadiran
                   </h1>
                   <p className="text-muted-foreground">
-                    Rekap kehadiran per mata kuliah agar sesuai dengan absensi
-                    yang dibuat dosen.
+                    Rekap presensi umum per mata kuliah, kelas, dan tanggal
+                    sesuai catatan kehadiran yang dibuat dosen.
                   </p>
                   {(isOfflineData || lastUpdatedLabel) && (
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -381,7 +468,7 @@ export default function PresensiPage() {
                 </Select>
                 <p className="text-sm text-muted-foreground">
                   {selectedMataKuliah === "__all__"
-                    ? "Menampilkan seluruh presensi. Jika satu tanggal memiliki beberapa mata kuliah, setiap mata kuliah dihitung sebagai satu catatan presensi terpisah."
+                    ? "Menampilkan seluruh presensi yang dikelompokkan per mata kuliah. Jika satu tanggal memiliki beberapa mata kuliah, setiap mata kuliah tetap dihitung sebagai catatan terpisah."
                     : `Menampilkan presensi untuk ${
                         selectedMataKuliahInfo?.nama || "mata kuliah aktif"
                       } saja.`}
@@ -433,7 +520,9 @@ export default function PresensiPage() {
           <CardHeader>
             <CardTitle>
               Persentase Kehadiran
-              {selectedMataKuliahInfo ? ` - ${selectedMataKuliahInfo.nama}` : ""}
+              {selectedMataKuliahInfo
+                ? ` - ${selectedMataKuliahInfo.nama}`
+                : ""}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -491,58 +580,123 @@ export default function PresensiPage() {
                 </AlertDescription>
               </Alert>
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-border/60 bg-background/70">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Mata Kuliah</TableHead>
-                      <TableHead>Kelas</TableHead>
-                      <TableHead>Topik/Keterangan</TableHead>
-                      <TableHead>Waktu Dicatat</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRecords.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium text-foreground">
-                          {formatDate(
-                            record.jadwal?.tanggal_praktikum ||
-                              record.tanggal ||
-                              "",
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">
-                              {getRecordMataKuliahName(record)}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {getRecordMataKuliahKode(record) || "Presensi"}
+              <div className="space-y-4">
+                {groupedRecords.map((group) => {
+                  const isExpanded =
+                    expandedGroups.has(group.id) ||
+                    selectedMataKuliah !== "__all__";
+
+                  return (
+                    <div
+                      key={group.id}
+                      className="overflow-hidden rounded-2xl border border-border/60 bg-background/70"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleGroup(group.id)}
+                        className="flex w-full flex-col gap-4 p-4 text-left transition-colors hover:bg-muted/30"
+                      >
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="h-4 w-4 text-primary" />
+                              <h3 className="truncate text-base font-bold text-foreground sm:text-lg">
+                                {group.nama}
+                              </h3>
+                              {group.kode && (
+                                <Badge variant="outline">{group.kode}</Badge>
+                              )}
+                            </div>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {group.total} pertemuan tercatat •{" "}
+                              {group.persentase}% hadir
                             </p>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {record.jadwal?.kelas?.nama_kelas ||
-                            (record as any).nama_kelas ||
-                            "-"}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {record.keterangan ||
-                            record.jadwal?.topik ||
-                            "Kehadiran Kelas"}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {formatRecordedTime(record.created_at)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {getStatusBadge(record.status)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge className="bg-green-50 text-green-700 border-green-200">
+                              Hadir {group.hadir}
+                            </Badge>
+                            {group.izin > 0 && (
+                              <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                                Izin {group.izin}
+                              </Badge>
+                            )}
+                            {group.sakit > 0 && (
+                              <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                                Sakit {group.sakit}
+                              </Badge>
+                            )}
+                            {group.alpha > 0 && (
+                              <Badge className="bg-red-50 text-red-700 border-red-200">
+                                Alpha {group.alpha}
+                              </Badge>
+                            )}
+                            <span
+                              className={cn(
+                                "inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground",
+                              )}
+                            >
+                              {isExpanded ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="border-t border-border/60 px-4 pb-4 pt-4">
+                          <div className="overflow-hidden rounded-xl border border-border/60">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Tanggal</TableHead>
+                                  <TableHead>Kelas</TableHead>
+                                  <TableHead>Topik/Keterangan</TableHead>
+                                  <TableHead>Waktu Dicatat</TableHead>
+                                  <TableHead className="text-center">
+                                    Status
+                                  </TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {group.records.map((record) => (
+                                  <TableRow key={record.id}>
+                                    <TableCell className="font-medium text-foreground">
+                                      {formatDate(
+                                        record.tanggal ||
+                                          record.jadwal?.tanggal_praktikum ||
+                                          "",
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      {record.jadwal?.kelas?.nama_kelas ||
+                                        (record as any).nama_kelas ||
+                                        "-"}
+                                    </TableCell>
+                                    <TableCell className="text-sm">
+                                      {record.keterangan ||
+                                        record.jadwal?.topik ||
+                                        "Presensi perkuliahan"}
+                                    </TableCell>
+                                    <TableCell className="text-sm">
+                                      {formatRecordedTime(record.created_at)}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                      {getStatusBadge(record.status)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>

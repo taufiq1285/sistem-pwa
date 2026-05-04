@@ -23,8 +23,6 @@ function makeScore(overrides: Partial<QuizScore> = {}): QuizScore {
 
 describe("ScoreCard", () => {
   describe("mode normal (non-laporan)", () => {
-
-
     it("menampilkan persentase", () => {
       render(<ScoreCard score={makeScore({ percentage: 75 })} />);
       const elements = screen.getAllByText(/75/);

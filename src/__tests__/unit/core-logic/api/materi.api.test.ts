@@ -60,10 +60,7 @@ import {
   update,
   remove,
 } from "@/lib/api/base.api";
-import {
-  uploadMateriFile,
-  downloadFileAsBlob,
-} from "@/lib/supabase/storage";
+import { uploadMateriFile, downloadFileAsBlob } from "@/lib/supabase/storage";
 import { supabase } from "@/lib/supabase/client";
 
 const mockMateri = {
