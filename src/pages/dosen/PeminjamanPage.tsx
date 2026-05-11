@@ -387,6 +387,11 @@ export default function PeminjamanPage() {
       void refreshBorrowings(true);
     };
 
+    const refreshScheduleOptions = async () => {
+      await invalidateCache("dosen_borrowing_schedule_options");
+      await loadScheduleOptions(true);
+    };
+
     const subscription = supabase
       .channel("dosen-peminjaman-sync")
       .on(
@@ -406,14 +411,20 @@ export default function PeminjamanPage() {
       }
     };
 
+    const handleJadwalChanged = () => {
+      void refreshScheduleOptions();
+    };
+
     window.addEventListener("focus", refreshBorrowingData);
     window.addEventListener("peminjaman:changed", refreshBorrowingData);
+    window.addEventListener("jadwal:changed", handleJadwalChanged);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       subscription.unsubscribe();
       window.removeEventListener("focus", refreshBorrowingData);
       window.removeEventListener("peminjaman:changed", refreshBorrowingData);
+      window.removeEventListener("jadwal:changed", handleJadwalChanged);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);

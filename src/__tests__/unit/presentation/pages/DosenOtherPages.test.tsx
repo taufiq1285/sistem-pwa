@@ -2,7 +2,7 @@
  * Dosen Other Pages Tests — JadwalPage, BankSoalPage, AttemptDetailPage, KuisResultsPage
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 const { mockUseAuth, mockCacheAPI, mockNavigate, mockToast } = vi.hoisted(
@@ -25,6 +25,91 @@ vi.mock("react-router-dom", async (orig) => {
   return { ...a, useNavigate: () => mockNavigate };
 });
 vi.mock("sonner", () => ({ toast: mockToast }));
+vi.mock("@/components/ui/tabs", async () => {
+  const React = await import("react");
+  const TabsContext = React.createContext<{
+    value?: string;
+    onValueChange?: (value: string) => void;
+  }>({});
+
+  return {
+    Tabs: ({
+      value,
+      defaultValue,
+      onValueChange,
+      children,
+      className,
+    }: {
+      value?: string;
+      defaultValue?: string;
+      onValueChange?: (value: string) => void;
+      children?: React.ReactNode;
+      className?: string;
+    }) => {
+      const [internalValue, setInternalValue] = React.useState(defaultValue);
+      const activeValue = value ?? internalValue;
+
+      return (
+        <TabsContext.Provider
+          value={{
+            value: activeValue,
+            onValueChange: (nextValue) => {
+              setInternalValue(nextValue);
+              onValueChange?.(nextValue);
+            },
+          }}
+        >
+          <div className={className}>{children}</div>
+        </TabsContext.Provider>
+      );
+    },
+    TabsList: ({
+      children,
+      className,
+    }: {
+      children?: React.ReactNode;
+      className?: string;
+    }) => <div className={className}>{children}</div>,
+    TabsTrigger: ({
+      value,
+      children,
+      className,
+    }: {
+      value: string;
+      children?: React.ReactNode;
+      className?: string;
+    }) => {
+      const context = React.useContext(TabsContext);
+      const isActive = context.value === value;
+
+      return (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={isActive}
+          data-state={isActive ? "active" : "inactive"}
+          className={className}
+          onClick={() => context.onValueChange?.(value)}
+        >
+          {children}
+        </button>
+      );
+    },
+    TabsContent: ({
+      value,
+      children,
+      className,
+    }: {
+      value: string;
+      children?: React.ReactNode;
+      className?: string;
+    }) => {
+      const context = React.useContext(TabsContext);
+      if (context.value !== value) return null;
+      return <div className={className}>{children}</div>;
+    },
+  };
+});
 vi.mock("@/lib/supabase/client", () => ({
   supabase: {
     channel: vi.fn(() => ({
@@ -54,8 +139,15 @@ vi.mock("@/lib/api/dosen.api", () => ({
   updateBorrowingRequest: vi.fn(),
   cancelBorrowingRequest: vi.fn(),
   getAvailableEquipment: vi.fn(),
+  getBorrowingScheduleOptions: vi.fn(),
   returnBorrowingRequest: vi.fn(),
   markBorrowingAsTaken: vi.fn(),
+}));
+vi.mock("@/lib/api/jadwal.api", () => ({
+  getJadwal: vi.fn(),
+  createJadwal: vi.fn(),
+  updateJadwal: vi.fn(),
+  deleteJadwal: vi.fn(),
 }));
 vi.mock("@/lib/api/bank-soal.api", () => ({
   getBankSoal: vi.fn(),
@@ -101,19 +193,29 @@ vi.mock("@/components/features/kuis/builder/QuizBuilder", () => ({
   QuizBuilder: () => <div data-testid="quiz-builder" />,
 }));
 vi.mock("@/components/shared/Calendar/Calendar", () => ({
-  Calendar: () => <div data-testid="calendar-view" />,
+  Calendar: ({ events = [] }: { events?: Array<{ title: string }> }) => (
+    <div data-testid="calendar-view">
+      {events.map((event) => (
+        <div key={event.title}>{event.title}</div>
+      ))}
+    </div>
+  ),
 }));
 vi.mock("@/components/shared/Calendar/EventDialog", () => ({
   EventDialog: () => null,
 }));
 
 import * as dosenApiRaw from "@/lib/api/dosen.api";
+import * as apiCacheRaw from "@/lib/offline/api-cache";
+import * as jadwalApiRaw from "@/lib/api/jadwal.api";
 import * as bankSoalApiRaw from "@/lib/api/bank-soal.api";
 import * as kuisApiRaw from "@/lib/api/kuis.api";
 import * as logbookApiRaw from "@/lib/api/logbook.api";
 import * as kelasApiRaw from "@/lib/api/kelas.api";
 
 const dosenApi = dosenApiRaw as any;
+const apiCache = apiCacheRaw as any;
+const jadwalApi = jadwalApiRaw as any;
 const bankSoalApi = bankSoalApiRaw as any;
 const kuisApi = kuisApiRaw as any;
 const logbookApi = logbookApiRaw as any;
@@ -143,20 +245,34 @@ describe("Dosen JadwalPage", () => {
   const mockKelas = [
     {
       id: "k1",
+      kode_kelas: "TI-1A",
       nama_kelas: "TI-1A",
+      tahun_ajaran: "2025/2026",
+      mata_kuliah_id: "mk-1",
       mata_kuliah: { kode_mk: "ANT101", nama_mk: "Anatomi" },
+    },
+  ];
+  const mockMataKuliah = [
+    {
+      id: "mk-1",
+      kode_mk: "ANT101",
+      nama_mk: "Anatomi",
     },
   ];
   const mockJadwal = [
     {
       id: "j1",
+      dosen_id: "dosen-1",
       kelas_id: "k1",
       hari: "senin",
-      tanggal: "2025-01-06",
+      tanggal_praktikum: "2099-01-06",
       jam_mulai: "08:00",
       jam_selesai: "10:00",
-      nama_lab: "Lab 1",
-      lokasi: "Gedung A",
+      status: "pending",
+      topik: "Praktikum Anatomi Dasar",
+      laboratorium_id: "lab-1",
+      laboratorium: { nama_lab: "Lab 1" },
+      mata_kuliah: { id: "mk-1", nama_mk: "Anatomi" },
     },
   ];
 
@@ -166,12 +282,17 @@ describe("Dosen JadwalPage", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     mockUseAuth.mockReturnValue({ user: mockDosenUser });
     mockCacheAPI.mockImplementation((key: string) => {
-      if (key.includes("kelas")) return Promise.resolve(mockKelas);
-      if (key.includes("jadwal")) return Promise.resolve(mockJadwal);
+      if (key.startsWith("dosen_jadwal_list_"))
+        return Promise.resolve(mockJadwal);
+      if (key === "admin_master_kelas_jadwal")
+        return Promise.resolve(mockKelas);
+      if (key === "admin_master_mata_kuliah_jadwal") {
+        return Promise.resolve(mockMataKuliah);
+      }
       return Promise.resolve([]);
     });
     vi.mocked(dosenApi.getMyKelas).mockResolvedValue(mockKelas as any);
-    vi.mocked(dosenApi.getJadwal).mockResolvedValue(mockJadwal as any);
+    vi.mocked(jadwalApi.getJadwal).mockResolvedValue(mockJadwal as any);
   });
 
   it("menampilkan loading skeleton", () => {
@@ -197,6 +318,26 @@ describe("Dosen JadwalPage", () => {
     await waitFor(() => {
       const tabs = screen.queryAllByRole("tab");
       expect(tabs.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("menjaga item pending tetap muncul di calendar dan list view", async () => {
+    wrap(<DosenJadwalPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("calendar-view")).toBeInTheDocument();
+      expect(screen.getByText("Anatomi - TI-1A - Lab 1")).toBeInTheDocument();
+    });
+
+    const listViewTab = screen.getByRole("tab", { name: /List View/i });
+    fireEvent.pointerDown(listViewTab);
+    fireEvent.click(listViewTab);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Menunggu \(1\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/Praktikum Anatomi Dasar/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Anatomi/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/Lab 1/i)).toBeInTheDocument();
     });
   });
 
@@ -531,6 +672,20 @@ describe("Dosen LogbookReviewPage", () => {
 import DosenPeminjamanPage from "@/pages/dosen/PeminjamanPage";
 
 describe("Dosen PeminjamanPage", () => {
+  const mockScheduleOptions = [
+    {
+      id: "jadwal-1",
+      mata_kuliah_nama: "Anatomi",
+      kelas_nama: "TI-1A",
+      tanggal_praktikum: "2099-01-06",
+      jam_mulai: "08:00",
+      jam_selesai: "10:00",
+      laboratorium_id: "lab-1",
+      laboratorium_nama: "Lab 1",
+      label: "Anatomi • TI-1A • Lab 1 • 06 Jan 2099",
+    },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -538,10 +693,14 @@ describe("Dosen PeminjamanPage", () => {
     mockCacheAPI.mockImplementation((key: string) => {
       if (key.includes("borrowings")) return Promise.resolve([]);
       if (key.includes("equipment")) return Promise.resolve([]);
+      if (key.includes("schedule_options")) return Promise.resolve([]);
       return Promise.resolve([]);
     });
     vi.mocked(dosenApi.getMyBorrowing).mockResolvedValue([] as any);
     vi.mocked(dosenApi.getAvailableEquipment).mockResolvedValue([] as any);
+    vi.mocked(dosenApi.getBorrowingScheduleOptions).mockResolvedValue(
+      mockScheduleOptions as any,
+    );
   });
 
   it("menampilkan heading peminjaman alat", async () => {
@@ -555,5 +714,75 @@ describe("Dosen PeminjamanPage", () => {
 
   it("tidak crash saat data kosong", () => {
     expect(() => wrap(<DosenPeminjamanPage />)).not.toThrow();
+  });
+
+  it("menampilkan helper jadwal aktif saat opsi praktikum tersedia", async () => {
+    mockCacheAPI.mockImplementation((key: string) => {
+      if (key.includes("borrowings")) return Promise.resolve([]);
+      if (key.includes("equipment")) return Promise.resolve([]);
+      if (key.includes("schedule_options")) {
+        return Promise.resolve(mockScheduleOptions);
+      }
+      return Promise.resolve([]);
+    });
+
+    wrap(<DosenPeminjamanPage />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Buat Pengajuan Peminjaman/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Pilih jadwal agar `Lab Tujuan` mengikuti lab/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(
+          /Belum ada jadwal praktikum aktif yang bisa dipakai/i,
+        ),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("me-refresh opsi jadwal saat event jadwal berubah", async () => {
+    mockCacheAPI.mockImplementation(
+      (key: string, _: unknown, options?: any) => {
+        if (key.includes("borrowings")) return Promise.resolve([]);
+        if (key.includes("equipment")) return Promise.resolve([]);
+        if (key.includes("schedule_options")) {
+          return Promise.resolve(
+            options?.forceRefresh ? mockScheduleOptions : [],
+          );
+        }
+        return Promise.resolve([]);
+      },
+    );
+
+    wrap(<DosenPeminjamanPage />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Buat Pengajuan Peminjaman/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Belum ada jadwal praktikum aktif yang bisa dipakai/i),
+      ).toBeInTheDocument();
+    });
+
+    window.dispatchEvent(
+      new CustomEvent("jadwal:changed", {
+        detail: { action: "approved", jadwalId: "jadwal-1" },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(apiCache.invalidateCache).toHaveBeenCalledWith(
+        "dosen_borrowing_schedule_options",
+      );
+      expect(
+        screen.getByText(/Pilih jadwal agar `Lab Tujuan` mengikuti lab/i),
+      ).toBeInTheDocument();
+    });
   });
 });

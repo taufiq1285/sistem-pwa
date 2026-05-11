@@ -47,6 +47,7 @@ import {
   cacheAPI,
   getCachedData,
   invalidateCachePatternSync,
+  isOnline as isOnlineNow,
 } from "@/lib/offline/api-cache";
 
 export default function MataKuliahPage() {
@@ -101,12 +102,12 @@ export default function MataKuliahPage() {
 
       if (hasCachedData && !forceRefresh) {
         setMataKuliahList(cachedEntry.data);
-        setIsOfflineData(!navigator.onLine);
+        setIsOfflineData(!isOnlineNow());
         setLastUpdatedAt(cachedEntry.timestamp || null);
         setIsLoading(false);
       }
 
-      if (forceRefresh && !navigator.onLine) {
+      if (forceRefresh && !isOnlineNow()) {
         throw new Error(
           hasCachedData
             ? "Perangkat sedang offline. Menampilkan snapshot mata kuliah terakhir."
@@ -135,7 +136,7 @@ export default function MataKuliahPage() {
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
     } catch (error: any) {
-      if (!navigator.onLine) {
+      if (!isOnlineNow()) {
         setIsOfflineData(true);
       } else {
         toast.error("Gagal memuat mata kuliah", { description: error.message });
@@ -188,7 +189,7 @@ export default function MataKuliahPage() {
       return;
     }
 
-    if (!navigator.onLine) {
+    if (!isOnlineNow()) {
       toast.error(
         "Tidak dapat menyimpan mata kuliah saat offline. Sambungkan internet terlebih dahulu.",
       );
@@ -225,7 +226,7 @@ export default function MataKuliahPage() {
   const confirmDelete = async (cascade: boolean = false) => {
     if (!deletingMK) return;
 
-    if (!navigator.onLine) {
+    if (!isOnlineNow()) {
       toast.error(
         "Tidak dapat menghapus mata kuliah saat offline. Sambungkan internet terlebih dahulu.",
       );
@@ -369,7 +370,7 @@ export default function MataKuliahPage() {
         </div>
       </div>
 
-      {(isOfflineData || !navigator.onLine) && (
+      {(isOfflineData || !isOnlineNow()) && (
         <Alert className="border-warning/40 bg-warning/10">
           <AlertDescription>
             Data mata kuliah sedang memakai snapshot lokal dari perangkat.
@@ -550,7 +551,7 @@ export default function MataKuliahPage() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving || !navigator.onLine}
+              disabled={isSaving || !isOnlineNow()}
               className="font-semibold bg-linear-to-r from-primary to-accent"
             >
               {isSaving ? "Menyimpan..." : editingMK ? "Simpan" : "Tambah"}

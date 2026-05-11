@@ -27,6 +27,7 @@ import {
   jadwalApi,
 } from "@/lib/api/jadwal.api";
 import * as baseApi from "@/lib/api/base.api";
+import * as apiCache from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
 import type { Jadwal } from "@/types/jadwal.types";
 
@@ -64,6 +65,10 @@ vi.mock("../../../../lib/utils/logger", () => ({
   logger: {
     info: vi.fn(),
   },
+}));
+
+vi.mock("../../../../lib/offline/api-cache", () => ({
+  invalidateCachePatternSync: vi.fn().mockResolvedValue(1),
 }));
 
 describe("Jadwal API", () => {
@@ -1011,6 +1016,10 @@ describe("Jadwal API", () => {
       });
       await expect(cancelJadwal("jadwal-1", "Libur")).resolves.toBeUndefined();
       await expect(reactivateJadwal("jadwal-1")).resolves.toBeUndefined();
+
+      expect(apiCache.invalidateCachePatternSync).toHaveBeenCalledWith(
+        "*dosen_borrowing_schedule_options*",
+      );
     });
 
     it("should throw when reactivate jadwal rpc fails", async () => {

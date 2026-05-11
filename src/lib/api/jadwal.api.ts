@@ -39,6 +39,7 @@ async function invalidateJadwalCaches(): Promise<void> {
     invalidateCachePatternSync("*query_jadwal_praktikum*"),
     invalidateCachePatternSync("*dosen_jadwal_list_*"),
     invalidateCachePatternSync("*dosen_jadwal_events_*"),
+    invalidateCachePatternSync("*dosen_borrowing_schedule_options*"),
     invalidateCachePatternSync("*mahasiswa_jadwal_full_*"),
     invalidateCachePatternSync("*mahasiswa_logbook_jadwal_*"),
     invalidateCachePatternSync("*mahasiswa_stats*"),

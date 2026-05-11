@@ -21,13 +21,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
-import {
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  format,
-} from "date-fns";
+import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 // Components
@@ -88,7 +82,6 @@ import { cn } from "@/lib/utils";
 // API & Types
 import {
   getJadwal,
-  getCalendarEvents,
   createJadwal,
   updateJadwal,
   deleteJadwal,
@@ -178,7 +171,6 @@ export default function JadwalPage() {
 
   // State
   const [jadwalList, setJadwalList] = useState<Jadwal[]>([]);
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [laboratoriumList, setLaboratoriumList] = useState<Laboratorium[]>([]);
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
@@ -282,7 +274,7 @@ export default function JadwalPage() {
 
   const scheduleCacheKeys = useMemo(() => {
     if (!user?.id) {
-      return { jadwal: null, events: null };
+      return { jadwal: null };
     }
 
     const filterKey = JSON.stringify({
@@ -294,7 +286,6 @@ export default function JadwalPage() {
 
     return {
       jadwal: `dosen_jadwal_list_${user.id}_${filterKey}`,
-      events: `dosen_jadwal_events_${user.id}_${filterKey}`,
     };
   }, [currentDate, filterHari, filterKelas, filterLab, user?.id]);
 
@@ -339,6 +330,51 @@ export default function JadwalPage() {
       }),
     [jadwalList, todayDate],
   );
+
+  const calendarEvents = useMemo<CalendarEvent[]>(() => {
+    return jadwalList
+      .filter(
+        (jadwal) =>
+          Boolean(jadwal.tanggal_praktikum) &&
+          Boolean(jadwal.jam_mulai) &&
+          Boolean(jadwal.jam_selesai),
+      )
+      .map((jadwal) => {
+        const kelas = kelasList.find((item) => item.id === jadwal.kelas_id);
+        const mataKuliah = getMataKuliahForJadwal(jadwal);
+        const laboratoriumNama = jadwal.laboratorium?.nama_lab || "Lab";
+        const kelasNama =
+          (typeof jadwal.kelas === "object"
+            ? jadwal.kelas?.nama_kelas
+            : null) ||
+          kelas?.nama_kelas ||
+          "Kelas";
+        const title = mataKuliah?.nama_mk
+          ? `${mataKuliah.nama_mk} - ${kelasNama} - ${laboratoriumNama}`
+          : `${kelasNama} - ${laboratoriumNama}`;
+
+        return {
+          id: jadwal.id,
+          title,
+          start: `${jadwal.tanggal_praktikum}T${jadwal.jam_mulai}:00.000Z`,
+          end: `${jadwal.tanggal_praktikum}T${jadwal.jam_selesai}:00.000Z`,
+          type: "class" as const,
+          color: "#3b82f6",
+          location: laboratoriumNama,
+          description: jadwal.topik || undefined,
+          metadata: {
+            jadwal_id: jadwal.id,
+            kelas_id: jadwal.kelas_id || undefined,
+            kelas_nama: kelasNama,
+            mata_kuliah_nama: mataKuliah?.nama_mk || undefined,
+            laboratorium_id: jadwal.laboratorium_id,
+            tanggal_praktikum: jadwal.tanggal_praktikum,
+            topik: jadwal.topik || undefined,
+            status: jadwal.status || "pending",
+          },
+        };
+      });
+  }, [getMataKuliahForJadwal, jadwalList, kelasList]);
 
   const renderJadwalCards = (
     data: Jadwal[],
@@ -520,38 +556,24 @@ export default function JadwalPage() {
       if (filterLab) filters.laboratorium_id = filterLab;
       if (filterHari) filters.hari = filterHari;
 
-      const monthStart = startOfMonth(currentDate);
-      const monthEnd = endOfMonth(currentDate);
-      const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-      const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-
-      if (!scheduleCacheKeys.jadwal || !scheduleCacheKeys.events) {
+      if (!scheduleCacheKeys.jadwal) {
         setJadwalList([]);
-        setCalendarEvents([]);
         setIsOfflineData(false);
         setLastUpdatedAt(null);
         return;
       }
 
-      const [cachedJadwalEntry, cachedEventsEntry] = await Promise.all([
-        getCachedData<Jadwal[]>(scheduleCacheKeys.jadwal),
-        getCachedData<CalendarEvent[]>(scheduleCacheKeys.events),
-      ]);
+      const cachedJadwalEntry = await getCachedData<Jadwal[]>(
+        scheduleCacheKeys.jadwal,
+      );
 
       const hasCachedJadwal = Array.isArray(cachedJadwalEntry?.data);
-      const hasCachedEvents = Array.isArray(cachedEventsEntry?.data);
-      const hasAnyCachedData = hasCachedJadwal || hasCachedEvents;
+      const hasAnyCachedData = hasCachedJadwal;
 
       if (hasAnyCachedData) {
         setJadwalList(hasCachedJadwal ? cachedJadwalEntry!.data : []);
-        setCalendarEvents(hasCachedEvents ? cachedEventsEntry!.data : []);
         setIsOfflineData(!navigator.onLine);
-        setLastUpdatedAt(
-          Math.max(
-            cachedJadwalEntry?.timestamp || 0,
-            cachedEventsEntry?.timestamp || 0,
-          ) || null,
-        );
+        setLastUpdatedAt(cachedJadwalEntry?.timestamp || null);
         setLoading(false);
       }
 
@@ -563,32 +585,21 @@ export default function JadwalPage() {
         );
       }
 
-      const [data, events] = await Promise.all([
-        cacheAPI(scheduleCacheKeys.jadwal, () => getJadwal(filters), {
+      const data = await cacheAPI(
+        scheduleCacheKeys.jadwal,
+        () => getJadwal(filters),
+        {
           ttl: 5 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
-        }),
-        cacheAPI(
-          scheduleCacheKeys.events,
-          () => getCalendarEvents(calendarStart, calendarEnd, filters),
-          {
-            ttl: 5 * 60 * 1000,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
-      ]);
+        },
+      );
 
       setJadwalList(data);
-      setCalendarEvents(events);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
     } catch (error: any) {
-      if (
-        !navigator.onLine &&
-        (jadwalList.length > 0 || calendarEvents.length > 0)
-      ) {
+      if (!navigator.onLine && jadwalList.length > 0) {
         toast.error("Mode offline aktif", {
           description:
             error?.message ||
@@ -794,8 +805,7 @@ export default function JadwalPage() {
       !referenceCacheKeys.laboratorium ||
       !referenceCacheKeys.mataKuliah ||
       !referenceCacheKeys.kelas ||
-      !scheduleCacheKeys.jadwal ||
-      !scheduleCacheKeys.events
+      !scheduleCacheKeys.jadwal
     ) {
       return;
     }
@@ -803,12 +813,7 @@ export default function JadwalPage() {
     const handleCacheUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{
         key?: string;
-        data?:
-          | Laboratorium[]
-          | MataKuliah[]
-          | Kelas[]
-          | Jadwal[]
-          | CalendarEvent[];
+        data?: Laboratorium[] | MataKuliah[] | Kelas[] | Jadwal[];
       }>;
 
       if (
@@ -843,15 +848,6 @@ export default function JadwalPage() {
         Array.isArray(customEvent.detail?.data)
       ) {
         setJadwalList(customEvent.detail.data as Jadwal[]);
-        setIsOfflineData(false);
-        setLastUpdatedAt(Date.now());
-      }
-
-      if (
-        customEvent.detail?.key === scheduleCacheKeys.events &&
-        Array.isArray(customEvent.detail?.data)
-      ) {
-        setCalendarEvents(customEvent.detail.data as CalendarEvent[]);
         setIsOfflineData(false);
         setLastUpdatedAt(Date.now());
       }
@@ -1001,7 +997,6 @@ export default function JadwalPage() {
       setIsCreateOpen(false);
       createForm.reset();
       await invalidateCache(scheduleCacheKeys.jadwal);
-      await invalidateCache(scheduleCacheKeys.events);
       fetchJadwal(true);
     } catch (error: any) {
       toast.error("Gagal menambahkan jadwal", {
@@ -1142,7 +1137,6 @@ export default function JadwalPage() {
       editForm.reset();
       setSelectedJadwal(null);
       await invalidateCache(scheduleCacheKeys.jadwal);
-      await invalidateCache(scheduleCacheKeys.events);
       fetchJadwal(true);
     } catch (error: any) {
       toast.error("Gagal memperbarui jadwal", {
@@ -1204,7 +1198,6 @@ export default function JadwalPage() {
       setIsDeleteOpen(false);
       setSelectedJadwal(null);
       await invalidateCache(scheduleCacheKeys.jadwal);
-      await invalidateCache(scheduleCacheKeys.events);
       fetchJadwal(true);
     } catch (error: any) {
       toast.error("Gagal menghapus jadwal", {

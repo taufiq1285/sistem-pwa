@@ -114,10 +114,26 @@ describe("EquipmentsPage", () => {
           tahun_pengadaan: 2024,
           keterangan: "-",
         },
+        {
+          id: "inv-2",
+          kode_barang: "INF-002",
+          nama_barang: "Infus Pump",
+          kategori: "Alat Lab",
+          merk: "B. Braun",
+          jumlah: 4,
+          jumlah_tersedia: 4,
+          kondisi: "baik",
+          tahun_pengadaan: 2025,
+          keterangan: "Ditambahkan laboran",
+          laboratorium: {
+            id: "lab-1",
+            nama_lab: "Lab Anatomi",
+          },
+        },
       ],
     });
 
-    mockGetInventarisCategories.mockResolvedValue(["Alat"]);
+    mockGetInventarisCategories.mockResolvedValue(["Alat", "Alat Lab"]);
 
     mockSupabaseFrom.mockImplementation(() => {
       const builder: any = {
@@ -132,15 +148,20 @@ describe("EquipmentsPage", () => {
     });
   });
 
-  it("render halaman equipment", async () => {
+  it("menampilkan inventaris laboran di monitoring admin", async () => {
     renderWithRouter();
 
     await waitFor(() => {
       expect(
         screen.getByRole("heading", { name: /manajemen peralatan/i }),
       ).toBeInTheDocument();
+      expect(screen.getByText("Infus Pump")).toBeInTheDocument();
+      expect(screen.getByText("INF-002")).toBeInTheDocument();
+      expect(screen.getByText("B. Braun")).toBeInTheDocument();
     });
 
-    expect(mockGetInventarisList).toHaveBeenCalled();
+    expect(mockGetInventarisList).toHaveBeenCalledWith({
+      search: undefined,
+    });
   });
 });

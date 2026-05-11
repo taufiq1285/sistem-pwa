@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { normalize } from "@/lib/utils/normalize";
+import { isOnline as isOnlineNow } from "@/lib/offline/api-cache";
 
 // UI Components
 import {
@@ -172,6 +173,13 @@ export default function KelasPageEnhanced() {
       return;
     }
 
+    if (!isOnlineNow()) {
+      toast.error(
+        "Tidak dapat menyimpan kelas saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     // Proceed normally - no dosen assignment needed for universal class
     await executeSave(formData);
   };
@@ -223,10 +231,17 @@ export default function KelasPageEnhanced() {
   const confirmDelete = async () => {
     if (!deletingKelas) return;
 
+    if (!isOnlineNow()) {
+      toast.error(
+        "Tidak dapat menghapus kelas saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     setIsProcessing(true);
     try {
       await deleteKelas(deletingKelas.id);
-      toast.success("Kelas berhasil dihapus");
+      toast.success("Kelas berhasil diarsipkan");
       await loadKelas();
       setIsDeleteDialogOpen(false);
       setDeletingKelas(null);
