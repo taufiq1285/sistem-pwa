@@ -69,7 +69,7 @@ export function DeleteConfirmDialog({
               {itemName}
             </p>
             {description && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-500 mt-1">
                 {description}
               </p>
             )}

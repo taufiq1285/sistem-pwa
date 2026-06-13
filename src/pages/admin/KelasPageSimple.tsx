@@ -424,16 +424,21 @@ export default function KelasPageSimple() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-3xl font-bold">Manajemen Kelas</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-foreground">
+            Manajemen Kelas
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Kelola kelas mahasiswa berdasarkan angkatan
           </p>
         </div>
-        <Button onClick={() => handleOpenForm()}>
+        <Button
+          onClick={() => handleOpenForm()}
+          className="font-semibold bg-linear-to-r from-primary to-accent shrink-0"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Tambah Kelas
         </Button>
@@ -501,33 +506,33 @@ export default function KelasPageSimple() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() => handleOpenMahasiswaDialog(kelas)}
+                          className="table-action-btn table-action-btn-view"
                           title="Kelola Mahasiswa"
                         >
                           <Users className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleOpenForm(kelas)}
+                          className="table-action-btn table-action-btn-edit"
                           title="Edit Kelas"
                         >
                           <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => {
                             setKelasToDelete(kelas);
                             setShowDeleteDialog(true);
                           }}
+                          className="table-action-btn table-action-btn-delete"
                           title="Hapus Kelas"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </div>
                     </TableCell>
                   </TableRow>

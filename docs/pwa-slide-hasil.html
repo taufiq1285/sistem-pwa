@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Implementasi PWA – Sistem Praktikum AKMB</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;width:1280px;height:720px;overflow:hidden;}
+
+.slide{
+  width:1280px;height:720px;
+  background:linear-gradient(150deg,#3a0000 0%,#6b0f0f 45%,#7c1212 70%,#4a0808 100%);
+  padding:26px 38px 22px;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  gap:14px;
+  position:relative;overflow:hidden;
+}
+.blob1{position:absolute;width:500px;height:500px;top:-160px;right:-60px;
+  background:radial-gradient(circle,rgba(220,160,20,0.11) 0%,transparent 65%);border-radius:50%;pointer-events:none}
+.blob2{position:absolute;width:360px;height:360px;bottom:-100px;left:-40px;
+  background:radial-gradient(circle,rgba(255,255,255,0.05) 0%,transparent 65%);border-radius:50%;pointer-events:none}
+
+/* ── HEADER ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:12px}
+.tag{display:inline-flex;align-items:center;gap:5px;
+  background:rgba(220,160,20,0.18);border:1px solid rgba(220,160,20,0.45);
+  border-radius:20px;padding:3px 13px;
+  font-size:11px;font-weight:700;color:#f5d87a;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.h-title{font-size:24px;font-weight:900;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,0.4)}
+.h-sub{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+.techs{display:flex;gap:6px;align-self:flex-end}
+.tech{background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.20);
+  border-radius:7px;padding:5px 12px;font-size:11.5px;font-weight:700;color:#fff}
+
+/* ── BODY: 3 cols ── */
+.body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* ── FEATURE CARD ── */
+.fcard{
+  background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.14);
+  border-radius:14px;padding:16px 15px;
+  display:flex;flex-direction:column;gap:10px;
+  position:relative;overflow:hidden;
+}
+.fcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.fcard.gold::before  {background:linear-gradient(90deg,#d4a017,#f5d87a)}
+.fcard.slate::before {background:linear-gradient(90deg,#94a3b8,#e2e8f0)}
+.fcard.rose::before  {background:linear-gradient(90deg,#f43f5e,#fb7185)}
+
+.fc-head{display:flex;align-items:center;gap:10px}
+.fc-icon{width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fc-icon svg{width:22px;height:22px;stroke-width:1.8}
+.fc-icon.gold  {background:rgba(212,160,23,0.20);border:1px solid rgba(212,160,23,0.35)}
+.fc-icon.slate {background:rgba(148,163,184,0.20);border:1px solid rgba(148,163,184,0.30)}
+.fc-icon.rose  {background:rgba(244,63,94,0.20);border:1px solid rgba(244,63,94,0.30)}
+.fc-title{font-size:14px;font-weight:800;color:#fff}
+.fc-file {font-size:10px;color:rgba(255,255,255,0.40);font-family:monospace;margin-top:1px}
+
+.divider{height:1px;background:rgba(255,255,255,0.10)}
+
+/* code-like snippet */
+.snippet{
+  background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.10);
+  border-radius:8px;padding:10px 12px;font-family:monospace;
+  font-size:10.5px;line-height:1.7;color:#94a3b8;
+}
+.kw{color:#f5d87a;font-weight:700}
+.fn{color:#93c5fd}
+.st{color:#86efac}
+.cm{color:#475569;font-style:italic}
+
+/* feature pills */
+.feat-row{display:flex;flex-wrap:wrap;gap:5px}
+.fp{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.16);
+  border-radius:8px;padding:5px 10px;
+  font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);
+}
+.fp svg{width:13px;height:13px;stroke-width:2;flex-shrink:0}
+.fp.g  svg{stroke:#34d399}.fp.b  svg{stroke:#60a5fa}
+.fp.y  svg{stroke:#fbbf24}.fp.r  svg{stroke:#fb7185}
+.fp.p  svg{stroke:#a78bfa}.fp.t  svg{stroke:#5eead4}
+
+/* ── STATS BAR ── */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.stat{
+  background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.13);
+  border-radius:10px;padding:9px 12px;
+  display:flex;align-items:center;gap:9px;
+}
+.stat svg{width:22px;height:22px;stroke-width:1.8;flex-shrink:0}
+.stat-val{font-size:20px;font-weight:900;color:#fff;line-height:1}
+.stat-lbl{font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="blob1"></div>
+  <div class="blob2"></div>
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div>
+      <div class="tag">Hasil &amp; Pembahasan</div>
+      <div class="h-title">Implementasi PWA pada Sistem Praktikum AKMB</div>
+      <div class="h-sub">Fitur-fitur PWA yang diimplementasikan dalam kode sumber sistem ini</div>
+    </div>
+    <div class="techs">
+      <div class="tech">src/lib/pwa/</div>
+      <div class="tech">src/lib/offline/</div>
+      <div class="tech">src/sw.ts</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- CARD 1: Service Worker & Register -->
+    <div class="fcard gold">
+      <div class="fc-head">
+        <div class="fc-icon gold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f5d87a"><path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div class="fc-title">Service Worker &amp; Auto Update</div>
+          <div class="fc-file">src/lib/pwa/register-sw.ts &nbsp;·&nbsp; src/main.tsx</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="snippet">
+<span class="cm">// main.tsx — registrasi SW saat app pertama dibuka</span><br>
+<span class="fn">registerServiceWorker</span>({<br>
+&nbsp;&nbsp;swPath: <span class="st">"/sw.js"</span>,<br>
+&nbsp;&nbsp;checkUpdateInterval: <span class="kw">5 * 60 * 1000</span>, <span class="cm">// 5 menit</span><br>
+&nbsp;&nbsp;enableAutoUpdate: <span class="kw">true</span>,<br>
+});<br>
+<span class="cm">// Auto-update saat user idle 2 menit</span><br>
+<span class="fn">setupIdleAutoUpdate</span>(); <span class="cm">// IDLE_TIMEOUT = 2 min</span>
+      </div>
+
+      <div class="feat-row">
+        <div class="fp g"><svg viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"/></svg>Registrasi Otomatis</div>
+        <div class="fp y"><svg viewBox="0 0 24 24" fill="none"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Idle Auto Update</div>
+        <div class="fp b"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Blank Screen Recovery</div>
+        <div class="fp p"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Check on Focus/Tab</div>
+      </div>
+    </div>
+
+    <!-- CARD 2: Offline & Sync -->
+    <div class="fcard slate">
+      <div class="fc-head">
+        <div class="fc-icon slate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        </div>
+        <div>
+          <div class="fc-title">Offline Mode &amp; Sync Manager</div>
+          <div class="fc-file">src/lib/offline/sync-manager.ts &nbsp;·&nbsp; indexeddb.ts</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="snippet">
+<span class="cm">// main.tsx — inisialisasi sync saat online</span><br>
+<span class="kw">if</span> (navigator.<span class="fn">onLine</span>) {<br>
+&nbsp;&nbsp;<span class="fn">initializeSyncManager</span>();<br>
+} <span class="kw">else</span> {<br>
+&nbsp;&nbsp;<span class="cm">// Tunda hingga koneksi kembali</span><br>
+&nbsp;&nbsp;window.<span class="fn">addEventListener</span>(<span class="st">"online"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;() =&gt; <span class="fn">bootstrapSyncManager</span>());<br>
+}
+      </div>
+
+      <div class="feat-row">
+        <div class="fp g"><svg viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"/></svg>IndexedDB Storage</div>
+        <div class="fp b"><svg viewBox="0 0 24 24" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Network Detector</div>
+        <div class="fp y"><svg viewBox="0 0 24 24" fill="none"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Queue Manager</div>
+        <div class="fp r"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Conflict Resolver</div>
+        <div class="fp t"><svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Offline Auth</div>
+      </div>
+    </div>
+
+    <!-- CARD 3: Caching & BG Sync -->
+    <div class="fcard rose">
+      <div class="fc-head">
+        <div class="fc-icon rose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fb7185"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+        </div>
+        <div>
+          <div class="fc-title">Caching Strategies &amp; BG Sync</div>
+          <div class="fc-file">src/lib/pwa/cache-strategies.ts &nbsp;·&nbsp; background-sync.ts</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="snippet">
+<span class="cm">// sw.ts — routing berdasarkan jenis request</span><br>
+<span class="kw">if</span> (<span class="fn">isApiRequest</span>(url)) {<br>
+&nbsp;&nbsp;<span class="fn">networkFirstStrategy</span>(req, api); <span class="cm">// 5s timeout</span><br>
+} <span class="kw">else if</span> (<span class="fn">isImageRequest</span>(url)) {<br>
+&nbsp;&nbsp;<span class="fn">cacheFirstStrategy</span>(req, images);<br>
+} <span class="kw">else</span> {<br>
+&nbsp;&nbsp;<span class="fn">staleWhileRevalidate</span>(req, dynamic);<br>
+}
+      </div>
+
+      <div class="feat-row">
+        <div class="fp b"><svg viewBox="0 0 24 24" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Cache First</div>
+        <div class="fp g"><svg viewBox="0 0 24 24" fill="none"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>Network First</div>
+        <div class="fp y"><svg viewBox="0 0 24 24" fill="none"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Stale While Revalidate</div>
+        <div class="fp r"><svg viewBox="0 0 24 24" fill="none"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>Workbox Precache</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats">
+    <div class="stat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#f5d87a"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <div><div class="stat-val">5</div><div class="stat-lbl">File PWA di src/lib/pwa</div></div>
+    </div>
+    <div class="stat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#34d399"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
+      <div><div class="stat-val">15</div><div class="stat-lbl">File Offline di src/lib/offline</div></div>
+    </div>
+    <div class="stat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <div><div class="stat-val">969</div><div class="stat-lbl">Baris kode di src/sw.ts</div></div>
+    </div>
+    <div class="stat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fb7185"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <div><div class="stat-val">3</div><div class="stat-lbl">BG Sync Tag (quiz, data, periodic)</div></div>
+    </div>
+    <div class="stat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa"><rect x="2" y="11" width="20" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <div><div class="stat-val">HTTPS</div><div class="stat-lbl">Deploy Vercel — SW aktif</div></div>
+    </div>
+    <div class="stat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <div><div class="stat-val">2 min</div><div class="stat-lbl">Idle timeout auto-update</div></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

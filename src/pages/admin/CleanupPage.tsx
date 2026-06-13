@@ -11,6 +11,7 @@ import {
   cleanupTugasPraktikumOnly,
   verifyKuisDataCounts,
 } from "@/lib/api/cleanup.api";
+import logger from "@/lib/utils/logger";
 
 export default function CleanupPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +39,7 @@ export default function CleanupPage() {
     try {
       const counts = await verifyKuisDataCounts();
       setCurrentCounts(counts);
-      console.log("📊 Current data counts:", counts);
+      logger.debug("📊 Current data counts:", counts);
     } catch (error) {
       console.error("❌ Verify error:", error);
       alert("Gagal memverifikasi data: " + (error as Error).message);

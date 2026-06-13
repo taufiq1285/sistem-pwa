@@ -1,10 +1,11 @@
 /**
  * Dosen API - FIXED: Added getMyKelas and KelasWithStats
- * * 🆕 UPDATED: Added Student Enrollment functions
+ * * ðŸ†• UPDATED: Added Student Enrollment functions
  */
 
 import { supabase } from "@/lib/supabase/client";
 import { cacheAPI } from "@/lib/offline/api-cache";
+import { logger } from "@/lib/utils/logger";
 
 import { requirePermission } from "@/lib/middleware";
 import { notifyLaboranPengembalianDiajukan } from "@/lib/api/notification.api";
@@ -38,7 +39,7 @@ export interface MataKuliahWithStats {
   totalMahasiswa: number;
 }
 
-// ✅ NEW: KelasWithStats type for dashboard
+// âœ… NEW: KelasWithStats type for dashboard
 export interface KelasWithStats {
   id: string;
   kode_kelas: string;
@@ -66,7 +67,7 @@ export interface KelasWithDetails {
 }
 
 // ============================================================================
-// 🆕 NEW TYPES - STUDENT ENROLLMENT
+// ðŸ†• NEW TYPES - STUDENT ENROLLMENT
 // ============================================================================
 export interface EnrolledStudent {
   id: string;
@@ -220,7 +221,7 @@ async function getBorrowingItemsMap(
 
     return grouped;
   } catch (error) {
-    console.warn(
+    logger.debug(
       "Failed to load peminjaman_detail, using legacy fallback.",
       error,
     );
@@ -296,10 +297,10 @@ async function getDosenId(): Promise<string | null> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    console.log("🔍 DEBUG getDosenId: user =", user?.id);
+    logger.debug("ðŸ” DEBUG getDosenId: user =", user?.id);
 
     if (!user) {
-      console.log("❌ DEBUG: No authenticated user");
+      logger.debug("âŒ DEBUG: No authenticated user");
       // No user - return stored dosen ID if available
       return storedDosenId || cachedDosenId;
     }
@@ -328,10 +329,10 @@ async function getDosenId(): Promise<string | null> {
         .eq("user_id", user.id)
         .single();
 
-      console.log("🔍 DEBUG getDosenId: dosen query result =", { data, error });
+      logger.debug("ðŸ” DEBUG getDosenId: dosen query result =", { data, error });
 
       if (error) {
-        console.log("❌ DEBUG: Dosen query error =", error);
+        logger.debug("âŒ DEBUG: Dosen query error =", error);
         // Suppress error logging - might be offline
         return storedUserDosenId || null; // Return only current-user cache
       }
@@ -555,7 +556,7 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
           },
         ).length;
 
-        // ✅ FIX: Exclude archived kuis from pending grading count
+        // âœ… FIX: Exclude archived kuis from pending grading count
         const { data: kuisData } = await supabase
           .from("kuis")
           .select("id")
@@ -564,7 +565,7 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
 
         const kuisIds = kuisData?.map((k) => k.id) || [];
 
-        // ✅ NEW: Get questions for each kuis to determine if it's a CBT (all pilihan_ganda)
+        // âœ… NEW: Get questions for each kuis to determine if it's a CBT (all pilihan_ganda)
         // CBT quizzes are auto-graded and should NOT be counted in pendingGrading
         const { data: soalData } = await supabase
           .from("soal")
@@ -590,7 +591,7 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
           }
         });
 
-        // ✅ FIX: Get submitted attempts and exclude CBT quizzes
+        // âœ… FIX: Get submitted attempts and exclude CBT quizzes
         let pendingGrading = 0;
         if (kuisIds.length > 0) {
           const { data: submittedAttempts } = await supabase
@@ -630,7 +631,7 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
           pendingGrading,
         };
       } catch (error) {
-        console.error("Error fetching dosen stats:", error);
+        logger.error("Error fetching dosen stats:", error);
         return {
           totalKelas: 0,
           totalMahasiswa: 0,
@@ -641,14 +642,14 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
     },
     {
       ttl: 5 * 60 * 1000, // Cache for 5 minutes
-      forceRefresh, // ✅ FIX: Allow force refresh to bypass cache
+      forceRefresh, // âœ… FIX: Allow force refresh to bypass cache
       staleWhileRevalidate: true, // Return stale data while fetching fresh
     },
   );
 }
 
 // ============================================================================
-// MY KELAS - ✅ NEW FUNCTION
+// MY KELAS - âœ… NEW FUNCTION
 // ============================================================================
 
 export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
@@ -693,7 +694,7 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
             .in("id", resolvedMkIds)
         : { data: [], error: null };
     if (mkError) {
-      console.error("Error fetching mata kuliah for dosen kelas:", mkError);
+      logger.error("Error fetching mata kuliah for dosen kelas:", mkError);
     }
     const mkMap = new Map((mataKuliahData || []).map((mk: any) => [mk.id, mk]));
     const kelasWithStats = await Promise.all(
@@ -726,7 +727,7 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
     );
     return limit ? finalResult.slice(0, limit) : finalResult;
   } catch (error) {
-    console.error("Error fetching my kelas:", error);
+    logger.error("Error fetching my kelas:", error);
     return [];
   }
 }
@@ -755,7 +756,7 @@ export async function getDashboardKelas(
     );
     return limit ? filtered.slice(0, limit) : filtered;
   } catch (error) {
-    console.error("Error fetching dashboard kelas:", error);
+    logger.error("Error fetching dashboard kelas:", error);
     return [];
   }
 }
@@ -839,7 +840,7 @@ export async function getMyMataKuliah(
     }
     return results;
   } catch (error) {
-    console.error("Error fetching mata kuliah:", error);
+    logger.error("Error fetching mata kuliah:", error);
     return [];
   }
 }
@@ -858,7 +859,7 @@ export async function getUpcomingPracticum(
       return [];
     }
 
-    // ✅ Logika Tanggal (7 hari: Hari ini + 6 hari)
+    // âœ… Logika Tanggal (7 hari: Hari ini + 6 hari)
     const today = new Date();
     const todayStr = today.toISOString().split("T")[0]; // Mulai hari ini
 
@@ -866,7 +867,7 @@ export async function getUpcomingPracticum(
     sixDaysFromNow.setDate(sixDaysFromNow.getDate() + 6); // Selesai 6 hari dari sekarang
     const endDateStr = sixDaysFromNow.toISOString().split("T")[0];
 
-    // ✅ PERBAIKAN: Filter jadwal yang aktif dan disetujui saja
+    // âœ… PERBAIKAN: Filter jadwal yang aktif dan disetujui saja
     let query: any = (supabase as any)
       .from("jadwal_praktikum")
       .select(
@@ -901,7 +902,7 @@ export async function getUpcomingPracticum(
       .eq("status", "approved") // Hanya jadwal yang disetujui
       .gte("tanggal_praktikum", todayStr)
       .lte("tanggal_praktikum", endDateStr)
-      .eq("dosen_id", dosenId) // 🔄 FIXED: Filter by dosen_id from jadwal_praktikum table itself
+      .eq("dosen_id", dosenId) // ðŸ”„ FIXED: Filter by dosen_id from jadwal_praktikum table itself
       .order("tanggal_praktikum", { ascending: true })
       .order("jam_mulai", { ascending: true });
 
@@ -912,28 +913,28 @@ export async function getUpcomingPracticum(
     const { data, error } = await query;
     if (error) {
       // Ini akan log error jika masih ada
-      console.error("Error fetching upcoming practicum:", error);
+      logger.error("Error fetching upcoming practicum:", error);
       throw error;
     }
 
     // Debug: Log raw data
-    console.log(
+    logger.debug(
       "Raw jadwal data for dosen",
       dosenId,
       ":",
       data?.length,
       "items",
     );
-    console.log("📋 Jadwal details:", data);
+    logger.debug("ðŸ“‹ Jadwal details:", data);
 
-    // 🔄 FIXED: No need for client-side filtering - query already filters by dosen_id
+    // ðŸ”„ FIXED: No need for client-side filtering - query already filters by dosen_id
     const filtered = data || [];
 
     // Apply limit after filtering
     const limitedData = limit ? filtered.slice(0, limit) : filtered;
 
     // Debug: Log filtered data
-    console.log("Filtered jadwal data:", limitedData.length, "items");
+    logger.debug("Filtered jadwal data:", limitedData.length, "items");
 
     return limitedData.map((item: any) => ({
       id: item.id,
@@ -950,7 +951,7 @@ export async function getUpcomingPracticum(
     }));
   } catch (error) {
     // Menangkap error jika terjadi di luar query
-    console.error("Error in getUpcomingPracticum function:", error);
+    logger.error("Error in getUpcomingPracticum function:", error);
     return [];
   }
 }
@@ -994,7 +995,7 @@ export async function getPendingGrading(
       return [];
     }
 
-    // ✅ FIX: Exclude archived kuis from pending grading
+    // âœ… FIX: Exclude archived kuis from pending grading
     const { data: kuisIds } = await supabase
       .from("kuis")
       .select("id")
@@ -1005,7 +1006,7 @@ export async function getPendingGrading(
       return [];
     }
 
-    // ✅ NEW: Get questions for each kuis to determine if it's a CBT (all pilihan_ganda)
+    // âœ… NEW: Get questions for each kuis to determine if it's a CBT (all pilihan_ganda)
     // CBT quizzes are auto-graded and should NOT appear in "Perlu Dinilai"
     const { data: soalData } = await supabase
       .from("soal")
@@ -1031,7 +1032,7 @@ export async function getPendingGrading(
         tipes.length > 0 && tipes.every((t) => t === "pilihan_ganda");
       if (allPilihanGanda) {
         cbtKuisIds.add(kuisId);
-        console.log(
+        logger.debug(
           "[getPendingGrading] Excluding CBT quiz:",
           kuisId,
           "(all questions are pilihan_ganda)",
@@ -1039,7 +1040,7 @@ export async function getPendingGrading(
       }
     });
 
-    // ✅ FIX: Get all submitted attempts first
+    // âœ… FIX: Get all submitted attempts first
     const { data: submittedAttempts, error: submittedError } = await supabase
       .from("attempt_kuis" as any)
       .select(
@@ -1078,12 +1079,12 @@ export async function getPendingGrading(
 
     if (submittedError) throw submittedError;
 
-    // ✅ FIX: Filter to only show attempts that need grading
+    // âœ… FIX: Filter to only show attempts that need grading
     // For each unique (kuis_id, mahasiswa_id) pair, only show if the latest attempt is "submitted"
     const uniquePairs = new Map<string, GradingData>();
 
     const allAttempts = (submittedAttempts as unknown as GradingData[]) || [];
-    console.log(
+    logger.debug(
       "[getPendingGrading] Total submitted/graded attempts:",
       allAttempts.length,
     );
@@ -1091,9 +1092,9 @@ export async function getPendingGrading(
     allAttempts.forEach((attempt) => {
       const key = `${attempt.kuis_id}_${attempt.mahasiswa_id}`;
 
-      // ✅ NEW: Skip if this is a CBT quiz (auto-graded)
+      // âœ… NEW: Skip if this is a CBT quiz (auto-graded)
       if (cbtKuisIds.has(attempt.kuis_id)) {
-        console.log(
+        logger.debug(
           "[getPendingGrading] Skipping CBT quiz attempt:",
           key,
           "quiz:",
@@ -1105,7 +1106,7 @@ export async function getPendingGrading(
       // Only keep the latest attempt for each (kuis, mahasiswa) pair
       if (!uniquePairs.has(key)) {
         uniquePairs.set(key, attempt);
-        console.log(
+        logger.debug(
           "[getPendingGrading] Added unique pair:",
           key,
           "status:",
@@ -1116,19 +1117,19 @@ export async function getPendingGrading(
       }
     });
 
-    console.log("[getPendingGrading] Unique pairs count:", uniquePairs.size);
+    logger.debug("[getPendingGrading] Unique pairs count:", uniquePairs.size);
 
     // Filter to only include pairs where the latest attempt status is "submitted" (not "graded")
     const pendingAttempts = Array.from(uniquePairs.values()).filter(
       (attempt) => attempt.status === "submitted",
     );
 
-    console.log(
+    logger.debug(
       "[getPendingGrading] Pending attempts (submitted only):",
       pendingAttempts.length,
     );
     pendingAttempts.forEach((attempt) => {
-      console.log(
+      logger.debug(
         "  -",
         attempt.mahasiswa?.user?.full_name,
         "|",
@@ -1156,7 +1157,7 @@ export async function getPendingGrading(
       attempt_number: item.attempt_number,
     }));
   } catch (error) {
-    console.error("Error fetching pending grading:", error);
+    logger.error("Error fetching pending grading:", error);
     return [];
   }
 }
@@ -1239,7 +1240,7 @@ export async function getActiveKuis(limit?: number): Promise<KuisWithStats[]> {
 
     return kuisWithStats;
   } catch (error) {
-    console.error("Error fetching active kuis:", error);
+    logger.error("Error fetching active kuis:", error);
     return [];
   }
 }
@@ -1360,7 +1361,7 @@ export async function getMyBorrowing(
       };
     });
   } catch (error) {
-    console.error("Error fetching my borrowing:", error);
+    logger.error("Error fetching my borrowing:", error);
     return [];
   }
 }
@@ -1434,17 +1435,17 @@ export async function getBorrowingScheduleOptions(): Promise<
           jam_selesai: item.jam_selesai,
           laboratorium_id: item.laboratorium_id,
           laboratorium_nama: laboratoriumNama,
-          label: `${mataKuliahNama} • ${kelasNama} • ${laboratoriumNama} • ${tanggalLabel}`,
+          label: `${mataKuliahNama} â€¢ ${kelasNama} â€¢ ${laboratoriumNama} â€¢ ${tanggalLabel}`,
         };
       });
   } catch (error) {
-    console.error("Error fetching borrowing schedule options:", error);
+    logger.error("Error fetching borrowing schedule options:", error);
     return [];
   }
 }
 
 // ============================================================================
-// 🆕 NEW FUNCTIONS - STUDENT ENROLLMENT
+// ðŸ†• NEW FUNCTIONS - STUDENT ENROLLMENT
 // ============================================================================
 /**
  * Get enrolled students for a specific class
@@ -1487,7 +1488,7 @@ export async function getKelasStudents(
       is_active: item.is_active,
     }));
   } catch (error) {
-    console.error("Error fetching kelas students:", error);
+    logger.error("Error fetching kelas students:", error);
     return [];
   }
 }
@@ -1560,7 +1561,7 @@ export async function getMyKelasWithStudents(): Promise<KelasWithStudents[]> {
     );
     return result;
   } catch (error) {
-    console.error("Error fetching kelas with students:", error);
+    logger.error("Error fetching kelas with students:", error);
     return [];
   }
 }
@@ -1586,7 +1587,7 @@ export async function getStudentStats(): Promise<StudentStats> {
       averagePerKelas,
     };
   } catch (error) {
-    console.error("Error fetching student stats:", error);
+    logger.error("Error fetching student stats:", error);
     return {
       totalStudents: 0,
       totalKelas: 0,
@@ -1616,7 +1617,7 @@ export async function exportAllStudents() {
     );
     return allStudents;
   } catch (error) {
-    console.error("Error exporting students:", error);
+    logger.error("Error exporting students:", error);
     return [];
   }
 }
@@ -1638,7 +1639,7 @@ async function createBorrowingRequestImpl(data: {
   tanggal_kembali_rencana: string;
 }): Promise<{ id: string }> {
   try {
-    // ✅ FIX ISSUE #6: Validate tanggal peminjaman
+    // âœ… FIX ISSUE #6: Validate tanggal peminjaman
     const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
 
     if (data.tanggal_pinjam < today) {
@@ -1806,13 +1807,13 @@ async function createBorrowingRequestImpl(data: {
       .select("id")
       .single();
 
-    // ✅ FIX ISSUE #4: Better error handling for insert
+    // âœ… FIX ISSUE #4: Better error handling for insert
     if (error) {
       // Check error code and provide helpful message
       const errorCode = (error as any)?.code;
       const errorMessage = (error as any)?.message || "";
 
-      console.error("Supabase Error Details:", {
+      logger.error("Supabase Error Details:", {
         code: errorCode,
         message: errorMessage,
         fullError: error,
@@ -1889,12 +1890,12 @@ async function createBorrowingRequestImpl(data: {
 
     return { id: (result as any).id };
   } catch (error) {
-    console.error("Error creating borrowing request:", error);
+    logger.error("Error creating borrowing request:", error);
     throw error;
   }
 }
 
-// 🔒 PROTECTED: Requires create:peminjaman permission
+// ðŸ”’ PROTECTED: Requires create:peminjaman permission
 export const createBorrowingRequest = requirePermission(
   "create:peminjaman",
   createBorrowingRequestImpl,
@@ -1929,7 +1930,7 @@ export async function getAvailableEquipment() {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error("Error fetching available equipment:", error);
+    logger.error("Error fetching available equipment:", error);
     throw error;
   }
 }
@@ -2018,7 +2019,7 @@ async function returnBorrowingRequestImpl(data: {
         );
       }
     } catch (notificationError) {
-      console.error(
+      logger.error(
         "Failed to notify laboran about return request:",
         notificationError,
       );
@@ -2026,12 +2027,12 @@ async function returnBorrowingRequestImpl(data: {
 
     return { id: peminjamanData.id };
   } catch (error) {
-    console.error("Error returning borrowing request:", error);
+    logger.error("Error returning borrowing request:", error);
     throw error;
   }
 }
 
-// 🔒 PROTECTED: Requires update:peminjaman permission
+// ðŸ”’ PROTECTED: Requires update:peminjaman permission
 export const returnBorrowingRequest = requirePermission(
   "update:peminjaman",
   returnBorrowingRequestImpl,
@@ -2058,12 +2059,12 @@ async function markBorrowingAsTakenImpl(
 
     return { id: peminjaman_id };
   } catch (error) {
-    console.error("Error marking borrowing as taken:", error);
+    logger.error("Error marking borrowing as taken:", error);
     throw error;
   }
 }
 
-// 🔒 PROTECTED: Requires update:peminjaman permission
+// ðŸ”’ PROTECTED: Requires update:peminjaman permission
 export const markBorrowingAsTaken = requirePermission(
   "update:peminjaman",
   markBorrowingAsTakenImpl,
@@ -2299,7 +2300,7 @@ async function updateBorrowingRequestImpl(
       .eq("id", peminjaman_id);
 
     if (updateError) {
-      console.error("Error updating peminjaman:", updateError);
+      logger.error("Error updating peminjaman:", updateError);
       throw updateError;
     }
 
@@ -2331,12 +2332,12 @@ async function updateBorrowingRequestImpl(
 
     return { id: peminjaman_id };
   } catch (error) {
-    console.error("Error updating borrowing request:", error);
+    logger.error("Error updating borrowing request:", error);
     throw error;
   }
 }
 
-// 🔒 PROTECTED: Requires update:peminjaman permission
+// ðŸ”’ PROTECTED: Requires update:peminjaman permission
 export const updateBorrowingRequest = requirePermission(
   "update:peminjaman",
   updateBorrowingRequestImpl,
@@ -2395,18 +2396,18 @@ async function cancelBorrowingRequestImpl(
       .eq("id", peminjaman_id);
 
     if (deleteError) {
-      console.error("Error deleting peminjaman:", deleteError);
+      logger.error("Error deleting peminjaman:", deleteError);
       throw deleteError;
     }
 
     return { id: peminjaman_id };
   } catch (error) {
-    console.error("Error canceling borrowing request:", error);
+    logger.error("Error canceling borrowing request:", error);
     throw error;
   }
 }
 
-// 🔒 PROTECTED: Requires update:peminjaman permission
+// ðŸ”’ PROTECTED: Requires update:peminjaman permission
 export const cancelBorrowingRequest = requirePermission(
   "update:peminjaman",
   cancelBorrowingRequestImpl,
@@ -2431,7 +2432,7 @@ export const dosenApi = {
   getMyBorrowing,
   getMyBorrowingRequests: getMyBorrowing,
 
-  // 🆕 NEW
+  // ðŸ†• NEW
   getKelasStudents,
   getMyKelasWithStudents,
   getStudentStats,
@@ -2458,7 +2459,7 @@ async function refreshDosenDataImpl(): Promise<{
   error?: string;
 }> {
   try {
-    console.log("🔄 Refreshing dosen data and clearing cache...");
+    logger.debug("ðŸ”„ Refreshing dosen data and clearing cache...");
 
     // Clear all dosen-related cache - clearByPattern not available
     // cacheAPI.clearByPattern("dosen:");
@@ -2471,10 +2472,10 @@ async function refreshDosenDataImpl(): Promise<{
     // Trigger Supabase cache invalidation by running a simple query
     await supabase.from("dosen").select("id").limit(1);
 
-    console.log("✅ Dosen data refreshed successfully");
+    logger.debug("âœ… Dosen data refreshed successfully");
     return { success: true };
   } catch (error: any) {
-    console.error("Error refreshing dosen data:", error);
+    logger.error("Error refreshing dosen data:", error);
     return { success: false, error: error.message };
   }
 }
@@ -2547,7 +2548,7 @@ async function checkDosenAssignmentChangesImpl(): Promise<{
       deletedAssignments: [],
     };
   } catch (error: any) {
-    console.error("Error checking dosen assignment changes:", error);
+    logger.error("Error checking dosen assignment changes:", error);
     return { hasChanges: false };
   }
 }

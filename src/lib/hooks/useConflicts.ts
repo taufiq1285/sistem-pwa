@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "./useAuth";
 import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import logger from "@/lib/utils/logger";
 
 export interface ConflictData {
   id: string;
@@ -137,14 +138,14 @@ export function useConflicts(): UseConflictsReturn {
         setConflicts(transformConflicts(data || []));
 
         if (isOffline) {
-          console.log("ℹ️ Offline mode - showing cached conflicts");
+          logger.debug("ℹ️ Offline mode - showing cached conflicts");
         }
       } catch (err) {
         console.error("Error fetching conflicts:", err);
 
         // ✅ Don't set error in offline mode - it's expected
         if (isOffline) {
-          console.log(
+          logger.debug(
             "ℹ️ Offline mode - conflict fetch failed (using cached data if available)",
           );
         } else {
@@ -208,7 +209,7 @@ export function useConflicts(): UseConflictsReturn {
             .eq("id", conflict.record_id);
 
           if (applyError) {
-            console.warn("Failed to apply resolved data:", applyError);
+            logger.debug("Failed to apply resolved data:", applyError);
             // Don't throw - conflict is marked resolved even if apply fails
           }
         }

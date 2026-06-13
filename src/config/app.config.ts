@@ -11,7 +11,7 @@
 
 export const APP_CONFIG = {
   name: "Sistem Praktikum PWA",
-  version: "1.0.0",
+  version: __APP_VERSION__,
   description: "Progressive Web App untuk Manajemen Praktikum Laboratorium",
   author: "Your Team Name",
 

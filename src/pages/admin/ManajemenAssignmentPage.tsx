@@ -32,10 +32,12 @@ import {
   GraduationCap,
   UserCheck,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { toast } from "sonner";
 
 // UI Components
 import { PageHeader } from "@/components/common/PageHeader";
+import { TableSkeleton } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -431,7 +433,7 @@ export default function ManajemenAssignmentPage() {
           .order("tanggal_praktikum", { ascending: true });
 
         if (jadwalError) {
-          console.warn(
+          logger.debug(
             "Error fetching jadwal details for assignment:",
             key,
             jadwalError,
@@ -975,7 +977,7 @@ export default function ManajemenAssignmentPage() {
             .insert(uniqueMahasiswaNotifications);
 
           if (mahasiswaNotifError) {
-            console.warn(
+            logger.debug(
               "Failed to send praktikum deletion notifications to mahasiswa:",
               mahasiswaNotifError,
             );
@@ -1009,7 +1011,7 @@ export default function ManajemenAssignmentPage() {
         });
 
       if (auditError) {
-        console.warn("Failed to write audit log:", auditError);
+        logger.debug("Failed to write audit log:", auditError);
       }
 
       toast.success("Assignment berhasil diarsipkan", {
@@ -1234,7 +1236,7 @@ export default function ManajemenAssignmentPage() {
           });
 
         if (dosenNotifError) {
-          console.warn(
+          logger.debug(
             "Failed to send jadwal update notification to dosen:",
             dosenNotifError,
           );
@@ -1260,7 +1262,7 @@ export default function ManajemenAssignmentPage() {
           .insert(notifications);
 
         if (mahasiswaNotifError) {
-          console.warn(
+          logger.debug(
             "Failed to send jadwal update notifications to mahasiswa:",
             mahasiswaNotifError,
           );
@@ -1573,7 +1575,7 @@ export default function ManajemenAssignmentPage() {
           });
 
         if (oldDosenNotifError) {
-          console.warn(
+          logger.debug(
             "Failed to send reassignment notification to old dosen:",
             oldDosenNotifError,
           );
@@ -1603,7 +1605,7 @@ export default function ManajemenAssignmentPage() {
           });
 
         if (newDosenNotifError) {
-          console.warn(
+          logger.debug(
             "Failed to send praktikum reference notification to new/current dosen:",
             newDosenNotifError,
           );
@@ -1656,7 +1658,7 @@ export default function ManajemenAssignmentPage() {
             .insert(notifications);
 
           if (mahasiswaNotifError) {
-            console.warn(
+            logger.debug(
               "Failed to send praktikum reference notifications to mahasiswa:",
               mahasiswaNotifError,
             );
@@ -1839,22 +1841,54 @@ export default function ManajemenAssignmentPage() {
   // ============================================================================
   // RENDER
   // ============================================================================
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Memuat data monitoring praktikum...</span>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer rounded-md" />
+            <div className="h-4 w-72 skeleton-shimmer rounded-md" />
+          </div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-20 skeleton-shimmer rounded-xs" />
+                <div className="h-4 w-4 skeleton-shimmer rounded-xs" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="h-8 w-12 skeleton-shimmer rounded-xs" />
+                <div className="h-3 w-24 skeleton-shimmer rounded-xs" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Tabs List & Search skeleton */}
+        <div className="space-y-4">
+          <div className="h-10 w-80 skeleton-shimmer rounded-md" />
+          <TableSkeleton rows={5} columns={6} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <PageHeader
-        title="Monitoring Praktikum & Referensi Akademik"
-        description="Pantau data praktikum yang dibuat dosen dan lakukan koreksi admin bila ada salah pengampu atau mata kuliah"
-      />
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Monitoring Praktikum & Referensi Akademik
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Pantau data praktikum yang dibuat dosen dan lakukan koreksi admin
+            bila ada salah pengampu atau mata kuliah
+          </p>
+        </div>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -2076,9 +2110,8 @@ export default function ManajemenAssignmentPage() {
             </CardHeader>
             <CardContent className="p-0">
               {kelasLoading || loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                  <span>Memuat referensi praktikum...</span>
+                <div className="p-4">
+                  <TableSkeleton rows={5} columns={6} />
                 </div>
               ) : filteredReferences.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -2164,26 +2197,26 @@ export default function ManajemenAssignmentPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <button
+                              type="button"
                               onClick={() =>
                                 handleEditAssignment(reference.assignment)
                               }
+                              className="table-action-btn table-action-btn-edit"
+                              title="Koreksi Relasi"
                             >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Koreksi Relasi
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() =>
                                 handleDeleteAssignment(reference.assignment)
                               }
+                              className="table-action-btn table-action-btn-delete"
+                              title="Hapus"
                             >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Hapus
-                            </Button>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
                         </TableCell>
                       </TableRow>

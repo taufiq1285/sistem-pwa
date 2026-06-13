@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Wifi,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -144,7 +145,7 @@ export function KelolaMahasiswaDialog({
           filter: `kelas_id=eq.${kelas.id}`,
         },
         async (payload) => {
-          console.log("Realtime update:", payload);
+          logger.debug("Realtime update:", payload);
           await loadData();
 
           if (payload.eventType === "INSERT") {
@@ -155,7 +156,7 @@ export function KelolaMahasiswaDialog({
         },
       )
       .subscribe((status) => {
-        console.log("Realtime status:", status);
+        logger.debug("Realtime status:", status);
         if (status === "SUBSCRIBED") {
           setRealtimeConnected(true);
         } else {
@@ -310,7 +311,7 @@ export function KelolaMahasiswaDialog({
 
               {enrolledStudents.length === 0 ? (
                 <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-                  <Users className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                  <Users className="h-12 w-12 mx-auto text-gray-500 mb-2" />
                   <p className="text-gray-500">
                     Belum ada mahasiswa yang terdaftar
                   </p>
@@ -391,7 +392,7 @@ export function KelolaMahasiswaDialog({
 
               {/* Search Bar */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <Input
                   placeholder="Cari mahasiswa berdasarkan NIM, nama, atau email..."
                   value={searchQuery}

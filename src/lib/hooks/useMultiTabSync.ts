@@ -7,6 +7,7 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import logger from "@/lib/utils/logger";
 
 const STORAGE_KEY = "_multiTabSync";
 const LOGOUT_EVENT = "_logout_event";
@@ -55,7 +56,7 @@ export function useMultiTabSync() {
         // Handle logout event from other tab
         if (e.key === LOGOUT_EVENT) {
           const message: TabSyncMessage = JSON.parse(e.newValue);
-          console.log(
+          logger.debug(
             "Detected logout from another tab, current tab logging out",
           );
           toast.info("Terdeteksi logout dari tab lain");
@@ -74,7 +75,7 @@ export function useMultiTabSync() {
               currentUserIdRef.current &&
               currentUserIdRef.current !== message.userId
             ) {
-              console.log(
+              logger.debug(
                 `Different user detected in another tab. Current: ${currentUserIdRef.current}, Other: ${message.userId}`,
               );
               toast.warning(
@@ -87,7 +88,7 @@ export function useMultiTabSync() {
           }
         }
       } catch (error) {
-        console.warn("Error handling multi-tab sync:", error);
+        logger.debug("Error handling multi-tab sync:", error);
       }
     };
 

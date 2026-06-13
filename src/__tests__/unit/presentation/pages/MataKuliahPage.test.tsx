@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { toast } from "sonner";
@@ -107,6 +113,10 @@ function renderWithRouter() {
       <MataKuliahPage />
     </MemoryRouter>,
   );
+}
+
+function changeField(field: HTMLElement, value: string) {
+  fireEvent.change(field, { target: { value } });
 }
 
 describe("MataKuliahPage", () => {
@@ -221,17 +231,13 @@ describe("MataKuliahPage", () => {
     await user.click(
       screen.getByRole("button", { name: /tambah mata kuliah/i }),
     );
-    await user.type(screen.getByPlaceholderText("MK001"), "bid002");
-    await user.type(
+    changeField(screen.getByPlaceholderText("MK001"), "bid002");
+    changeField(
       screen.getByPlaceholderText("Contoh: Komunikasi Bisnis Digital"),
       "Anatomi",
     );
-    await user.clear(screen.getByDisplayValue("D3 Kebidanan"));
-    await user.type(
-      screen.getByPlaceholderText("D3 Kebidanan"),
-      "D4 Kebidanan",
-    );
-    await user.type(
+    changeField(screen.getByPlaceholderText("D3 Kebidanan"), "D4 Kebidanan");
+    changeField(
       screen.getByPlaceholderText("Deskripsi mata kuliah (opsional)"),
       "Mata kuliah baru",
     );
@@ -256,10 +262,7 @@ describe("MataKuliahPage", () => {
     const mkRow = screen.getByTestId("row-mk-1");
     const mkButtons = within(mkRow).getAllByRole("button");
     await user.click(mkButtons[0]);
-    await user.clear(
-      screen.getByPlaceholderText("Contoh: Komunikasi Bisnis Digital"),
-    );
-    await user.type(
+    changeField(
       screen.getByPlaceholderText("Contoh: Komunikasi Bisnis Digital"),
       "Komunikasi Kebidanan Update",
     );
@@ -286,8 +289,8 @@ describe("MataKuliahPage", () => {
     await user.click(
       screen.getByRole("button", { name: /tambah mata kuliah/i }),
     );
-    await user.type(screen.getByPlaceholderText("MK001"), "bid003");
-    await user.type(
+    changeField(screen.getByPlaceholderText("MK001"), "bid003");
+    changeField(
       screen.getByPlaceholderText("Contoh: Komunikasi Bisnis Digital"),
       "Offline MK",
     );

@@ -61,7 +61,7 @@ import type {
 } from "@/types/logbook.types";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
-import { PageHeader } from "@/components/common/PageHeader";
+import { PageHeader, CardListSkeleton, EmptyState } from "@/components/common";
 
 // ============================================================================
 // COMPONENT
@@ -456,15 +456,24 @@ export default function DosenLogbookReviewPage() {
 
   if (loading) {
     return (
-      <div className="role-page-shell">
-        <div className="role-page-content app-container py-6">
-          <div className="flex min-h-[50vh] items-center justify-center rounded-3xl border border-slate-200/70 bg-white/85 px-6 shadow-lg shadow-slate-200/60">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-3 text-sm font-medium text-muted-foreground sm:text-base">
-              Memuat data penilaian logbook...
-            </span>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Penilaian Logbook Mahasiswa
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Tinjau catatan praktikum mahasiswa, beri nilai angka, dan tulis
+              feedback untuk mahasiswa.
+            </p>
           </div>
         </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-[76px] skeleton-shimmer rounded-3xl" />
+          ))}
+        </div>
+        <CardListSkeleton count={4} />
       </div>
     );
   }
@@ -472,496 +481,497 @@ export default function DosenLogbookReviewPage() {
   const filteredLogbooks = getFilteredLogbooks();
 
   return (
-    <div className="role-page-shell">
-      <div className="role-page-content app-container space-y-6 py-4 sm:space-y-8 sm:py-6 lg:py-8">
-        <PageHeader
-          title="Penilaian Logbook Mahasiswa"
-          description="Tinjau catatan praktikum mahasiswa, beri nilai angka, dan tulis feedback untuk mahasiswa."
-          className="section-shell"
-        />
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Penilaian Logbook Mahasiswa
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Tinjau catatan praktikum mahasiswa, beri nilai angka, dan tulis
+            feedback untuk mahasiswa.
+          </p>
+        </div>
+      </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <Card className="overflow-hidden rounded-3xl border border-primary/10 bg-linear-to-br from-primary/5 to-accent/10 shadow-lg shadow-primary/10">
-              <CardContent className="p-4">
-                <p className="text-2xl font-bold text-primary">
-                  {stats.total_logbooks}
-                </p>
-                <p className="text-xs text-muted-foreground">Total Logbook</p>
-              </CardContent>
-            </Card>
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <Card className="overflow-hidden rounded-3xl border border-primary/10 bg-linear-to-br from-primary/5 to-accent/10 shadow-lg shadow-primary/10">
+            <CardContent className="p-4">
+              <p className="text-2xl font-bold text-primary">
+                {stats.total_logbooks}
+              </p>
+              <p className="text-xs text-muted-foreground">Total Logbook</p>
+            </CardContent>
+          </Card>
 
-            <Card className="overflow-hidden rounded-3xl border border-warning/20 bg-linear-to-br from-warning/5 to-warning/10 shadow-lg shadow-warning/10">
-              <CardContent className="p-4">
-                <p className="text-2xl font-bold text-warning">
-                  {stats.submitted + stats.reviewed}
-                </p>
-                <p className="text-xs text-muted-foreground">Perlu Dinilai</p>
-              </CardContent>
-            </Card>
+          <Card className="overflow-hidden rounded-3xl border border-warning/20 bg-linear-to-br from-warning/5 to-warning/10 shadow-lg shadow-warning/10">
+            <CardContent className="p-4">
+              <p className="text-2xl font-bold text-warning">
+                {stats.submitted + stats.reviewed}
+              </p>
+              <p className="text-xs text-muted-foreground">Perlu Dinilai</p>
+            </CardContent>
+          </Card>
 
-            <Card className="overflow-hidden rounded-3xl border border-success/20 bg-linear-to-br from-success/5 to-success/10 shadow-lg shadow-success/10">
-              <CardContent className="p-4">
-                <p className="text-2xl font-bold text-success">
-                  {stats.graded}
-                </p>
-                <p className="text-xs text-muted-foreground">Sudah Dinilai</p>
-              </CardContent>
-            </Card>
+          <Card className="overflow-hidden rounded-3xl border border-success/20 bg-linear-to-br from-success/5 to-success/10 shadow-lg shadow-success/10">
+            <CardContent className="p-4">
+              <p className="text-2xl font-bold text-success">{stats.graded}</p>
+              <p className="text-xs text-muted-foreground">Sudah Dinilai</p>
+            </CardContent>
+          </Card>
 
-            <Card className="overflow-hidden rounded-3xl border border-accent/20 bg-linear-to-br from-accent/5 to-accent/10 shadow-lg shadow-accent/10">
-              <CardContent className="p-4">
-                <p className="text-2xl font-bold text-accent">
-                  {stats.average_grade?.toFixed(1) || "-"}
-                </p>
-                <p className="text-xs text-muted-foreground">Rata-rata Nilai</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+          <Card className="overflow-hidden rounded-3xl border border-accent/20 bg-linear-to-br from-accent/5 to-accent/10 shadow-lg shadow-accent/10">
+            <CardContent className="p-4">
+              <p className="text-2xl font-bold text-accent">
+                {stats.average_grade?.toFixed(1) || "-"}
+              </p>
+              <p className="text-xs text-muted-foreground">Rata-rata Nilai</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        {/* Filters */}
-        <Card className="interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60">
-          <CardContent className="p-4 sm:p-5 lg:p-6">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <div className="flex items-center gap-2 sm:col-span-2 xl:col-span-1">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Filter:</span>
-              </div>
-
-              <Select
-                value={selectedKelas}
-                onValueChange={(value) => {
-                  setSelectedKelas(value);
-                  setSelectedMataKuliah("all");
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-55">
-                  <SelectValue placeholder="Pilih Kelas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Kelas</SelectItem>
-                  {kelasList.map((kelas) => (
-                    <SelectItem key={kelas.id} value={kelas.id}>
-                      {kelas.nama_kelas}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={selectedMataKuliah}
-                onValueChange={setSelectedMataKuliah}
-              >
-                <SelectTrigger className="w-full sm:w-60">
-                  <SelectValue placeholder="Pilih Mata Kuliah" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Mata Kuliah</SelectItem>
-                  {mataKuliahOptions.map((mk) => (
-                    <SelectItem key={mk.id} value={mk.id}>
-                      {mk.nama_mk}
-                      {mk.kode_mk ? ` - ${mk.kode_mk}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-full sm:w-50">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="needs_score">Perlu Dinilai</SelectItem>
-                  <SelectItem value="submitted">Baru Dikirim</SelectItem>
-                  <SelectItem value="graded">Sudah Dinilai</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Input
-                placeholder="Cari nama mahasiswa..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-              />
+      {/* Filters */}
+      <Card className="interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60">
+        <CardContent className="p-4 sm:p-5 lg:p-6">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="flex items-center gap-2 sm:col-span-2 xl:col-span-1">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Filter:</span>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Logbook List */}
-        <div className="space-y-4">
-          {filteredLogbooks.length === 0 ? (
-            <Card className="overflow-hidden rounded-3xl border border-dashed border-primary/30 bg-white/85 shadow-lg shadow-slate-200/60">
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center sm:py-14">
-                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary">
-                  <FileText className="h-8 w-8" />
-                </div>
-                <p className="max-w-md text-sm leading-6 text-muted-foreground sm:text-base">
-                  {searchQuery ||
-                  selectedKelas !== "all" ||
-                  selectedMataKuliah !== "all" ||
-                  selectedStatus !== "all"
-                    ? "Tidak ada logbook yang sesuai dengan filter"
-                    : "Belum ada logbook mahasiswa"}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredLogbooks.map((logbook) => (
-              <Card
-                key={logbook.id}
-                className={
-                  logbook.status === "graded"
-                    ? "interactive-card overflow-hidden rounded-3xl border border-success/30 bg-success/5 shadow-lg shadow-success/10"
-                    : "interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60"
-                }
-              >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <GraduationCap className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">
-                          {logbook.mahasiswa?.user?.full_name || "Mahasiswa"}
-                        </h3>
-                        {getStatusBadge(logbook.status)}
-                      </div>
+            <Select
+              value={selectedKelas}
+              onValueChange={(value) => {
+                setSelectedKelas(value);
+                setSelectedMataKuliah("all");
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-55">
+                <SelectValue placeholder="Pilih Kelas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Kelas</SelectItem>
+                {kelasList.map((kelas) => (
+                  <SelectItem key={kelas.id} value={kelas.id}>
+                    {kelas.nama_kelas}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                      <p className="text-sm text-muted-foreground mb-1">
-                        {logbook.jadwal?.topik || "Praktikum"}
-                      </p>
+            <Select
+              value={selectedMataKuliah}
+              onValueChange={setSelectedMataKuliah}
+            >
+              <SelectTrigger className="w-full sm:w-60">
+                <SelectValue placeholder="Pilih Mata Kuliah" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Mata Kuliah</SelectItem>
+                {mataKuliahOptions.map((mk) => (
+                  <SelectItem key={mk.id} value={mk.id}>
+                    {mk.nama_mk}
+                    {mk.kode_mk ? ` - ${mk.kode_mk}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                      <p className="text-xs font-medium text-primary mb-1">
-                        {logbook.jadwal?.mata_kuliah?.nama_mk || "Mata Kuliah"}
-                      </p>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-full sm:w-50">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="needs_score">Perlu Dinilai</SelectItem>
+                <SelectItem value="submitted">Baru Dikirim</SelectItem>
+                <SelectItem value="graded">Sudah Dinilai</SelectItem>
+              </SelectContent>
+            </Select>
 
-                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                        {logbook.jadwal?.tanggal_praktikum && (
-                          <span>
-                            {format(
-                              new Date(logbook.jadwal.tanggal_praktikum),
-                              "dd MMM yyyy",
-                            )}
-                          </span>
-                        )}
-                        {logbook.jadwal?.laboratorium && (
-                          <span>
-                            Lab: {logbook.jadwal.laboratorium.nama_lab}
-                          </span>
-                        )}
-                      </div>
+            <Input
+              placeholder="Cari nama mahasiswa..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-                      {logbook.submitted_at && (
-                        <p className="text-xs text-muted-foreground/60 mt-1">
-                          Diserahkan:{" "}
+      {/* Logbook List */}
+      <div className="space-y-4">
+        {filteredLogbooks.length === 0 ? (
+          <EmptyState
+            variant={
+              searchQuery ||
+              selectedKelas !== "all" ||
+              selectedMataKuliah !== "all" ||
+              selectedStatus !== "all"
+                ? "no-results"
+                : "no-data"
+            }
+            context="logbook"
+            onAction={() => {
+              setSearchQuery("");
+              setSelectedKelas("all");
+              setSelectedMataKuliah("all");
+              setSelectedStatus("all");
+            }}
+            actionLabel="Reset Filter"
+          />
+        ) : (
+          filteredLogbooks.map((logbook) => (
+            <Card
+              key={logbook.id}
+              className={
+                logbook.status === "graded"
+                  ? "interactive-card overflow-hidden rounded-3xl border border-success/30 bg-success/5 shadow-lg shadow-success/10"
+                  : "interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60"
+              }
+            >
+              <CardContent className="p-4 sm:p-6">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <GraduationCap className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">
+                        {logbook.mahasiswa?.user?.full_name || "Mahasiswa"}
+                      </h3>
+                      {getStatusBadge(logbook.status)}
+                    </div>
+
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {logbook.jadwal?.topik || "Praktikum"}
+                    </p>
+
+                    <p className="text-xs font-medium text-primary mb-1">
+                      {logbook.jadwal?.mata_kuliah?.nama_mk || "Mata Kuliah"}
+                    </p>
+
+                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      {logbook.jadwal?.tanggal_praktikum && (
+                        <span>
                           {format(
-                            new Date(logbook.submitted_at),
-                            "dd MMM yyyy, HH:mm",
+                            new Date(logbook.jadwal.tanggal_praktikum),
+                            "dd MMM yyyy",
                           )}
-                        </p>
+                        </span>
                       )}
-
-                      {logbook.status === "graded" && (
-                        <p className="mt-2 inline-flex rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
-                          Logbook telah dinilai dan tetap tersimpan di riwayat
-                          dosen
-                        </p>
+                      {logbook.jadwal?.laboratorium && (
+                        <span>Lab: {logbook.jadwal.laboratorium.nama_lab}</span>
                       )}
                     </div>
 
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openViewDialog(logbook)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-
-                      {(logbook.status === "submitted" ||
-                        logbook.status === "reviewed" ||
-                        logbook.status === "graded") && (
-                        <Button
-                          size="sm"
-                          onClick={() => openGradeDialog(logbook)}
-                        >
-                          <Star className="h-4 w-4 mr-2" />
-                          {logbook.status === "graded"
-                            ? "Ubah Nilai & Feedback"
-                            : "Nilai & Feedback"}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Preview */}
-                  {logbook.prosedur_dilakukan && (
-                    <div className="text-sm mb-2">
-                      <span className="font-medium">Prosedur:</span>{" "}
-                      <span className="text-muted-foreground line-clamp-2">
-                        {logbook.prosedur_dilakukan}
-                      </span>
-                    </div>
-                  )}
-
-                  {logbook.skill_dipelajari &&
-                    logbook.skill_dipelajari.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {logbook.skill_dipelajari.map((skill) => (
-                          <Badge
-                            key={skill}
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
+                    {logbook.submitted_at && (
+                      <p className="text-xs text-muted-foreground/60 mt-1">
+                        Diserahkan:{" "}
+                        {format(
+                          new Date(logbook.submitted_at),
+                          "dd MMM yyyy, HH:mm",
+                        )}
+                      </p>
                     )}
 
-                  {logbook.nilai !== null && logbook.nilai !== undefined && (
-                    <div className="mt-3 flex items-center gap-2">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Nilai:
-                      </span>
-                      <span className="text-2xl font-bold text-success">
-                        {logbook.nilai}
-                      </span>
-                    </div>
-                  )}
-
-                  {logbook.dosen_feedback && (
-                    <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
-                      <p className="mb-1 text-xs font-medium text-primary">
-                        Feedback:
+                    {logbook.status === "graded" && (
+                      <p className="mt-2 inline-flex rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
+                        Logbook telah dinilai dan tetap tersimpan di riwayat
+                        dosen
                       </p>
-                      <p className="text-sm text-primary/80">
-                        {logbook.dosen_feedback}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                    )}
+                  </div>
 
-        {/* Nilai Dialog */}
-        <Dialog open={showGradeDialog} onOpenChange={setShowGradeDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nilai Logbook</DialogTitle>
-              <DialogDescription>
-                Periksa isi logbook mahasiswa, lalu simpan nilai dan feedback
-                pemeriksaan.
-              </DialogDescription>
-            </DialogHeader>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openViewDialog(logbook)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
 
-            {selectedLogbook && (
-              <div className="space-y-4 py-4">
-                <div className="p-3 bg-muted/40 rounded-lg">
-                  <p className="text-sm font-medium">
-                    Mahasiswa:{" "}
-                    {selectedLogbook?.mahasiswa?.user?.full_name || "-"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedLogbook?.jadwal?.topik || "Praktikum"}
-                  </p>
+                    {(logbook.status === "submitted" ||
+                      logbook.status === "reviewed" ||
+                      logbook.status === "graded") && (
+                      <Button
+                        size="sm"
+                        onClick={() => openGradeDialog(logbook)}
+                      >
+                        <Star className="h-4 w-4 mr-2" />
+                        {logbook.status === "graded"
+                          ? "Ubah Nilai & Feedback"
+                          : "Nilai & Feedback"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="nilai">Nilai (0-100)</Label>
-                  <Input
-                    id="nilai"
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={nilai}
-                    onChange={(e) => setNilai(Number(e.target.value))}
-                    className="text-2xl font-bold"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="feedback-nilai">
-                    Feedback Pemeriksaan <span className="text-danger">*</span>
-                  </Label>
-                  <Textarea
-                    id="feedback-nilai"
-                    placeholder="Contoh: Prosedur sudah runtut, namun refleksi perlu diperjelas pada bagian kendala praktikum."
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                    rows={4}
-                  />
-                </div>
-
-                <div className="rounded-lg border border-muted bg-muted/30 p-3 text-xs text-muted-foreground">
-                  Simpan nilai dalam angka 0-100. Mahasiswa hanya akan melihat
-                  nilai angka dan feedback pemeriksaan, tanpa grade huruf atau
-                  predikat.
-                </div>
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowGradeDialog(false)}
-                disabled={submitting}
-              >
-                Batal
-              </Button>
-              <Button onClick={handleGrade} disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  <>
-                    <Star className="h-4 w-4 mr-2" />
-                    Simpan Nilai & Feedback
-                  </>
+                {/* Preview */}
+                {logbook.prosedur_dilakukan && (
+                  <div className="text-sm mb-2">
+                    <span className="font-medium">Prosedur:</span>{" "}
+                    <span className="text-muted-foreground line-clamp-2">
+                      {logbook.prosedur_dilakukan}
+                    </span>
+                  </div>
                 )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
-        {/* View Dialog */}
-        <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Detail Logbook</DialogTitle>
-            </DialogHeader>
+                {logbook.skill_dipelajari &&
+                  logbook.skill_dipelajari.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {logbook.skill_dipelajari.map((skill) => (
+                        <Badge
+                          key={skill}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
 
+                {logbook.nilai !== null && logbook.nilai !== undefined && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Nilai:
+                    </span>
+                    <span className="text-2xl font-bold text-success">
+                      {logbook.nilai}
+                    </span>
+                  </div>
+                )}
+
+                {logbook.dosen_feedback && (
+                  <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <p className="mb-1 text-xs font-medium text-primary">
+                      Feedback:
+                    </p>
+                    <p className="text-sm text-primary/80">
+                      {logbook.dosen_feedback}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Nilai Dialog */}
+      <Dialog open={showGradeDialog} onOpenChange={setShowGradeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nilai Logbook</DialogTitle>
+            <DialogDescription>
+              Periksa isi logbook mahasiswa, lalu simpan nilai dan feedback
+              pemeriksaan.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedLogbook && (
             <div className="space-y-4 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Mahasiswa</p>
-                  <p className="font-medium">
-                    {selectedLogbook?.mahasiswa?.user?.full_name}
-                  </p>
-                </div>
-                {selectedLogbook && getStatusBadge(selectedLogbook.status)}
+              <div className="p-3 bg-muted/40 rounded-lg">
+                <p className="text-sm font-medium">
+                  Mahasiswa:{" "}
+                  {selectedLogbook?.mahasiswa?.user?.full_name || "-"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {selectedLogbook?.jadwal?.topik || "Praktikum"}
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="nilai">Nilai (0-100)</Label>
+                <Input
+                  id="nilai"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={nilai}
+                  onChange={(e) => setNilai(Number(e.target.value))}
+                  className="text-2xl font-bold"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="feedback-nilai">
+                  Feedback Pemeriksaan <span className="text-danger">*</span>
+                </Label>
+                <Textarea
+                  id="feedback-nilai"
+                  placeholder="Contoh: Prosedur sudah runtut, namun refleksi perlu diperjelas pada bagian kendala praktikum."
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  rows={4}
+                />
+              </div>
+
+              <div className="rounded-lg border border-muted bg-muted/30 p-3 text-xs text-muted-foreground">
+                Simpan nilai dalam angka 0-100. Mahasiswa hanya akan melihat
+                nilai angka dan feedback pemeriksaan, tanpa grade huruf atau
+                predikat.
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowGradeDialog(false)}
+              disabled={submitting}
+            >
+              Batal
+            </Button>
+            <Button onClick={handleGrade} disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Star className="h-4 w-4 mr-2" />
+                  Simpan Nilai & Feedback
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Dialog */}
+      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detail Logbook</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Mahasiswa</p>
+                <p className="font-medium">
+                  {selectedLogbook?.mahasiswa?.user?.full_name}
+                </p>
+              </div>
+              {selectedLogbook && getStatusBadge(selectedLogbook.status)}
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Topik</p>
+              <p className="text-sm">{selectedLogbook?.jadwal?.topik}</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 text-sm text-muted-foreground sm:grid-cols-2">
+              <div>
+                <p className="font-medium">Tanggal</p>
+                <p>
+                  {selectedLogbook?.jadwal?.tanggal_praktikum &&
+                    format(
+                      new Date(selectedLogbook.jadwal.tanggal_praktikum),
+                      "dd MMM yyyy",
+                    )}
+                </p>
+              </div>
+              <div>
+                <p className="font-medium">Lab</p>
+                <p>{selectedLogbook?.jadwal?.laboratorium?.nama_lab}</p>
+              </div>
+            </div>
+
+            <hr />
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Prosedur
+                </p>
+                <p className="text-sm bg-white p-2 rounded border">
+                  {selectedLogbook?.prosedur_dilakukan || "-"}
+                </p>
               </div>
 
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Topik
+                  Hasil Observasi
                 </p>
-                <p className="text-sm">{selectedLogbook?.jadwal?.topik}</p>
+                <p className="text-sm bg-white p-2 rounded border">
+                  {selectedLogbook?.hasil_observasi || "-"}
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 text-sm text-muted-foreground sm:grid-cols-2">
-                <div>
-                  <p className="font-medium">Tanggal</p>
-                  <p>
-                    {selectedLogbook?.jadwal?.tanggal_praktikum &&
-                      format(
-                        new Date(selectedLogbook.jadwal.tanggal_praktikum),
-                        "dd MMM yyyy",
-                      )}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium">Lab</p>
-                  <p>{selectedLogbook?.jadwal?.laboratorium?.nama_lab}</p>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Skill
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {selectedLogbook?.skill_dipelajari?.map((skill) => (
+                    <Badge key={skill} variant="secondary">
+                      {skill}
+                    </Badge>
+                  ))}
                 </div>
               </div>
 
-              <hr />
-
-              <div className="space-y-3">
+              {selectedLogbook?.kendala_dihadapi && (
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    Prosedur
+                    Kendala
                   </p>
                   <p className="text-sm bg-white p-2 rounded border">
-                    {selectedLogbook?.prosedur_dilakukan || "-"}
+                    {selectedLogbook.kendala_dihadapi}
                   </p>
                 </div>
+              )}
 
+              {selectedLogbook?.refleksi && (
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    Hasil Observasi
+                    Refleksi
                   </p>
                   <p className="text-sm bg-white p-2 rounded border">
-                    {selectedLogbook?.hasil_observasi || "-"}
+                    {selectedLogbook.refleksi}
                   </p>
                 </div>
+              )}
+            </div>
 
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Skill
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedLogbook?.skill_dipelajari?.map((skill) => (
-                      <Badge key={skill} variant="secondary">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {selectedLogbook?.kendala_dihadapi && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Kendala
-                    </p>
-                    <p className="text-sm bg-white p-2 rounded border">
-                      {selectedLogbook.kendala_dihadapi}
-                    </p>
-                  </div>
-                )}
-
-                {selectedLogbook?.refleksi && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Refleksi
-                    </p>
-                    <p className="text-sm bg-white p-2 rounded border">
-                      {selectedLogbook.refleksi}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {selectedLogbook?.nilai !== null &&
-                selectedLogbook?.nilai !== undefined && (
-                  <>
-                    <hr />
-                    <div className="p-3 bg-success/10 rounded-lg border border-success/30">
-                      <p className="text-sm font-medium text-success">
-                        Nilai: {selectedLogbook.nilai}
-                      </p>
-                    </div>
-                  </>
-                )}
-
-              {selectedLogbook?.dosen_feedback && (
+            {selectedLogbook?.nilai !== null &&
+              selectedLogbook?.nilai !== undefined && (
                 <>
                   <hr />
-                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-                    <p className="mb-1 text-sm font-medium text-primary">
-                      Feedback Dosen:
-                    </p>
-                    <p className="text-sm text-primary/80">
-                      {selectedLogbook.dosen_feedback}
+                  <div className="p-3 bg-success/10 rounded-lg border border-success/30">
+                    <p className="text-sm font-medium text-success">
+                      Nilai: {selectedLogbook.nilai}
                     </p>
                   </div>
                 </>
               )}
-            </div>
 
-            <DialogFooter>
-              <Button onClick={() => setShowViewDialog(false)}>Tutup</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            {selectedLogbook?.dosen_feedback && (
+              <>
+                <hr />
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <p className="mb-1 text-sm font-medium text-primary">
+                    Feedback Dosen:
+                  </p>
+                  <p className="text-sm text-primary/80">
+                    {selectedLogbook.dosen_feedback}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowViewDialog(false)}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

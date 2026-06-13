@@ -115,11 +115,11 @@ export function EnrollKelasDialog({
         <ScrollArea className="h-[500px] pr-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
             </div>
           ) : availableKelas.length === 0 ? (
             <div className="text-center py-12">
-              <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-500">Tidak ada kelas tersedia saat ini</p>
             </div>
           ) : (

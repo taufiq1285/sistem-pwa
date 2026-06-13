@@ -78,6 +78,12 @@ import { KehadiranHistory } from "@/components/features/kehadiran/KehadiranHisto
 import { cn } from "@/lib/utils";
 import type { Kelas } from "@/types/kelas.types";
 import type { MataKuliah } from "@/types/mata-kuliah.types";
+import {
+  TableSkeleton,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 
 // ============================================================================
 // TYPES
@@ -222,6 +228,7 @@ const STATUS_OPTIONS: {
 
 export default function DosenKehadiranPage() {
   const { user } = useAuth();
+  const { isOffline } = useOfflineContext();
 
   // ============================================================================
   // STATE
@@ -815,36 +822,43 @@ export default function DosenKehadiranPage() {
   // RENDER
   // ============================================================================
 
-  return (
-    <div className="role-page-shell">
-      <div className="role-page-content space-y-6">
-        {/* Hero Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-primary via-primary/90 to-accent/85 p-5 sm:p-6 md:p-8 text-primary-foreground shadow-2xl shadow-primary/30">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
+  // Offline empty state
+  if (isOffline && mataKuliahList.length === 0) {
+    return <EmptyState variant="offline" context="kehadiran" />;
+  }
 
-          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold flex items-center gap-3">
-                <BookOpen className="h-8 w-8" />
-                Kehadiran Mahasiswa
-              </h1>
-              <p className="text-sm sm:text-base md:text-lg font-semibold mt-2 max-w-xl">
-                Catat presensi umum per mata kuliah, kelas, dan tanggal. Satu
-                kelas dapat memiliki beberapa mata kuliah dengan riwayat
-                kehadiran yang berbeda.
-              </p>
-            </div>
+  if (mataKuliahList.length === 0 && !loading) {
+    return <EmptyState variant="no-data" context="kehadiran" />;
+  }
+
+  return (
+    <OfflineAwareContent
+      hasData={mataKuliahList.length > 0}
+      context="kehadiran"
+      onSync={() => loadMataKuliah(true)}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        {/* Hero Header */}
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Kehadiran Mahasiswa
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Catat presensi umum per mata kuliah, kelas, dan tanggal. Satu
+              kelas dapat memiliki beberapa mata kuliah dengan riwayat kehadiran
+              yang berbeda.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <Button
-              variant="secondary"
+              variant="outline"
+              size="sm"
               onClick={() => loadMataKuliah(true)}
               disabled={loading || !navigator.onLine}
-              className="w-full bg-white/90 text-primary hover:bg-white sm:w-auto"
-              title="Ambil ulang data master terbaru dari admin"
+              className="gap-2"
             >
-              <RefreshCw
-                className={cn("mr-2 h-4 w-4", loading && "animate-spin")}
-              />
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
               Refresh Data
             </Button>
           </div>
@@ -1357,17 +1371,9 @@ export default function DosenKehadiranPage() {
                       </AlertDescription>
                     </Alert>
                   ) : loading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
-                      <p className="text-muted-foreground">Memuat data...</p>
-                    </div>
+                    <TableSkeleton rows={6} columns={4} />
                   ) : attendanceRecords.length === 0 ? (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        Tidak ada mahasiswa dalam kelas ini atau belum ada data.
-                      </AlertDescription>
-                    </Alert>
+                    <EmptyState variant="no-data" context="kehadiran" />
                   ) : (
                     <div className="space-y-4">
                       <div className="rounded-md border overflow-x-auto">
@@ -1539,6 +1545,6 @@ export default function DosenKehadiranPage() {
           </div>
         )}
       </div>
-    </div>
+    </OfflineAwareContent>
   );
 }

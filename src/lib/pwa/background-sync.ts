@@ -1,3 +1,4 @@
+import logger from "@/lib/utils/logger";
 /**
  * Background Sync API Integration
  *
@@ -67,7 +68,7 @@ export function isBackgroundSyncSupported(): boolean {
  */
 export async function registerBackgroundSync(tag: SyncTag): Promise<boolean> {
   if (!isBackgroundSyncSupported()) {
-    console.warn("[BackgroundSync] Not supported, will use manual sync");
+    logger.debug("[BackgroundSync] Not supported, will use manual sync");
     return false;
   }
 
@@ -75,7 +76,7 @@ export async function registerBackgroundSync(tag: SyncTag): Promise<boolean> {
     const registration = await navigator.serviceWorker.ready;
     await registration.sync.register(tag);
 
-    console.log(`[BackgroundSync] Registered: ${tag}`);
+    logger.debug(`[BackgroundSync] Registered: ${tag}`);
 
     // Store registration info
     localStorage.setItem(
@@ -152,9 +153,9 @@ export async function fallbackManualSync(
   syncFunction: () => Promise<void>,
 ): Promise<void> {
   try {
-    console.log("[BackgroundSync] Using fallback manual sync");
+    logger.debug("[BackgroundSync] Using fallback manual sync");
     await syncFunction();
-    console.log("[BackgroundSync] Manual sync completed");
+    logger.debug("[BackgroundSync] Manual sync completed");
   } catch (error) {
     console.error("[BackgroundSync] Manual sync failed:", error);
     throw error;
@@ -215,17 +216,17 @@ export async function smartSync(
  * ```ts
  * // In your app initialization (main.tsx or App.tsx)
  * setupOnlineSync(() => {
- *   console.log('Back online, syncing...');
+ *   logger.debug('Back online, syncing...');
  *   return syncAllOfflineData();
  * });
  * ```
  */
 export function setupOnlineSync(syncFunction: () => Promise<void>): () => void {
   if (!isBackgroundSyncSupported()) {
-    console.log("[BackgroundSync] Setting up fallback online listener");
+    logger.debug("[BackgroundSync] Setting up fallback online listener");
 
     const handleOnline = async () => {
-      console.log(
+      logger.debug(
         "[BackgroundSync] Connection restored, triggering fallback sync",
       );
 
@@ -234,7 +235,7 @@ export function setupOnlineSync(syncFunction: () => Promise<void>): () => void {
 
       try {
         await syncFunction();
-        console.log("[BackgroundSync] Fallback sync completed successfully");
+        logger.debug("[BackgroundSync] Fallback sync completed successfully");
       } catch (error) {
         console.error("[BackgroundSync] Fallback sync failed:", error);
       }
@@ -248,7 +249,7 @@ export function setupOnlineSync(syncFunction: () => Promise<void>): () => void {
     };
   }
 
-  console.log("[BackgroundSync] Using native Background Sync API");
+  logger.debug("[BackgroundSync] Using native Background Sync API");
 
   // Return no-op cleanup for consistency
   return () => {};
@@ -292,7 +293,7 @@ export function logSyncEvent(
     details,
   };
 
-  console.log("[BackgroundSync]", logEntry);
+  logger.debug("[BackgroundSync]", logEntry);
 
   // Store in localStorage for debugging
   try {

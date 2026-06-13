@@ -139,11 +139,11 @@ export function StudentsListDialog({
         <ScrollArea className="h-[500px]">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
             </div>
           ) : students.length === 0 ? (
             <div className="text-center py-12">
-              <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-500">Belum ada mahasiswa terdaftar</p>
             </div>
           ) : (

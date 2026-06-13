@@ -27,6 +27,7 @@ import {
   User,
 } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
+import { FormSkeleton } from "@/components/common";
 
 interface UserProfile {
   full_name: string;
@@ -105,22 +106,28 @@ export default function AdminProfilePage() {
 
   if (loading) {
     return (
-      <div className="app-container">
-        <div className="mx-auto max-w-4xl animate-pulse space-y-6">
-          <div className="h-24 rounded-3xl bg-primary/10" />
-          <div className="h-64 rounded-3xl bg-muted" />
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer rounded-md" />
+            <div className="h-4 w-72 skeleton-shimmer rounded-md" />
+          </div>
         </div>
+        <FormSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="app-container space-y-6">
-      <PageHeader
-        title="Profil Saya"
-        description="Kelola informasi profil Anda"
-        className="section-shell"
-      />
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Profil Saya</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Kelola informasi profil Anda
+          </p>
+        </div>
+      </div>
 
       {error && (
         <Alert variant="destructive" className="rounded-2xl">
@@ -167,7 +174,7 @@ export default function AdminProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   value={profile.email}
@@ -180,7 +187,7 @@ export default function AdminProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <div className="relative">
-                <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="role"
                   value="Administrator"

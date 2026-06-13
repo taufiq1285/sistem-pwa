@@ -5,6 +5,7 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
@@ -14,9 +15,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
   try {
     const theme = useTheme();
-    effectiveTheme = theme.effectiveTheme;
+    effectiveTheme = theme.resolvedTheme;
   } catch (error) {
-    console.warn("Toaster: Failed to get theme, using light mode", error);
+    logger.debug("Toaster: Failed to get theme, using light mode", error);
   }
 
   return (

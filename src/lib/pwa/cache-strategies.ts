@@ -1,4 +1,5 @@
 import type { CacheRule } from "@/config/cache.config";
+import logger from "@/lib/utils/logger";
 
 export interface CacheMatchOptions {
   ignoreSearch?: boolean;
@@ -66,7 +67,7 @@ export async function cacheFirst(
 
     if (cachedResponse) {
       if (debug) {
-        console.log(`[CacheFirst] Cache hit: ${request.url}`);
+        logger.debug(`[CacheFirst] Cache hit: ${request.url}`);
       }
 
       // Check if cached response is still valid
@@ -74,14 +75,14 @@ export async function cacheFirst(
         return cachedResponse;
       } else {
         if (debug) {
-          console.log(`[CacheFirst] Cache expired: ${request.url}`);
+          logger.debug(`[CacheFirst] Cache expired: ${request.url}`);
         }
       }
     }
 
     // 2. Cache miss or expired - fetch from network
     if (debug) {
-      console.log(
+      logger.debug(
         `[CacheFirst] Cache miss, fetching from network: ${request.url}`,
       );
     }
@@ -94,7 +95,7 @@ export async function cacheFirst(
       await cache.put(request, responseToCache);
 
       if (debug) {
-        console.log(`[CacheFirst] Cached new response: ${request.url}`);
+        logger.debug(`[CacheFirst] Cached new response: ${request.url}`);
       }
     }
 
@@ -107,7 +108,7 @@ export async function cacheFirst(
     const staleResponse = await cache.match(request);
 
     if (staleResponse) {
-      console.warn("[CacheFirst] Returning stale cache:", request.url);
+      logger.debug("[CacheFirst] Returning stale cache:", request.url);
       return staleResponse;
     }
 
@@ -156,7 +157,7 @@ export async function networkFirst(
       clearTimeout(timeoutId);
 
       if (debug) {
-        console.log(`[NetworkFirst] Network success: ${request.url}`);
+        logger.debug(`[NetworkFirst] Network success: ${request.url}`);
       }
 
       // Cache successful responses
@@ -166,7 +167,7 @@ export async function networkFirst(
         await cache.put(request, responseToCache);
 
         if (debug) {
-          console.log(`[NetworkFirst] Cached response: ${request.url}`);
+          logger.debug(`[NetworkFirst] Cached response: ${request.url}`);
         }
       }
 
@@ -178,7 +179,7 @@ export async function networkFirst(
   } catch (error) {
     // 2. Network failed - try cache
     if (debug) {
-      console.log(
+      logger.debug(
         `[NetworkFirst] Network failed, trying cache: ${request.url}`,
       );
     }
@@ -187,7 +188,7 @@ export async function networkFirst(
     const cachedResponse = await cache.match(request, cacheMatchOptions);
 
     if (cachedResponse) {
-      console.warn("[NetworkFirst] Serving from cache (offline):", request.url);
+      logger.debug("[NetworkFirst] Serving from cache (offline):", request.url);
       return cachedResponse;
     }
 
@@ -236,7 +237,7 @@ export async function staleWhileRevalidate(
           await cache.put(request, responseToCache);
 
           if (debug) {
-            console.log(
+            logger.debug(
               `[StaleWhileRevalidate] Background cache update: ${request.url}`,
             );
           }
@@ -245,7 +246,7 @@ export async function staleWhileRevalidate(
       })
       .catch((error) => {
         if (debug) {
-          console.warn("[StaleWhileRevalidate] Network update failed:", error);
+          logger.debug("[StaleWhileRevalidate] Network update failed:", error);
         }
         return null;
       });
@@ -254,7 +255,7 @@ export async function staleWhileRevalidate(
     const cachedResponse = await cachedResponsePromise;
     if (cachedResponse) {
       if (debug) {
-        console.log(
+        logger.debug(
           `[StaleWhileRevalidate] Serving from cache: ${request.url}`,
         );
       }
@@ -269,7 +270,7 @@ export async function staleWhileRevalidate(
 
     // No cache - wait for network
     if (debug) {
-      console.log(
+      logger.debug(
         `[StaleWhileRevalidate] No cache, waiting for network: ${request.url}`,
       );
     }
@@ -312,7 +313,7 @@ export async function networkOnly(
 
   try {
     if (debug) {
-      console.log(`[NetworkOnly] Fetching from network: ${request.url}`);
+      logger.debug(`[NetworkOnly] Fetching from network: ${request.url}`);
     }
 
     const response = await fetch(request);
@@ -352,7 +353,7 @@ export async function cacheOnly(
 
     if (cachedResponse) {
       if (debug) {
-        console.log(`[CacheOnly] Cache hit: ${request.url}`);
+        logger.debug(`[CacheOnly] Cache hit: ${request.url}`);
       }
       return cachedResponse;
     }
@@ -422,7 +423,7 @@ export function getStrategyHandler(strategyName: string): StrategyHandler {
     case "CacheOnly":
       return cacheOnly;
     default:
-      console.warn(`Unknown strategy: ${strategyName}, using NetworkFirst`);
+      logger.debug(`Unknown strategy: ${strategyName}, using NetworkFirst`);
       return networkFirst;
   }
 }
@@ -471,7 +472,7 @@ export async function cleanupCache(
 
   await Promise.all(requestsToDelete.map((request) => cache.delete(request)));
 
-  console.log(
+  logger.debug(
     `[Cache] Cleaned up ${entriesToDelete} entries from ${cacheName}`,
   );
 }
@@ -507,7 +508,7 @@ export async function cleanupExpiredCache(
   await Promise.all(deletePromises);
 
   if (deletePromises.length > 0) {
-    console.log(
+    logger.debug(
       `[Cache] Cleaned up ${deletePromises.length} expired entries from ${cacheName}`,
     );
   }
@@ -522,14 +523,14 @@ export async function precacheUrls(
 ): Promise<void> {
   const cache = await caches.open(cacheName);
 
-  console.log(`[Cache] Precaching ${urls.length} URLs...`);
+  logger.debug(`[Cache] Precaching ${urls.length} URLs...`);
 
   const cachePromises = urls.map(async (url) => {
     try {
       const response = await fetch(url);
       if (response.status === 200) {
         await cache.put(url, response);
-        console.log(`[Cache] Precached: ${url}`);
+        logger.debug(`[Cache] Precached: ${url}`);
       }
     } catch (error) {
       console.error(`[Cache] Failed to precache ${url}:`, error);
@@ -537,7 +538,7 @@ export async function precacheUrls(
   });
 
   await Promise.all(cachePromises);
-  console.log(`[Cache] Precaching complete`);
+  logger.debug(`[Cache] Precaching complete`);
 }
 
 /**
@@ -547,7 +548,7 @@ export async function clearAllCaches(): Promise<number> {
   const cacheNames = await caches.keys();
   await Promise.all(cacheNames.map((name) => caches.delete(name)));
 
-  console.log(`[Cache] Cleared ${cacheNames.length} caches`);
+  logger.debug(`[Cache] Cleared ${cacheNames.length} caches`);
   return cacheNames.length;
 }
 

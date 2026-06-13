@@ -4,10 +4,9 @@
  */
 
 import type { ReactNode } from "react";
-import { ArrowLeft } from "lucide-react";
+import { IconArrowLeft } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 interface Breadcrumb {
@@ -47,19 +46,19 @@ export function PageHeader({
   return (
     <div className={cn("space-y-4", className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 sm:text-sm">
+        <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground sm:text-sm">
           {breadcrumbs.map((breadcrumb, index) => (
             <div key={index} className="flex items-center gap-2">
-              {index > 0 && <span>/</span>}
+              {index > 0 && <span className="text-border">/</span>}
               {breadcrumb.href ? (
                 <button
                   onClick={() => navigate(breadcrumb.href!)}
-                  className="transition-colors hover:text-slate-800"
+                  className="transition-colors hover:text-foreground"
                 >
                   {breadcrumb.label}
                 </button>
               ) : (
-                <span className="font-semibold text-slate-800">
+                <span className="font-semibold text-foreground">
                   {breadcrumb.label}
                 </span>
               )}
@@ -78,17 +77,15 @@ export function PageHeader({
               onClick={handleBack}
               className="mt-0.5 shrink-0"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <IconArrowLeft className="h-4 w-4" aria-hidden="true" />
               <span className="sr-only">Kembali</span>
             </Button>
           )}
 
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-              {title}
-            </h1>
+            <h1 className="text-display text-foreground">{title}</h1>
             {description && (
-              <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
+              <p className="mt-1.5 max-w-2xl text-small text-text-muted">
                 {description}
               </p>
             )}
@@ -102,7 +99,7 @@ export function PageHeader({
         )}
       </div>
 
-      <Separator />
+      <div className="h-px w-full bg-border/60" />
     </div>
   );
 }

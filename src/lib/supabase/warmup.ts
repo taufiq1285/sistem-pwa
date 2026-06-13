@@ -40,12 +40,10 @@ export function startSupabaseWarmup(
   }
 
   const envEnabled = toBooleanEnv(import.meta.env.VITE_ENABLE_SUPABASE_WARMUP);
-  const defaultEnabled = envEnabled ?? !import.meta.env.DEV;
+  const defaultEnabled = envEnabled ?? false;
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const defaultPingUrl = supabaseUrl
-    ? `${supabaseUrl}/rest/v1/?apikey=${import.meta.env.VITE_SUPABASE_ANON_KEY || ""}`
-    : "";
+  const defaultPingUrl = supabaseUrl ? `${supabaseUrl}/auth/v1/health` : "";
 
   const finalConfig: Required<SupabaseWarmupConfig> = {
     enabled: config.enabled ?? defaultEnabled,
@@ -90,7 +88,7 @@ export function startSupabaseWarmup(
 
       logger.info("🔥 Supabase warm-up success", { reason });
     } catch (error) {
-      logger.warn("⚠️ Supabase warm-up failed", { reason, error });
+      logger.debug("Supabase warm-up failed", { reason, error });
     } finally {
       clearTimeout(timeoutId);
       isRunning = false;

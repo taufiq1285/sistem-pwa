@@ -11,6 +11,7 @@ import { MobileNav } from "@/components/layout/MobileNav";
 import { Navigation } from "@/components/layout/Navigation";
 import { OfflineBar } from "@/components/layout/OfflineBar";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { SidebarProvider } from "@/components/layout/SidebarContext";
 
 const mockUseAuth = vi.fn();
 const mockUseRole = vi.fn();
@@ -63,7 +64,8 @@ vi.mock("@/components/features/sync/ConflictResolver", () => ({
 }));
 
 vi.mock("@/lib/hooks/useRoleTheme", () => ({
-  useRoleTheme: () => ({
+  useRoleTheme: vi.fn(),
+  useRoleThemeConfig: () => ({
     accentBorder: "border-t-4 border-slate-600",
     primaryBtn: "bg-slate-800 hover:bg-slate-900 text-white shadow-sm",
     sidebarBg: "bg-slate-950/95",
@@ -116,13 +118,16 @@ vi.mock("@/config/navigation.config", async () => {
 
 function renderWithRouter(ui: React.ReactElement, initialEntries = ["/"]) {
   return render(
-    <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>,
+    <MemoryRouter initialEntries={initialEntries}>
+      <SidebarProvider>{ui}</SidebarProvider>
+    </MemoryRouter>,
   );
 }
 
 describe("Layout Components", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
 
     mockUseAuth.mockReturnValue({
       user: { full_name: "Admin User", email: "admin@example.com" },
@@ -263,7 +268,7 @@ describe("Layout Components", () => {
       const onMenuClick = vi.fn();
       const onNotificationClick = vi.fn();
 
-      render(
+      renderWithRouter(
         <Header
           userName="Admin"
           userEmail="admin@example.com"
@@ -285,7 +290,7 @@ describe("Layout Components", () => {
     });
 
     it("menampilkan NotificationDropdown saat mode dropdown aktif", () => {
-      render(<Header showNotificationDropdown />);
+      renderWithRouter(<Header showNotificationDropdown />);
       expect(screen.getByTestId("notification-dropdown")).toBeInTheDocument();
     });
   });

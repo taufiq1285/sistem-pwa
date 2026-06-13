@@ -31,7 +31,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
           <p className="mt-6 text-gray-700 dark:text-gray-200 font-medium">
             Loading...
           </p>
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
             This should be instant with cache!
           </p>
         </div>

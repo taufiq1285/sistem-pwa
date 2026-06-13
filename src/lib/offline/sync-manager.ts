@@ -18,6 +18,7 @@ import { indexedDBManager } from "./indexeddb";
 import type { SyncQueueItem } from "@/types/offline.types";
 import { supabase } from "@/lib/supabase/client";
 import { submitAnswerSafe } from "@/lib/api/kuis-versioned-simple.api";
+import { logger } from "@/lib/utils/logger";
 
 // ============================================================================
 // DEFAULT SYNC PROCESSOR
@@ -281,16 +282,16 @@ export class SyncManager {
       queueManager.setProcessor(defaultSyncProcessor);
 
       this.isInitialized = true;
-      console.log("SyncManager initialized");
+      logger.info("SyncManager initialized");
     } catch (error) {
-      console.error("SyncManager init failed:", error);
+      logger.error("SyncManager init failed:", error);
     }
   }
 
   private handleSWMessage = async (event: MessageEvent) => {
     const { data } = event;
     if (data && data.type === "PROCESS_SYNC_QUEUE") {
-      console.log("Received PROCESS_SYNC_QUEUE from SW");
+      logger.info("Received PROCESS_SYNC_QUEUE from SW");
       await this.processSync();
     }
   };
@@ -310,7 +311,7 @@ export class SyncManager {
         await (this.swRegistration as any).sync.register(this.config.syncTag);
       }
     } catch (error) {
-      console.error("Failed to register background sync:", error);
+      logger.error("Failed to register background sync:", error);
     }
   }
 
@@ -320,13 +321,13 @@ export class SyncManager {
   async processSync(): Promise<SyncResult> {
     // Prevent concurrent syncs
     if (this.isSyncing) {
-      console.warn("[SyncManager] Sync already in progress");
+      logger.warn("[SyncManager] Sync already in progress");
       return { success: false, processed: 0, failed: 0, errors: [] };
     }
 
     // Check if paused
     if (this.isPaused) {
-      console.warn("[SyncManager] Sync is paused");
+      logger.warn("[SyncManager] Sync is paused");
       return { success: false, processed: 0, failed: 0, errors: [] };
     }
 
@@ -447,7 +448,7 @@ export class SyncManager {
         timestamp: Date.now(),
       });
 
-      console.error("[SyncManager] Sync failed:", error);
+      logger.error("[SyncManager] Sync failed:", error);
       return errorResult;
     } finally {
       this.isSyncing = false;
@@ -470,7 +471,7 @@ export class SyncManager {
   async retryFailed(): Promise<number> {
     const count = await queueManager.retryFailed();
     if (count > 0) {
-      console.log(`[SyncManager] Retrying ${count} failed items`);
+      logger.info(`[SyncManager] Retrying ${count} failed items`);
       await this.processSync();
     }
     return count;
@@ -509,7 +510,7 @@ export class SyncManager {
    */
   pause(): void {
     if (!this.isSyncing) {
-      console.warn("[SyncManager] Cannot pause - no sync in progress");
+      logger.warn("[SyncManager] Cannot pause - no sync in progress");
       return;
     }
 
@@ -521,7 +522,7 @@ export class SyncManager {
       timestamp: Date.now(),
     });
 
-    console.log("[SyncManager] Sync paused");
+    logger.info("[SyncManager] Sync paused");
   }
 
   /**
@@ -529,7 +530,7 @@ export class SyncManager {
    */
   resume(): void {
     if (!this.isPaused) {
-      console.warn("[SyncManager] Sync is not paused");
+      logger.warn("[SyncManager] Sync is not paused");
       return;
     }
 
@@ -541,7 +542,7 @@ export class SyncManager {
       timestamp: Date.now(),
     });
 
-    console.log("[SyncManager] Sync resumed");
+    logger.info("[SyncManager] Sync resumed");
   }
 
   /**
@@ -549,7 +550,7 @@ export class SyncManager {
    */
   clearHistory(): void {
     this.stats.syncHistory = [];
-    console.log("[SyncManager] Sync history cleared");
+    logger.info("[SyncManager] Sync history cleared");
   }
 
   /**
@@ -562,7 +563,7 @@ export class SyncManager {
       averageDuration: 0,
       syncHistory: [],
     };
-    console.log("[SyncManager] Statistics reset");
+    logger.info("[SyncManager] Statistics reset");
   }
 
   // ============================================================================
@@ -605,7 +606,7 @@ export class SyncManager {
       try {
         listener(event);
       } catch (error) {
-        console.error("[SyncManager] Event listener error:", error);
+        logger.error("[SyncManager] Event listener error:", error);
       }
     });
   }
@@ -675,7 +676,7 @@ export class SyncManager {
     this.isPaused = false;
     this.currentStatus = "idle";
 
-    console.log("[SyncManager] Destroyed");
+    logger.info("[SyncManager] Destroyed");
   }
 
   /**

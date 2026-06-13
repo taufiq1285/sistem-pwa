@@ -15,7 +15,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, Phone, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  IconAlertCircle,
+  IconCircleCheck,
+  IconPhone,
+  IconUser,
+} from "@tabler/icons-react";
 import { supabase } from "@/lib/supabase/client";
 
 interface ProfileFormProps {
@@ -35,6 +40,8 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
     setValue,
   } = useForm<ProfileUpdateFormData>({
     resolver: zodResolver(profileUpdateSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
     defaultValues: {
       full_name: user?.full_name || "",
       phone: user?.phone || "",
@@ -89,7 +96,10 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       {/* Success Alert */}
       {success && (
         <Alert className="bg-green-50 border-green-200">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <IconCircleCheck
+            className="h-4 w-4 text-green-600"
+            aria-hidden="true"
+          />
           <AlertDescription className="text-green-800">
             {success}
           </AlertDescription>
@@ -99,7 +109,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       {/* Error Alert */}
       {error && (
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+          <IconAlertCircle className="h-4 w-4" aria-hidden="true" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -112,9 +122,10 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
           type="email"
           value={user?.email || ""}
           disabled
+          aria-describedby="field-profile-email-help"
           className="bg-gray-50"
         />
-        <p className="text-xs text-gray-500">
+        <p id="field-profile-email-help" className="text-xs text-gray-500">
           Email cannot be changed. Contact administrator if you need to update
           it.
         </p>
@@ -123,7 +134,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       {/* Full Name */}
       <div className="space-y-2">
         <Label htmlFor="full_name">
-          <User className="inline-block w-4 h-4 mr-2" />
+          <IconUser className="inline-block w-4 h-4 mr-2" aria-hidden="true" />
           Full Name
         </Label>
         <Input
@@ -132,16 +143,27 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
           placeholder="Enter your full name"
           {...register("full_name")}
           disabled={isSubmitting}
+          aria-required="true"
+          aria-invalid={!!errors.full_name}
+          aria-describedby={
+            errors.full_name ? "field-profile-full-name-error" : undefined
+          }
         />
         {errors.full_name && (
-          <p className="text-sm text-red-500">{errors.full_name.message}</p>
+          <p
+            id="field-profile-full-name-error"
+            role="alert"
+            className="text-sm text-red-500"
+          >
+            {errors.full_name.message}
+          </p>
         )}
       </div>
 
       {/* Phone */}
       <div className="space-y-2">
         <Label htmlFor="phone">
-          <Phone className="inline-block w-4 h-4 mr-2" />
+          <IconPhone className="inline-block w-4 h-4 mr-2" aria-hidden="true" />
           Phone Number (Optional)
         </Label>
         <Input
@@ -150,9 +172,19 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
           placeholder="+62 xxx xxx xxxx"
           {...register("phone")}
           disabled={isSubmitting}
+          aria-invalid={!!errors.phone}
+          aria-describedby={
+            errors.phone ? "field-profile-phone-error" : undefined
+          }
         />
         {errors.phone && (
-          <p className="text-sm text-red-500">{errors.phone.message}</p>
+          <p
+            id="field-profile-phone-error"
+            role="alert"
+            className="text-sm text-red-500"
+          >
+            {errors.phone.message}
+          </p>
         )}
       </div>
 
@@ -164,15 +196,24 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
           type="text"
           value={user?.role || ""}
           disabled
+          aria-describedby="field-profile-role-help"
           className="bg-gray-50 capitalize"
         />
-        <p className="text-xs text-gray-500">
+        <p id="field-profile-role-help" className="text-xs text-gray-500">
           Your role is assigned by the administrator.
         </p>
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+          aria-label={
+            isSubmitting ? "Sedang memproses, mohon tunggu" : undefined
+          }
+        >
           {isSubmitting ? (
             <>
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

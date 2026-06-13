@@ -460,3 +460,48 @@ Penguji biasanya meminta ringkasan akhir.
 **Catatan penting:**  
 Ini bisa menjadi jawaban penutup paling kuat.
 
+## H. Pertanyaan Kritis dari Batasan dan Saran (Sering Menjadi "Jebakan")
+
+### 41. [Tinggi] Di saran Anda menyebutkan perlunya integrasi dengan SIAKAD. Berarti sistem Anda saat ini masih berdiri sendiri (silo) dan tidak efisien bagi admin kampus?
+
+**Maksud pertanyaan:**  
+Penguji menguji kesadaran Anda akan keterbatasan sistem saat ini dan bagaimana Anda mempertahankannya dengan argumen teknis/batasan masalah.
+
+**Jawaban aman:**  
+"Benar, pada iterasi saat ini sistem masih berstatus *standalone* sesuai dengan Batasan Masalah di Bab 1. Fokus utama penelitian ini adalah membuktikan kelayakan implementasi PWA pada manajemen praktikum, bukan pada integrasi infrastruktur kampus secara menyeluruh. Namun, karena basis datanya menggunakan PostgreSQL (via Supabase) dan dibangun dengan arsitektur berbasis API, sistem ini sudah sangat siap dan mudah untuk dihubungkan dengan SIAKAD kampus ke depannya tanpa merombak ulang dari awal."
+
+**Catatan penting:**  
+Jangan defensif atau panik. Akui itu batasan, tapi beri tahu bahwa sistem Anda sangat "scalable" (mudah dikembangkan/diintegrasikan kelak).
+
+### 42. [Sedang] Anda menyarankan evaluasi SUS dengan responden yang lebih merata di Bab 5. Apakah 46 responden saat ini belum representatif atau hasilnya bias ke mahasiswa?
+
+**Maksud pertanyaan:**  
+Penguji mempertanyakan keabsahan hasil pengujian SUS Anda yang mendapat skor 75,11.
+
+**Jawaban aman:**  
+"Ke-46 responden saat ini sudah mewakili seluruh aktor yang terlibat secara proporsional sesuai kondisi di lapangan, di mana populasi mahasiswa memang selalu jauh lebih besar dibanding dosen, admin, maupun laboran. Saya menuliskan saran tersebut bukan karena data saat ini bias, melainkan sebagai anjuran jika sistem ini kelak diterapkan pada skala institusi yang lebih luas, sehingga persepsi dari sisi manajerial (admin/laboran) bisa terjaring lebih banyak lagi."
+
+**Catatan penting:**  
+Yakinkan bahwa data Anda valid dan proporsional untuk lingkup skripsi, saran itu hanya untuk implementasi nyata di masa depan.
+
+### 43. [Tinggi] Di abstrak tertulis 5.231 test case white box lulus 100%, tapi di saran Anda malah meminta cakupan pengujian white box diperluas. Bagian mana yang sebenarnya belum diuji?
+
+**Maksud pertanyaan:**  
+Penguji mengecek pemahaman Anda tentang perbedaan pengujian logika (*core-logic*) dan pengujian antarmuka (*UI/UX*).
+
+**Jawaban aman:**  
+"Angka 5.231 test case tersebut sudah mencakup pengujian menyeluruh pada *core-logic* (logika inti) aplikasi secara otomatis, seperti perhitungan nilai, antrean sinkronisasi offline, dan relasi database. Namun, untuk pengujian interaksi antarmuka (UI) yang dinamis pada browser, saat ini masih dilakukan secara manual melalui skenario Black Box. Saran tersebut ditujukan agar pengujian antarmuka (UI Testing) ke depannya bisa diotomatisasi juga, bukan berarti logika utama sistem saat ini belum teruji."
+
+**Catatan penting:**  
+Bedakan antara logika sistem (yang sudah di-unit test) dan tampilan antarmuka UI (yang dites manual/black box).
+
+### 44. [Pasti] Saya tidak melihat pengujian keamanan khusus (Security/Penetration Testing) di skripsi ini. Bagaimana Anda menjamin data nilai mahasiswa tidak dimanipulasi?
+
+**Maksud pertanyaan:**  
+Pertanyaan kritis dari penguji yang peduli terhadap integritas data akademik dan keamanan web.
+
+**Jawaban aman:**  
+"Terkait uji keamanan khusus seperti *penetration testing* memang tidak masuk dalam cakupan penelitian sesuai Batasan Masalah. Namun, keamanan data sudah ditangani pada level arsitektur (*built-in security*) menggunakan fitur otorisasi dari Supabase. Kami menerapkan *Row Level Security (RLS)* di database, sehingga secara sistem, akun dengan *role* Mahasiswa tidak akan pernah bisa mengakses API untuk melakukan perintah 'Update' pada tabel nilai. Hak akses tersebut dikunci murni hanya untuk *role* Dosen dan Admin pada level server."
+
+**Catatan penting:**  
+Ini adalah jawaban teknis yang sangat elegan. Sebutkan "Row Level Security (RLS)" untuk menunjukkan Anda memikirkan keamanan database, meski tidak melakukan uji *hacking* spesifik.

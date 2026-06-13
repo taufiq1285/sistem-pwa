@@ -1,0 +1,254 @@
+/**
+ * Central runtime design tokens for role colors, semantic aliases, dark mode,
+ * type scale, elevation, and compatibility variables used across SiPraktik.
+ */
+
+/* ============ ROLE TOKENS ============ */
+/* Default: admin */
+:root {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8fafc;
+  --color-bg-tertiary: #f1f5f9;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  --color-success-bg: #f0fdf4;
+  --color-success-border: #bbf7d0;
+  --color-success-text: #166534;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-warning-text: #92400e;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fecaca;
+  --color-danger-text: #991b1b;
+  --color-info-bg: #eff6ff;
+  --color-info-border: #bfdbfe;
+  --color-info-text: #1e40af;
+
+  --role-50: #ede9fe;
+  --role-100: #ddd6fe;
+  --role-200: #c4b5fd;
+  --role-300: #a78bfa;
+  --role-400: #8b5cf6;
+  --role-500: #7c3aed;
+  --role-600: #6d28d9;
+  --role-700: #5b21b6;
+  --role-800: #4c1d95;
+  --role-900: #2e1065;
+  --role-sidebar-from: #7c3aed;
+  --role-sidebar-to: #4f46e5;
+  --role-accent: #6d28d9;
+  --role-surface: #ede9fe;
+  --role-border: #c4b5fd;
+  --role-text: #5b21b6;
+  --role-chip-bg: #ede9fe;
+  --role-chip-text: #5b21b6;
+  --role-focus-ring: #7c3aed;
+
+  /* Compatibility tokens used by existing components. */
+  --role-sidebar-bg: var(--role-sidebar-from);
+  --role-sidebar-dark: var(--role-sidebar-to);
+  --role-accent-hover: var(--role-700);
+  --role-accent-light: var(--role-surface);
+  --role-accent-text: var(--role-text);
+  --role-banner-from: var(--role-sidebar-from);
+  --role-banner-to: var(--role-sidebar-to);
+  --role-avatar-bg: var(--role-accent);
+  --role-label-bg: var(--role-chip-bg);
+  --role-label-text: var(--role-chip-text);
+
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 262.1 83.3% 57.8%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 262.1 83.3% 57.8%;
+
+  --text-display: 24px;
+  --text-title: 18px;
+  --text-heading: 15px;
+  --text-body: 14px;
+  --text-small: 12px;
+  --text-caption: 11px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+[data-role="admin"] {
+  --role-50: #ede9fe;
+  --role-100: #ddd6fe;
+  --role-200: #c4b5fd;
+  --role-300: #a78bfa;
+  --role-400: #8b5cf6;
+  --role-500: #7c3aed;
+  --role-600: #6d28d9;
+  --role-700: #5b21b6;
+  --role-800: #4c1d95;
+  --role-900: #2e1065;
+  --role-sidebar-from: #7c3aed;
+  --role-sidebar-to: #4f46e5;
+  --role-accent: #6d28d9;
+  --role-surface: #ede9fe;
+  --role-border: #c4b5fd;
+  --role-text: #5b21b6;
+  --role-chip-bg: #ede9fe;
+  --role-chip-text: #5b21b6;
+  --role-focus-ring: #7c3aed;
+}
+
+[data-role="dosen"] {
+  --role-50: #eff6ff;
+  --role-100: #dbeafe;
+  --role-200: #bfdbfe;
+  --role-300: #93c5fd;
+  --role-400: #60a5fa;
+  --role-500: #3b82f6;
+  --role-600: #1d4ed8;
+  --role-700: #1e40af;
+  --role-800: #1e3a8a;
+  --role-900: #172554;
+  --role-sidebar-from: #1d4ed8;
+  --role-sidebar-to: #1e3a8a;
+  --role-accent: #1d4ed8;
+  --role-surface: #eff6ff;
+  --role-border: #bfdbfe;
+  --role-text: #1e40af;
+  --role-chip-bg: #dbeafe;
+  --role-chip-text: #1e40af;
+  --role-focus-ring: #3b82f6;
+}
+
+[data-role="mahasiswa"] {
+  --role-50: #f0fdfa;
+  --role-100: #ccfbf1;
+  --role-200: #99f6e4;
+  --role-300: #5eead4;
+  --role-400: #2dd4bf;
+  --role-500: #14b8a6;
+  --role-600: #0d9488;
+  --role-700: #0f766e;
+  --role-800: #115e59;
+  --role-900: #134e4a;
+  --role-sidebar-from: #0d9488;
+  --role-sidebar-to: #0f766e;
+  --role-accent: #0d9488;
+  --role-surface: #f0fdfa;
+  --role-border: #99f6e4;
+  --role-text: #0f766e;
+  --role-chip-bg: #ccfbf1;
+  --role-chip-text: #0f766e;
+  --role-focus-ring: #14b8a6;
+}
+
+[data-role="laboran"] {
+  --role-50: #fff7ed;
+  --role-100: #ffedd5;
+  --role-200: #fed7aa;
+  --role-300: #fdba74;
+  --role-400: #fb923c;
+  --role-500: #f97316;
+  --role-600: #c2410c;
+  --role-700: #9a3412;
+  --role-800: #7c2d12;
+  --role-900: #431407;
+  --role-sidebar-from: #c2410c;
+  --role-sidebar-to: #9a3412;
+  --role-accent: #c2410c;
+  --role-surface: #fff7ed;
+  --role-border: #fed7aa;
+  --role-text: #9a3412;
+  --role-chip-bg: #ffedd5;
+  --role-chip-text: #9a3412;
+  --role-focus-ring: #f97316;
+}
+
+[data-role] {
+  --role-sidebar-bg: var(--role-sidebar-from);
+  --role-sidebar-dark: var(--role-sidebar-to);
+  --role-accent-hover: var(--role-700);
+  --role-accent-light: var(--role-surface);
+  --role-accent-text: var(--role-text);
+  --role-banner-from: var(--role-sidebar-from);
+  --role-banner-to: var(--role-sidebar-to);
+  --role-avatar-bg: var(--role-accent);
+  --role-label-bg: var(--role-chip-bg);
+  --role-label-text: var(--role-chip-text);
+}
+
+/* ============ DARK MODE ============ */
+[data-theme="dark"] {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-bg-tertiary: #0f172a;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-border: #1e293b;
+  --color-border-strong: #334155;
+
+  --color-success-bg: #052e16;
+  --color-success-border: #166534;
+  --color-success-text: #86efac;
+  --color-warning-bg: #451a03;
+  --color-warning-border: #92400e;
+  --color-warning-text: #fde68a;
+  --color-danger-bg: #450a0a;
+  --color-danger-border: #991b1b;
+  --color-danger-text: #fecaca;
+  --color-info-bg: #172554;
+  --color-info-border: #1e40af;
+  --color-info-text: #bfdbfe;
+
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+  --sidebar: 222.2 84% 4.9%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-primary: 224.3 76.3% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217.2 32.6% 17.5%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217.2 32.6% 17.5%;
+  --sidebar-ring: 212.7 26.8% 83.9%;
+}

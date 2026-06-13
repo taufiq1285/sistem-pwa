@@ -20,6 +20,7 @@ import {
   AlertCircle,
   WifiOff,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert"; // ✅ NEW: Alert component
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -52,7 +53,7 @@ export default function JadwalPage() {
 
   useEffect(() => {
     if (user?.id) {
-      fetchData();
+      fetchData(navigator.onLine);
     }
   }, [user?.id]);
 
@@ -263,7 +264,7 @@ export default function JadwalPage() {
       setAllJadwal(jadwalData);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
-      console.log("[JadwalPage] Data loaded:", jadwalData.length, "jadwal");
+      logger.debug("[JadwalPage] Data loaded:", jadwalData.length, "jadwal");
     } catch (error: any) {
       console.error("Error fetching data:", error);
       if (myKelas.length > 0 || allJadwal.length > 0 || !navigator.onLine) {
@@ -335,245 +336,317 @@ export default function JadwalPage() {
   }
 
   return (
-    <div className="app-container py-4 sm:py-6 lg:py-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      {/* Header */}
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Jadwal Praktikum
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Lihat jadwal aktif dan riwayat praktikum dari kelas yang Anda ikuti
+          </p>
+          {(isOfflineData || lastUpdatedLabel) && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              {isOfflineData && (
+                <span className="inline-flex items-center gap-1 font-medium text-warning">
+                  <WifiOff className="h-3.5 w-3.5" />
+                  Menampilkan jadwal tersimpan lokal
+                </span>
+              )}
+              {lastUpdatedLabel && (
+                <span>Update terakhir: {lastUpdatedLabel}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isOfflineData && (
+        <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
+          <AlertDescription>
+            Halaman jadwal tetap bisa dibuka dari cache lokal saat offline. Data
+            yang tampil adalah snapshot terakhir yang berhasil disimpan dan
+            mungkin belum mencerminkan perubahan jadwal terbaru.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Statistics Cards */}
+      {myKelas.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <DashboardCard
+            title="Total Kelas"
+            value={myKelas.length}
+            icon={BookOpen}
+            color="blue"
+          />
+          <DashboardCard
+            title="Hari Ini"
+            value={todayJadwal.length}
+            icon={Calendar}
+            color="green"
+          />
+          <DashboardCard
+            title="Mendatang"
+            value={upcomingDates.length}
+            icon={Clock}
+            color="purple"
+          />
+          <DashboardCard
+            title="Total Jadwal"
+            value={allJadwal.length}
+            icon={AlertCircle}
+            color="amber"
+          />
+        </div>
+      )}
+
+      {/* ✅ NEW: Info Banner */}
+      <GlassCard
+        intensity="low"
+        className="border-primary/20 bg-primary/5 shadow-sm dark:border-primary/20 dark:bg-primary/10"
+      >
+        <CardContent className="p-4 sm:p-5">
+          <Alert className="border-0 bg-transparent p-0 shadow-none">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-primary dark:text-primary/80">
+              Jadwal praktikum diatur oleh dosen pengampu kelas Anda. Jika ada
+              pertanyaan terkait jadwal, silakan hubungi dosen yang
+              bersangkutan. Sesi yang sudah lewat akan otomatis masuk ke tab
+              riwayat.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </GlassCard>
+
+      {/* ✅ UPDATED: Empty State (No Enrollment CTA) */}
+      {myKelas.length === 0 && (
         <GlassCard
-          intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
+          intensity="low"
+          className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
         >
-          <CardContent className="p-6 sm:p-8">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
-                  Jadwal Praktikum
-                </h1>
-                <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-                  Lihat jadwal aktif dan riwayat praktikum dari kelas yang Anda
-                  ikuti
-                </p>
-                {(isOfflineData || lastUpdatedLabel) && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                    {isOfflineData && (
-                      <span className="inline-flex items-center gap-1 font-medium text-warning">
-                        <WifiOff className="h-4 w-4" />
-                        Menampilkan jadwal tersimpan lokal
-                      </span>
-                    )}
-                    {lastUpdatedLabel && (
-                      <span>Update terakhir: {lastUpdatedLabel}</span>
-                    )}
-                  </div>
-                )}
-              </div>
+          <CardContent className="p-12">
+            <div className="text-center">
+              <Calendar className="mx-auto mb-4 h-16 w-16 text-muted-foreground/40" />
+              <h3 className="mb-2 text-xl font-semibold text-foreground">
+                Belum Ada Jadwal Praktikum
+              </h3>
+              <p className="mx-auto max-w-md text-muted-foreground">
+                Anda belum memiliki jadwal praktikum aktif. Jika sebelumnya
+                pernah mengikuti praktikum, sesi yang sudah selesai akan tetap
+                muncul di tab riwayat saat data tersedia.
+              </p>
               {/* ❌ REMOVED: Daftar Kelas Button */}
             </div>
           </CardContent>
         </GlassCard>
+      )}
 
-        {isOfflineData && (
-          <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
-            <AlertDescription>
-              Halaman jadwal tetap bisa dibuka dari cache lokal saat offline.
-              Data yang tampil adalah snapshot terakhir yang berhasil disimpan
-              dan mungkin belum mencerminkan perubahan jadwal terbaru.
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* Has Classes - Tabs */}
+      {myKelas.length > 0 && (
+        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-2xl bg-muted/60 p-1 sm:grid-cols-3">
+            <TabsTrigger value="upcoming" className="rounded-xl">
+              Jadwal Mendatang ({upcomingDates.length})
+            </TabsTrigger>
+            <TabsTrigger value="today" className="rounded-xl">
+              Hari Ini ({todayJadwal.length})
+            </TabsTrigger>
+            <TabsTrigger value="history" className="rounded-xl">
+              Riwayat ({historyDates.length})
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Statistics Cards */}
-        {myKelas.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <DashboardCard
-              title="Total Kelas"
-              value={myKelas.length}
-              icon={BookOpen}
-              color="blue"
-            />
-            <DashboardCard
-              title="Hari Ini"
-              value={todayJadwal.length}
-              icon={Calendar}
-              color="green"
-            />
-            <DashboardCard
-              title="Mendatang"
-              value={upcomingDates.length}
-              icon={Clock}
-              color="purple"
-            />
-            <DashboardCard
-              title="Total Jadwal"
-              value={allJadwal.length}
-              icon={AlertCircle}
-              color="amber"
-            />
-          </div>
-        )}
-
-        {/* ✅ NEW: Info Banner */}
-        <GlassCard
-          intensity="low"
-          className="border-primary/20 bg-primary/5 shadow-sm dark:border-primary/20 dark:bg-primary/10"
-        >
-          <CardContent className="p-4 sm:p-5">
-            <Alert className="border-0 bg-transparent p-0 shadow-none">
-              <Info className="h-4 w-4 text-primary" />
-              <AlertDescription className="text-primary dark:text-primary/80">
-                Jadwal praktikum diatur oleh dosen pengampu kelas Anda. Jika ada
-                pertanyaan terkait jadwal, silakan hubungi dosen yang
-                bersangkutan. Sesi yang sudah lewat akan otomatis masuk ke tab
-                riwayat.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </GlassCard>
-
-        {/* ✅ UPDATED: Empty State (No Enrollment CTA) */}
-        {myKelas.length === 0 && (
-          <GlassCard
-            intensity="low"
-            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
-          >
-            <CardContent className="p-12">
-              <div className="text-center">
-                <Calendar className="mx-auto mb-4 h-16 w-16 text-muted-foreground/40" />
-                <h3 className="mb-2 text-xl font-semibold text-foreground">
-                  Belum Ada Jadwal Praktikum
-                </h3>
-                <p className="mx-auto max-w-md text-muted-foreground">
-                  Anda belum memiliki jadwal praktikum aktif. Jika sebelumnya
-                  pernah mengikuti praktikum, sesi yang sudah selesai akan tetap
-                  muncul di tab riwayat saat data tersedia.
-                </p>
-                {/* ❌ REMOVED: Daftar Kelas Button */}
-              </div>
-            </CardContent>
-          </GlassCard>
-        )}
-
-        {/* Has Classes - Tabs */}
-        {myKelas.length > 0 && (
-          <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-2xl bg-muted/60 p-1 sm:grid-cols-3">
-              <TabsTrigger value="upcoming" className="rounded-xl">
-                Jadwal Mendatang ({upcomingDates.length})
-              </TabsTrigger>
-              <TabsTrigger value="today" className="rounded-xl">
-                Hari Ini ({todayJadwal.length})
-              </TabsTrigger>
-              <TabsTrigger value="history" className="rounded-xl">
-                Riwayat ({historyDates.length})
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Today's Schedule */}
-            <TabsContent value="today" className="space-y-4">
-              {todayJadwal.length === 0 ? (
-                <GlassCard
-                  intensity="low"
-                  className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
-                >
-                  <CardContent className="p-6">
-                    <div className="py-6 text-center">
-                      <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
-                      <p className="text-muted-foreground">
-                        Tidak ada jadwal praktikum hari ini
-                      </p>
-                    </div>
-                  </CardContent>
-                </GlassCard>
-              ) : (
-                <div className="space-y-3">
-                  {todayJadwal.map((jadwal) => (
-                    <GlassCard
-                      key={jadwal.id}
-                      intensity="low"
-                      className="border-success/30 bg-success/5 dark:border-success/20 dark:bg-success/10"
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex gap-4">
-                          <div className="shrink-0">
-                            <div className="w-16 h-16 bg-success/10 rounded-lg flex flex-col items-center justify-center">
-                              <Clock className="h-5 w-5 text-success mb-1" />
-                              <span className="text-xs font-medium text-success">
-                                {formatTime(jadwal.jam_mulai)}
-                              </span>
-                            </div>
+          {/* Today's Schedule */}
+          <TabsContent value="today" className="space-y-4">
+            {todayJadwal.length === 0 ? (
+              <GlassCard
+                intensity="low"
+                className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
+              >
+                <CardContent className="p-6">
+                  <div className="py-6 text-center">
+                    <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
+                    <p className="text-muted-foreground">
+                      Tidak ada jadwal praktikum hari ini
+                    </p>
+                  </div>
+                </CardContent>
+              </GlassCard>
+            ) : (
+              <div className="space-y-3">
+                {todayJadwal.map((jadwal) => (
+                  <GlassCard
+                    key={jadwal.id}
+                    intensity="low"
+                    className="border-success/30 bg-success/5 dark:border-success/20 dark:bg-success/10"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex gap-4">
+                        <div className="shrink-0">
+                          <div className="w-16 h-16 bg-success/10 rounded-lg flex flex-col items-center justify-center">
+                            <Clock className="h-5 w-5 text-success mb-1" />
+                            <span className="text-xs font-medium text-success">
+                              {formatTime(jadwal.jam_mulai)}
+                            </span>
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg">
-                              {jadwal.mata_kuliah_nama}
-                            </h3>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">
+                            {jadwal.mata_kuliah_nama}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {jadwal.kelas_nama}
+                          </p>
+                          {jadwal.topik && (
                             <p className="text-sm text-muted-foreground mb-2">
-                              {jadwal.kelas_nama}
+                              📝 {jadwal.topik}
                             </p>
-                            {jadwal.topik && (
-                              <p className="text-sm text-muted-foreground mb-2">
-                                📝 {jadwal.topik}
-                              </p>
-                            )}
-                            {jadwal.dosen_nama && jadwal.dosen_nama !== "-" ? (
-                              <p className="text-sm text-muted-foreground mb-2">
-                                Dosen: {jadwal.dosen_nama}
-                              </p>
-                            ) : null}
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-4 w-4" />
-                                {formatTime(jadwal.jam_mulai)} -{" "}
-                                {formatTime(jadwal.jam_selesai)}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <MapPin className="h-4 w-4" />
-                                {jadwal.lab_nama}
-                              </div>
+                          )}
+                          {jadwal.dosen_nama && jadwal.dosen_nama !== "-" ? (
+                            <p className="text-sm text-muted-foreground mb-2">
+                              Dosen: {jadwal.dosen_nama}
+                            </p>
+                          ) : null}
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              {formatTime(jadwal.jam_mulai)} -{" "}
+                              {formatTime(jadwal.jam_selesai)}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              {jadwal.lab_nama}
                             </div>
                           </div>
                         </div>
-                      </CardContent>
-                    </GlassCard>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
+                      </div>
+                    </CardContent>
+                  </GlassCard>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-            {/* Upcoming Schedule */}
-            <TabsContent value="upcoming" className="space-y-6">
-              {upcomingDates.length === 0 ? (
-                <GlassCard
-                  intensity="low"
-                  className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
-                >
-                  <CardContent className="p-6">
-                    <div className="py-6 text-center">
-                      <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
-                      <p className="text-muted-foreground">
-                        Tidak ada jadwal praktikum mendatang
-                      </p>
-                    </div>
-                  </CardContent>
-                </GlassCard>
-              ) : (
-                upcomingDates.map((date) => (
+          {/* Upcoming Schedule */}
+          <TabsContent value="upcoming" className="space-y-6">
+            {upcomingDates.length === 0 ? (
+              <GlassCard
+                intensity="low"
+                className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
+              >
+                <CardContent className="p-6">
+                  <div className="py-6 text-center">
+                    <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
+                    <p className="text-muted-foreground">
+                      Tidak ada jadwal praktikum mendatang
+                    </p>
+                  </div>
+                </CardContent>
+              </GlassCard>
+            ) : (
+              upcomingDates.map((date) => (
+                <div key={date}>
+                  <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    {formatDate(date)}
+                  </h3>
+                  <div className="space-y-3">
+                    {groupedJadwal[date].map((jadwal) => (
+                      <GlassCard
+                        key={jadwal.id}
+                        intensity="low"
+                        className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            <div className="shrink-0">
+                              <div className="w-16 h-16 bg-primary/10 rounded-lg flex flex-col items-center justify-center">
+                                <Clock className="h-5 w-5 text-primary mb-1" />
+                                <span className="text-xs font-medium text-primary">
+                                  {formatTime(jadwal.jam_mulai)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg">
+                                {jadwal.mata_kuliah_nama}
+                              </h3>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {jadwal.kelas_nama}
+                              </p>
+                              {jadwal.topik && (
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  📝 {jadwal.topik}
+                                </p>
+                              )}
+                              {jadwal.dosen_nama &&
+                              jadwal.dosen_nama !== "-" ? (
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  Dosen: {jadwal.dosen_nama}
+                                </p>
+                              ) : null}
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  {formatTime(jadwal.jam_mulai)} -{" "}
+                                  {formatTime(jadwal.jam_selesai)}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-4 w-4" />
+                                  {jadwal.lab_nama}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </GlassCard>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </TabsContent>
+
+          {/* History Schedule */}
+          <TabsContent value="history" className="space-y-6">
+            {historyDates.length === 0 ? (
+              <GlassCard
+                intensity="low"
+                className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
+              >
+                <CardContent className="p-6">
+                  <div className="py-6 text-center">
+                    <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
+                    <p className="text-muted-foreground">
+                      Belum ada riwayat praktikum
+                    </p>
+                  </div>
+                </CardContent>
+              </GlassCard>
+            ) : (
+              historyDates.map((date) => {
+                return (
                   <div key={date}>
                     <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                       <Calendar className="h-5 w-5" />
                       {formatDate(date)}
+                      <StatusBadge status="offline">Selesai</StatusBadge>
                     </h3>
                     <div className="space-y-3">
                       {groupedJadwal[date].map((jadwal) => (
                         <GlassCard
                           key={jadwal.id}
                           intensity="low"
-                          className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
+                          className="border-border/40 bg-white/90 shadow-lg dark:bg-card"
                         >
                           <CardContent className="p-4">
                             <div className="flex gap-4">
-                              <div className="shrink-0">
-                                <div className="w-16 h-16 bg-primary/10 rounded-lg flex flex-col items-center justify-center">
-                                  <Clock className="h-5 w-5 text-primary mb-1" />
-                                  <span className="text-xs font-medium text-primary">
+                              <div className="/* shrink-0 */">
+                                <div className="w-16 h-16 rounded-lg flex flex-col items-center justify-center bg-muted">
+                                  <Clock className="h-5 w-5 mb-1 text-muted-foreground" />
+                                  <span className="text-xs font-medium text-muted-foreground">
                                     {formatTime(jadwal.jam_mulai)}
                                   </span>
                                 </div>
@@ -614,105 +687,20 @@ export default function JadwalPage() {
                       ))}
                     </div>
                   </div>
-                ))
-              )}
-            </TabsContent>
+                );
+              })
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
 
-            {/* History Schedule */}
-            <TabsContent value="history" className="space-y-6">
-              {historyDates.length === 0 ? (
-                <GlassCard
-                  intensity="low"
-                  className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
-                >
-                  <CardContent className="p-6">
-                    <div className="py-6 text-center">
-                      <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
-                      <p className="text-muted-foreground">
-                        Belum ada riwayat praktikum
-                      </p>
-                    </div>
-                  </CardContent>
-                </GlassCard>
-              ) : (
-                historyDates.map((date) => {
-                  return (
-                    <div key={date}>
-                      <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
-                        {formatDate(date)}
-                        <StatusBadge status="offline">Selesai</StatusBadge>
-                      </h3>
-                      <div className="space-y-3">
-                        {groupedJadwal[date].map((jadwal) => (
-                          <GlassCard
-                            key={jadwal.id}
-                            intensity="low"
-                            className="border-border/40 bg-white/90 shadow-lg dark:bg-card"
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex gap-4">
-                                <div className="/* shrink-0 */">
-                                  <div className="w-16 h-16 rounded-lg flex flex-col items-center justify-center bg-muted">
-                                    <Clock className="h-5 w-5 mb-1 text-muted-foreground" />
-                                    <span className="text-xs font-medium text-muted-foreground">
-                                      {formatTime(jadwal.jam_mulai)}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="flex-1">
-                                  <h3 className="font-semibold text-lg">
-                                    {jadwal.mata_kuliah_nama}
-                                  </h3>
-                                  <p className="text-sm text-muted-foreground mb-2">
-                                    {jadwal.kelas_nama}
-                                  </p>
-                                  {jadwal.topik && (
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                      📝 {jadwal.topik}
-                                    </p>
-                                  )}
-                                  {jadwal.dosen_nama &&
-                                  jadwal.dosen_nama !== "-" ? (
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                      Dosen: {jadwal.dosen_nama}
-                                    </p>
-                                  ) : null}
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                      <Clock className="h-4 w-4" />
-                                      {formatTime(jadwal.jam_mulai)} -{" "}
-                                      {formatTime(jadwal.jam_selesai)}
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <MapPin className="h-4 w-4" />
-                                      {jadwal.lab_nama}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </GlassCard>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </TabsContent>
-          </Tabs>
-        )}
-
-        {/* ❌ REMOVED: Kelas yang Diikuti card
+      {/* ❌ REMOVED: Kelas yang Diikuti card
             Reason: Redundant and not relevant to jadwal viewing
             - Page is focused on schedule (when/where)
             - Kelas list is not needed here
             - User already knows which kelas they're enrolled in
             - If needed, this info belongs in Dashboard or Profile
         */}
-      </div>
-
-      {/* ❌ REMOVED: EnrollKelasDialog component */}
     </div>
   );
 }

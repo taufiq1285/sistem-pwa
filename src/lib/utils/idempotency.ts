@@ -14,6 +14,7 @@
  */
 
 import type { SyncEntity, SyncOperation } from "@/types/offline.types";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -178,7 +179,7 @@ export function parseRequestId(requestId: string): {
  * // { judul: "Quiz 1", kelas_id: "123", _requestId: "req_kuis_create_..." }
  *
  * // Original data unchanged
- * console.log(originalData); // { judul: "Quiz 1", kelas_id: "123" }
+ * logger.debug(originalData); // { judul: "Quiz 1", kelas_id: "123" }
  * ```
  */
 export function addIdempotencyKey<T extends Record<string, unknown>>(
@@ -381,7 +382,7 @@ export function cleanupProcessedRequests(
 
     if (removed > 0) {
       localStorage.setItem(PROCESSED_REQUESTS_KEY, JSON.stringify(filtered));
-      console.log(`🧹 Cleaned up ${removed} old processed requests`);
+      logger.debug(`🧹 Cleaned up ${removed} old processed requests`);
     }
 
     return removed;

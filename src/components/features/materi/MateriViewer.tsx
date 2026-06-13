@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import logger from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import type { Materi } from "@/types/materi.types";
 import { getFileTypeCategory, formatFileSize } from "@/lib/supabase/storage";
@@ -145,7 +146,7 @@ export function MateriViewer({
             <div className="flex-1">
               <DialogTitle className="text-xl">{materi.judul}</DialogTitle>
               {materi.deskripsi ? (
-                <DialogDescription className="mt-1">
+                <DialogDescription className="prose prose-slate mt-1 max-w-none text-body dark:prose-invert">
                   {materi.deskripsi}
                 </DialogDescription>
               ) : (
@@ -289,7 +290,7 @@ function PDFViewer({ url }: { url: string }) {
       className="w-full h-full border-0"
       title="PDF Viewer"
       onError={() => {
-        console.warn("PDF failed to load in iframe");
+        logger.debug("PDF failed to load in iframe");
         setIframeError(true);
       }}
     />

@@ -1,0 +1,262 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:bg><p:bgPr><a:solidFill><a:srgbClr val="F8FAFC"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
+    <p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
+<p:sp>
+  <p:nvSpPr><p:cNvPr id="2" name="TopBand"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+  <p:spPr>
+    <a:xfrm><a:off x="0" y="0"/><a:ext cx="12192000" cy="760000"/></a:xfrm>
+    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+    <a:solidFill><a:srgbClr val="6B1022"/></a:solidFill>
+    <a:ln w="12700"><a:solidFill><a:srgbClr val="6B1022"/></a:solidFill></a:ln>
+  </p:spPr>
+  <p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr lang="id-ID"/></a:p></p:txBody>
+</p:sp>
+<p:sp>
+  <p:nvSpPr><p:cNvPr id="3" name="SlideTitle"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+  <p:spPr>
+    <a:xfrm><a:off x="520000" y="135000"/><a:ext cx="10100000" cy="380000"/></a:xfrm>
+    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+    <a:noFill/><a:ln><a:noFill/></a:ln>
+  </p:spPr>
+  <p:txBody>
+    <a:bodyPr wrap="square" rtlCol="0"><a:spAutoFit/></a:bodyPr><a:lstStyle/>
+<a:p>
+  <a:pPr algn="l" marL="0" indent="0"><a:buNone/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="2200" b="1">
+      <a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Objek, Lokasi, dan Sampel</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="2200">
+    <a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+  </p:txBody>
+</p:sp>
+<p:sp>
+  <p:nvSpPr><p:cNvPr id="4" name="SlideNo"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+  <p:spPr>
+    <a:xfrm><a:off x="11100000" y="150000"/><a:ext cx="600000" cy="300000"/></a:xfrm>
+    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+    <a:noFill/><a:ln><a:noFill/></a:ln>
+  </p:spPr>
+  <p:txBody>
+    <a:bodyPr wrap="square" rtlCol="0"><a:spAutoFit/></a:bodyPr><a:lstStyle/>
+<a:p>
+  <a:pPr algn="r" marL="0" indent="0"><a:buNone/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1500" b="1">
+      <a:solidFill><a:srgbClr val="FDE68A"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>11</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1500">
+    <a:solidFill><a:srgbClr val="FDE68A"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+  </p:txBody>
+</p:sp>
+<p:sp>
+  <p:nvSpPr><p:cNvPr id="20" name="Bullets"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+  <p:spPr>
+    <a:xfrm><a:off x="600000" y="1050000"/><a:ext cx="4400000" cy="4700000"/></a:xfrm>
+    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+    <a:noFill/><a:ln><a:noFill/></a:ln>
+  </p:spPr>
+  <p:txBody>
+    <a:bodyPr wrap="square" rtlCol="0"><a:spAutoFit/></a:bodyPr><a:lstStyle/>
+<a:p>
+  <a:pPr algn="l" marL="285750" indent="-171450"><a:buChar char="-"/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1300" b="0">
+      <a:solidFill><a:srgbClr val="334155"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Lokasi penelitian: Akademi Kebidanan Mega Buana.</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1300">
+    <a:solidFill><a:srgbClr val="334155"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+<a:p>
+  <a:pPr algn="l" marL="285750" indent="-171450"><a:buChar char="-"/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1300" b="0">
+      <a:solidFill><a:srgbClr val="334155"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Teknik sampel menggunakan total sampling.</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1300">
+    <a:solidFill><a:srgbClr val="334155"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+<a:p>
+  <a:pPr algn="l" marL="285750" indent="-171450"><a:buChar char="-"/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1300" b="0">
+      <a:solidFill><a:srgbClr val="334155"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Evaluasi usability melibatkan 46 responden.</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1300">
+    <a:solidFill><a:srgbClr val="334155"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+  </p:txBody>
+</p:sp>
+<p:sp>
+  <p:nvSpPr><p:cNvPr id="130" name="Badge130"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+  <p:spPr>
+    <a:xfrm><a:off x="5850000" y="1450000"/><a:ext cx="2200000" cy="1350000"/></a:xfrm>
+    <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+    <a:solidFill><a:srgbClr val="6B1022"/></a:solidFill>
+    <a:ln w="12700"><a:solidFill><a:srgbClr val="6B1022"/></a:solidFill></a:ln>
+  </p:spPr>
+  <p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr lang="id-ID"/></a:p></p:txBody>
+</p:sp><p:sp>
+  <p:nvSpPr><p:cNvPr id="131" name="BadgeText130"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+  <p:spPr>
+    <a:xfrm><a:off x="5900000" y="1680000"/><a:ext cx="2100000" cy="850000"/></a:xfrm>
+    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+    <a:noFill/><a:ln><a:noFill/></a:ln>
+  </p:spPr>
+  <p:txBody>
+    <a:bodyPr wrap="square" rtlCol="0"><a:spAutoFit/></a:bodyPr><a:lstStyle/>
+<a:p>
+  <a:pPr algn="ctr" marL="0" indent="0"><a:buNone/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="2700" b="1">
+      <a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>46</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="2700">
+    <a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+<a:p>
+  <a:pPr algn="ctr" marL="0" indent="0"><a:buNone/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1200" b="1">
+      <a:solidFill><a:srgbClr val="FDE68A"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Responden SUS</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1200">
+    <a:solidFill><a:srgbClr val="FDE68A"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+  </p:txBody>
+</p:sp>
+<p:sp>
+  <p:nvSpPr><p:cNvPr id="140" name="Card140"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+  <p:spPr>
+    <a:xfrm><a:off x="8400000" y="1300000"/><a:ext cx="2700000" cy="3300000"/></a:xfrm>
+    <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+    <a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill>
+    <a:ln w="12700"><a:solidFill><a:srgbClr val="E5E7EB"/></a:solidFill></a:ln>
+  </p:spPr>
+  <p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr lang="id-ID"/></a:p></p:txBody>
+</p:sp><p:sp>
+  <p:nvSpPr><p:cNvPr id="141" name="CardText140"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+  <p:spPr>
+    <a:xfrm><a:off x="8580000" y="1450000"/><a:ext cx="2340000" cy="3040000"/></a:xfrm>
+    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+    <a:noFill/><a:ln><a:noFill/></a:ln>
+  </p:spPr>
+  <p:txBody>
+    <a:bodyPr wrap="square" rtlCol="0"><a:spAutoFit/></a:bodyPr><a:lstStyle/>
+<a:p>
+  <a:pPr algn="l" marL="0" indent="0"><a:buNone/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1650" b="1">
+      <a:solidFill><a:srgbClr val="6B1022"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Distribusi Peran</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1650">
+    <a:solidFill><a:srgbClr val="6B1022"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+<a:p>
+  <a:pPr algn="l" marL="285750" indent="-171450"><a:buChar char="-"/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1350" b="0">
+      <a:solidFill><a:srgbClr val="374151"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Mahasiswa 38</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1350">
+    <a:solidFill><a:srgbClr val="374151"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+<a:p>
+  <a:pPr algn="l" marL="285750" indent="-171450"><a:buChar char="-"/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1350" b="0">
+      <a:solidFill><a:srgbClr val="374151"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Dosen 6</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1350">
+    <a:solidFill><a:srgbClr val="374151"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+<a:p>
+  <a:pPr algn="l" marL="285750" indent="-171450"><a:buChar char="-"/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1350" b="0">
+      <a:solidFill><a:srgbClr val="374151"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Laboran 1</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1350">
+    <a:solidFill><a:srgbClr val="374151"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+<a:p>
+  <a:pPr algn="l" marL="285750" indent="-171450"><a:buChar char="-"/></a:pPr>
+  <a:r>
+    <a:rPr lang="id-ID" sz="1350" b="0">
+      <a:solidFill><a:srgbClr val="374151"/></a:solidFill>
+      <a:latin typeface="Aptos"/>
+    </a:rPr>
+    <a:t>Admin 1</a:t>
+  </a:r>
+  <a:endParaRPr lang="id-ID" sz="1350">
+    <a:solidFill><a:srgbClr val="374151"/></a:solidFill>
+    <a:latin typeface="Aptos"/>
+  </a:endParaRPr>
+</a:p>
+  </p:txBody>
+</p:sp>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
+</p:sld>

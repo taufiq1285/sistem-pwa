@@ -7,14 +7,15 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { AuthContext } from "@/context/AuthContext";
-import logger from "@/lib/utils/logger";
 import type {
   AuthUser,
   AuthSession,
   LoginCredentials,
   RegisterData,
 } from "@/types/auth.types";
+import logger from "@/lib/utils/logger";
 import * as authApi from "@/lib/supabase/auth";
+import { getRecommendedTimeout } from "@/lib/utils/fetch-with-timeout";
 import {
   offlineLogin,
   secureOfflineLogin,
@@ -40,6 +41,13 @@ const AUTH_CACHE_KEY = "auth_cache";
 const LOGOUT_FLAG_KEY = "auth_logout_flag";
 const CACHE_VERSION = "v1";
 const ONLINE_LOGIN_TIMEOUT_MS = 12000;
+const AUTH_INIT_TIMEOUT_MS = 3000;
+const PUBLIC_AUTH_PATHS = new Set([
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+]);
 
 interface AuthCache {
   version: string;
@@ -71,7 +79,7 @@ function getCachedAuth(): {
 
     return { user: data.user, session: data.session };
   } catch (error) {
-    console.warn("Failed to read auth cache:", error);
+    logger.warn("Failed to read auth cache:", error);
     return null;
   }
 }
@@ -86,7 +94,7 @@ function setCachedAuth(user: AuthUser | null, session: AuthSession | null) {
     };
     localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(cache));
   } catch (error) {
-    console.warn("Failed to cache auth:", error);
+    logger.warn("Failed to cache auth:", error);
   }
 }
 
@@ -95,9 +103,9 @@ function clearCachedAuth() {
     localStorage.removeItem(AUTH_CACHE_KEY);
     // ✅ PERBAIKAN: Juga hapus logout flag lama jika ada
     // Ini memastikan consistency setelah logout
-    console.log("✅ Auth cache cleared");
+    logger.info("✅ Auth cache cleared");
   } catch (error) {
-    console.warn("Failed to clear auth cache:", error);
+    logger.warn("Failed to clear auth cache:", error);
   }
 }
 
@@ -105,9 +113,9 @@ function setLogoutFlag() {
   try {
     const timestamp = Date.now().toString();
     localStorage.setItem(LOGOUT_FLAG_KEY, timestamp);
-    console.log("✅ Logout flag set:", timestamp);
+    logger.info("✅ Logout flag set:", timestamp);
   } catch (error) {
-    console.warn("Failed to set logout flag:", error);
+    logger.warn("Failed to set logout flag:", error);
   }
 }
 
@@ -129,7 +137,7 @@ function getLogoutFlag(): number | null {
 
     return timestamp;
   } catch (error) {
-    console.warn("Failed to get logout flag:", error);
+    logger.warn("Failed to get logout flag:", error);
     return null;
   }
 }
@@ -140,9 +148,9 @@ function getLogoutFlag(): number | null {
 function clearLogoutFlag() {
   try {
     localStorage.removeItem(LOGOUT_FLAG_KEY);
-    console.log("✅ Logout flag cleared (user logged in)");
+    logger.info("✅ Logout flag cleared (user logged in)");
   } catch (error) {
-    console.warn("Failed to clear logout flag:", error);
+    logger.warn("Failed to clear logout flag:", error);
   }
 }
 
@@ -152,6 +160,40 @@ function createNetworkTimeoutError() {
   );
   error.name = "AuthNetworkTimeoutError";
   return error;
+}
+
+function getAdaptiveOnlineLoginTimeoutMs() {
+  return Math.max(ONLINE_LOGIN_TIMEOUT_MS, getRecommendedTimeout());
+}
+
+function isPublicAuthStartupPath(): boolean {
+  if (typeof window === "undefined") return false;
+  return PUBLIC_AUTH_PATHS.has(window.location.pathname);
+}
+
+function createAuthInitTimeoutError() {
+  const error = new Error("Auth initialization timed out");
+  error.name = "AuthInitTimeoutError";
+  return error;
+}
+
+async function getSessionWithStartupTimeout() {
+  let timeoutId: number | null = null;
+
+  try {
+    return await Promise.race([
+      authApi.getSession(),
+      new Promise<null>((_, reject) => {
+        timeoutId = window.setTimeout(() => {
+          reject(createAuthInitTimeoutError());
+        }, AUTH_INIT_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
+  }
 }
 
 function isNetworkLikeLoginError(error: unknown): boolean {
@@ -178,7 +220,10 @@ function isNetworkLikeLoginError(error: unknown): boolean {
   ].some((keyword) => message.includes(keyword));
 }
 
-async function loginOnlineWithTimeout(credentials: LoginCredentials) {
+async function loginOnlineWithTimeout(
+  credentials: LoginCredentials,
+  timeoutMs: number = getAdaptiveOnlineLoginTimeoutMs(),
+) {
   let timeoutId: number | null = null;
 
   try {
@@ -187,7 +232,7 @@ async function loginOnlineWithTimeout(credentials: LoginCredentials) {
       new Promise<never>((_, reject) => {
         timeoutId = window.setTimeout(() => {
           reject(createNetworkTimeoutError());
-        }, ONLINE_LOGIN_TIMEOUT_MS);
+        }, timeoutMs);
       }),
     ]);
   } finally {
@@ -195,6 +240,47 @@ async function loginOnlineWithTimeout(credentials: LoginCredentials) {
       window.clearTimeout(timeoutId);
     }
   }
+}
+
+async function performOnlineLoginAttempt(credentials: LoginCredentials) {
+  const response = await loginOnlineWithTimeout(credentials);
+
+  if (!response.success) {
+    throw new Error(
+      response.error || "Login gagal. Periksa email dan password Anda.",
+    );
+  }
+
+  if (!response.user || !response.session) {
+    throw new Error("Login response missing user or session data");
+  }
+
+  return response;
+}
+
+async function loginOnlineWithRetry(credentials: LoginCredentials) {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await performOnlineLoginAttempt(credentials);
+    } catch (error) {
+      lastError = error;
+
+      const shouldRetry =
+        attempt === 0 && navigator.onLine && isNetworkLikeLoginError(error);
+
+      if (!shouldRetry) {
+        throw error;
+      }
+
+      logger.auth(
+        "Online login encountered network instability, retrying once before fallback",
+      );
+    }
+  }
+
+  throw lastError;
 }
 
 // ============================================================================
@@ -286,7 +372,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return;
         }
 
-        const currentSession = await authApi.getSession();
+        if (!initialCache && isPublicAuthStartupPath()) {
+          logger.auth(
+            "Public auth route startup - rendering immediately and deferring session restoration",
+          );
+          updateAuthState(null, null);
+          setInitialized(true);
+          setLoading(false);
+          return;
+        }
+
+        const currentSession = await getSessionWithStartupTimeout();
 
         if (mounted) {
           // ✅ PERBAIKAN: Jika ada logout flag, prioritaskan logout daripada online session
@@ -409,18 +505,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Online login
           logger.auth("Online login attempt...");
           try {
-            const response = await loginOnlineWithTimeout(credentials);
-
-            if (!response.success) {
-              throw new Error(
-                response.error ||
-                  "Login gagal. Periksa email dan password Anda.",
-              );
-            }
-
-            if (!response.user || !response.session) {
-              throw new Error("Login response missing user or session data");
-            }
+            const response = await loginOnlineWithRetry(credentials);
 
             try {
               await storeOfflineCredentials(
@@ -443,7 +528,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 });
               }
             } catch (storageError) {
-              console.warn(
+              logger.warn(
                 "Failed to store offline credentials:",
                 storageError,
               );
@@ -513,7 +598,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setInitialized(true); // ✅ FORCE INITIALIZED AFTER SUCCESSFUL OFFLINE LOGIN
         }
       } catch (error) {
-        console.error("Login error:", error);
+        logger.error("Login error:", error);
         throw error;
       } finally {
         setLoading(false);
@@ -534,7 +619,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // After successful registration, the user should be able to login
       // The first login will record the online login
     } catch (error) {
-      console.error("Registration error:", error);
+      logger.error("Registration error:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -542,7 +627,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const logout = useCallback(async () => {
-    console.log("🔵 logout: START - INSTANT MODE ⚡");
+    logger.info("🔵 logout: START - INSTANT MODE ⚡");
 
     // Simpan userId sebelum di-clear untuk clearOfflineSession
     const currentUserId = user?.id;
@@ -554,11 +639,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // ✅ OPTIMIZATION: Clear state IMMEDIATELY for instant logout
-    console.log("🔵 logout: Clearing state & storage FIRST...");
+    logger.info("🔵 logout: Clearing state & storage FIRST...");
     updateAuthState(null, null);
     clearCachedAuth();
     setLogoutFlag(); // ✅ Set flag to prevent auto-login from offline session
-    console.log("🔵 logout: Logout flag SET - auto-login prevented");
+    logger.info("🔵 logout: Logout flag SET - auto-login prevented");
     setLoading(false); // Set false immediately for instant UI update
 
     // ✅ Run cleanup operations in background (non-blocking)
@@ -574,16 +659,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
           authApiWithLogout.logout || authApiWithLogout.signOut;
 
         if (performLogout) {
-          console.log("🔵 Calling auth API logout (background)...");
+          logger.info("🔵 Calling auth API logout (background)...");
           performLogout().catch((error) => {
-            console.warn("⚠️ Logout API error (non-critical):", error);
+            logger.warn("⚠️ Logout API error (non-critical):", error);
           });
         }
 
         // 2. Clear offline session ONLY untuk user yang logout (keep credentials for future offline login)
         const offlineCleanupPromise = Promise.all([
           clearOfflineSession(currentUserId).catch((error) => {
-            console.warn("⚠️ Clear offline session error:", error);
+            logger.warn("⚠️ Clear offline session error:", error);
           }),
           // NOTE: We DON'T clear credentials here, so users can login offline again
         ]);
@@ -596,7 +681,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           clearSessionStorage: true, // ✅ Clear sessionStorage (temp data only)
           clearServiceWorkerCache: false, // ✅ KEEP Service Worker cache for offline PWA
         }).catch((error) => {
-          console.warn("⚠️ Cache cleanup error:", error);
+          logger.warn("⚠️ Cache cleanup error:", error);
         });
 
         // Wait for both with a timeout (max 2 seconds total)
@@ -605,16 +690,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
           new Promise((resolve) => setTimeout(resolve, 2000)),
         ]);
 
-        console.log("✅ Background cleanup completed");
-        console.log(
+        logger.info("✅ Background cleanup completed");
+        logger.info(
           "✅ Offline session cleared (credentials kept for offline login)",
         );
       } catch (error) {
-        console.warn("⚠️ Background cleanup failed:", error);
+        logger.warn("⚠️ Background cleanup failed:", error);
       }
     })();
 
-    console.log("✅ logout: COMPLETE (instant!)");
+    logger.info("✅ logout: COMPLETE (instant!)");
 
     // ✅ Redirect to login page immediately without waiting
     // Check if window is available (for test environments)
@@ -634,7 +719,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error(response.error || "Password reset failed");
       }
     } catch (error) {
-      console.error("Password reset error:", error);
+      logger.error("Password reset error:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -650,7 +735,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error(response.error || "Password update failed");
       }
     } catch (error) {
-      console.error("Password update error:", error);
+      logger.error("Password update error:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -665,7 +750,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         updateAuthState(newSession.user, newSession);
       }
     } catch (error) {
-      console.error("Refresh session error:", error);
+      logger.error("Refresh session error:", error);
     }
   }, [updateAuthState]);
 

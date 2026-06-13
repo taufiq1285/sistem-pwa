@@ -11,7 +11,7 @@ import {
   Users,
   Edit,
   Trash2,
-  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { TableBody } from "@/components/ui/table";
-import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
+import { TableSkeleton } from "@/components/common";
 import {
   EnhancedTable,
   EnhancedTableHeader,
@@ -59,6 +59,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   getLaboratoriumList,
   updateLaboratorium,
@@ -294,9 +295,9 @@ export default function LaboratoriesPage() {
   };
 
   return (
-    <div className="app-container space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {/* Header */}
-      <div className="section-shell flex items-center justify-between rounded-2xl p-5">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
             Manajemen Laboratorium
@@ -307,7 +308,7 @@ export default function LaboratoriesPage() {
         </div>
         <Button
           onClick={handleAdd}
-          className="font-semibold bg-linear-to-r from-primary to-accent"
+          className="font-semibold bg-linear-to-r from-primary to-accent shrink-0"
         >
           <Plus className="h-4 w-4 mr-2" />
           Tambah Lab
@@ -339,52 +340,41 @@ export default function LaboratoriesPage() {
         />
       </div>
 
-      <Card className="border-warning/30 bg-warning/5">
-        <CardContent className="p-4">
-          <p className="text-sm text-foreground">
-            Halaman ini berfungsi sebagai master data laboratorium. Laboratorium
-            hanya bisa dihapus jika belum dipakai oleh inventaris maupun jadwal
-            praktikum.
-          </p>
-        </CardContent>
-      </Card>
+      <Alert className="border-amber-300/40 bg-amber-50/60 dark:border-amber-700/30 dark:bg-amber-900/10">
+        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+        <AlertDescription className="text-amber-800 dark:text-amber-300">
+          Halaman ini berfungsi sebagai master data laboratorium. Laboratorium
+          hanya bisa dihapus jika belum dipakai oleh inventaris maupun jadwal
+          praktikum.
+        </AlertDescription>
+      </Alert>
 
       {/* Search */}
       <div className="flex gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search laboratories..."
+            placeholder="Cari laboratorium..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-10"
           />
         </div>
       </div>
 
       {/* Laboratories Table */}
-      <Card className="border-0 shadow-xl">
-        <CardHeader className="p-6">
-          <CardTitle className="text-xl font-bold">All Laboratories</CardTitle>
-          <CardDescription className="text-base font-semibold mt-1">
-            Manage laboratory facilities and information
+      <Card className="border border-border/60 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold">
+            Daftar Laboratorium
+          </CardTitle>
+          <CardDescription>
+            Kelola fasilitas dan informasi laboratorium
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <TableSkeleton
-              rows={5}
-              columns={7}
-              columnWidths={[
-                "50px",
-                "120px",
-                "200px",
-                "150px",
-                "80px",
-                "100px",
-                "160px",
-              ]}
-            />
+            <TableSkeleton rows={5} columns={7} />
           ) : laboratories.length === 0 ? (
             searchQuery ? (
               <EmptySearchResults onClear={() => setSearchQuery("")} />
@@ -555,21 +545,22 @@ export default function LaboratoriesPage() {
                       {columnVisibility.actions && (
                         <EnhancedTableCell>
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <button
+                              type="button"
                               onClick={() => handleEdit(lab)}
+                              className="table-action-btn table-action-btn-edit"
+                              title="Edit"
                             >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleDelete(lab)}
+                              className="table-action-btn table-action-btn-delete"
+                              title="Hapus"
                             >
-                              <Trash2 className="h-4 w-4 text-danger" />
-                            </Button>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
                         </EnhancedTableCell>
                       )}
@@ -584,18 +575,18 @@ export default function LaboratoriesPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md p-6">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
-              Edit Laboratory
+            <DialogTitle className="text-lg font-semibold">
+              Edit Laboratorium
             </DialogTitle>
-            <DialogDescription className="text-base font-semibold">
-              Update laboratory information
+            <DialogDescription>
+              Perbarui informasi laboratorium
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="kode_lab">Lab Code</Label>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="kode_lab">Kode Lab</Label>
               <Input
                 id="kode_lab"
                 value={editFormData.kode_lab || ""}
@@ -604,8 +595,8 @@ export default function LaboratoriesPage() {
                 }
               />
             </div>
-            <div>
-              <Label htmlFor="nama_lab">Lab Name</Label>
+            <div className="space-y-2">
+              <Label htmlFor="nama_lab">Nama Lab</Label>
               <Input
                 id="nama_lab"
                 value={editFormData.nama_lab || ""}
@@ -614,8 +605,8 @@ export default function LaboratoriesPage() {
                 }
               />
             </div>
-            <div>
-              <Label htmlFor="lokasi">Location</Label>
+            <div className="space-y-2">
+              <Label htmlFor="lokasi">Lokasi</Label>
               <Input
                 id="lokasi"
                 value={editFormData.lokasi || ""}
@@ -624,8 +615,8 @@ export default function LaboratoriesPage() {
                 }
               />
             </div>
-            <div>
-              <Label htmlFor="kapasitas">Capacity</Label>
+            <div className="space-y-2">
+              <Label htmlFor="kapasitas">Kapasitas</Label>
               <Input
                 id="kapasitas"
                 type="text"
@@ -642,8 +633,8 @@ export default function LaboratoriesPage() {
                 }}
               />
             </div>
-            <div>
-              <Label htmlFor="keterangan">Description</Label>
+            <div className="space-y-2">
+              <Label htmlFor="keterangan">Keterangan</Label>
               <Input
                 id="keterangan"
                 value={editFormData.keterangan || ""}
@@ -655,36 +646,53 @@ export default function LaboratoriesPage() {
                 }
               />
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
+            <div className="flex items-center justify-between rounded-lg border border-border/50 px-3.5 py-2.5">
+              <Label htmlFor="is_active" className="cursor-pointer font-medium">
+                Status Aktif
+              </Label>
+              <button
                 id="is_active"
-                checked={editFormData.is_active ?? true}
-                onChange={(e) =>
+                type="button"
+                role="switch"
+                aria-checked={editFormData.is_active ?? true}
+                onClick={() =>
                   setEditFormData({
                     ...editFormData,
-                    is_active: e.target.checked,
+                    is_active: !(editFormData.is_active ?? true),
                   })
                 }
-              />
-              <Label htmlFor="is_active">Active</Label>
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
+                  (editFormData.is_active ?? true)
+                    ? "bg-primary"
+                    : "bg-muted-foreground/30"
+                }`}
+              >
+                <span
+                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${
+                    (editFormData.is_active ?? true)
+                      ? "translate-x-4"
+                      : "translate-x-0.5"
+                  }`}
+                />
+              </button>
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
                 disabled={isSaving}
-                className="font-semibold border-2"
               >
-                Cancel
+                Batal
               </Button>
               <Button
                 onClick={handleUpdate}
                 disabled={isSaving}
                 className="font-semibold bg-linear-to-r from-primary to-accent"
               >
-                {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Save Changes
+                {isSaving && (
+                  <span className="h-4 w-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full inline-block" />
+                )}
+                Simpan
               </Button>
             </div>
           </div>
@@ -693,18 +701,18 @@ export default function LaboratoriesPage() {
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-md p-6">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
-              Add New Laboratory
+            <DialogTitle className="text-lg font-semibold">
+              Tambah Laboratorium Baru
             </DialogTitle>
-            <DialogDescription className="text-base font-semibold">
-              Create a new laboratory facility
+            <DialogDescription>
+              Buat fasilitas laboratorium baru
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="new_kode_lab">Lab Code *</Label>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="new_kode_lab">Kode Lab *</Label>
               <Input
                 id="new_kode_lab"
                 value={addFormData.kode_lab}
@@ -714,30 +722,30 @@ export default function LaboratoriesPage() {
                 placeholder="LAB-001"
               />
             </div>
-            <div>
-              <Label htmlFor="new_nama_lab">Lab Name *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="new_nama_lab">Nama Lab *</Label>
               <Input
                 id="new_nama_lab"
                 value={addFormData.nama_lab}
                 onChange={(e) =>
                   setAddFormData({ ...addFormData, nama_lab: e.target.value })
                 }
-                placeholder="Computer Laboratory"
+                placeholder="Laboratorium Komputer"
               />
             </div>
-            <div>
-              <Label htmlFor="new_lokasi">Location</Label>
+            <div className="space-y-2">
+              <Label htmlFor="new_lokasi">Lokasi</Label>
               <Input
                 id="new_lokasi"
                 value={addFormData.lokasi}
                 onChange={(e) =>
                   setAddFormData({ ...addFormData, lokasi: e.target.value })
                 }
-                placeholder="Building A, 2nd Floor"
+                placeholder="Gedung A, Lantai 2"
               />
             </div>
-            <div>
-              <Label htmlFor="new_kapasitas">Capacity</Label>
+            <div className="space-y-2">
+              <Label htmlFor="new_kapasitas">Kapasitas</Label>
               <Input
                 id="new_kapasitas"
                 type="text"
@@ -755,47 +763,67 @@ export default function LaboratoriesPage() {
                 placeholder="30"
               />
             </div>
-            <div>
-              <Label htmlFor="new_keterangan">Description</Label>
+            <div className="space-y-2">
+              <Label htmlFor="new_keterangan">Keterangan</Label>
               <Input
                 id="new_keterangan"
                 value={addFormData.keterangan}
                 onChange={(e) =>
                   setAddFormData({ ...addFormData, keterangan: e.target.value })
                 }
-                placeholder="Computer lab with 30 workstations"
+                placeholder="Lab komputer dengan 30 workstation"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
+            <div className="flex items-center justify-between rounded-lg border border-border/50 px-3.5 py-2.5">
+              <Label
+                htmlFor="new_is_active"
+                className="cursor-pointer font-medium"
+              >
+                Status Aktif
+              </Label>
+              <button
                 id="new_is_active"
-                checked={addFormData.is_active ?? true}
-                onChange={(e) =>
+                type="button"
+                role="switch"
+                aria-checked={addFormData.is_active ?? true}
+                onClick={() =>
                   setAddFormData({
                     ...addFormData,
-                    is_active: e.target.checked,
+                    is_active: !(addFormData.is_active ?? true),
                   })
                 }
-              />
-              <Label htmlFor="new_is_active">Active</Label>
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
+                  (addFormData.is_active ?? true)
+                    ? "bg-primary"
+                    : "bg-muted-foreground/30"
+                }`}
+              >
+                <span
+                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${
+                    (addFormData.is_active ?? true)
+                      ? "translate-x-4"
+                      : "translate-x-0.5"
+                  }`}
+                />
+              </button>
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
               <Button
                 variant="outline"
                 onClick={() => setIsAddDialogOpen(false)}
                 disabled={isSaving}
-                className="font-semibold border-2"
               >
-                Cancel
+                Batal
               </Button>
               <Button
                 onClick={handleCreate}
                 disabled={isSaving}
                 className="font-semibold bg-linear-to-r from-primary to-accent"
               >
-                {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Create Laboratory
+                {isSaving && (
+                  <span className="h-4 w-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full inline-block" />
+                )}
+                Buat Lab
               </Button>
             </div>
           </div>

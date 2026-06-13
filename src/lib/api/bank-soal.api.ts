@@ -18,6 +18,7 @@ import type {
   BankSoalFilters,
   BankSoalStats,
 } from "@/types/bank-soal.types";
+import logger from "@/lib/utils/logger";
 import type { TipeSoal, Soal, OpsiJawaban } from "@/types/kuis.types";
 
 // ============================================================================
@@ -398,7 +399,7 @@ export async function incrementBankSoalUsage(id: string): Promise<void> {
   //   question_id: id,
   // });
   // if (error) throw error;
-  console.log(
+  logger.debug(
     `Usage increment for bank soal ${id} skipped - RPC not available`,
   );
 }

@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -238,33 +239,34 @@ export default function PeminjamanApprovalPage() {
       minute: "2-digit",
     });
   };
-
   return (
-    <div className="space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-4xl font-extrabold">
+          <h1 className="text-2xl font-bold text-foreground">
             Persetujuan Peminjaman Alat
           </h1>
-          <p className="text-lg font-semibold text-muted-foreground mt-2">
+          <p className="text-sm text-muted-foreground mt-1">
             Sebagai Admin, Anda dapat menyetujui atau menolak permintaan
             peminjaman alat dari dosen
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => Promise.all([loadRequests(), loadHistory()])}
-          disabled={loading || historyLoading}
-          className="font-semibold shrink-0"
-        >
-          {loading || historyLoading ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            onClick={() => Promise.all([loadRequests(), loadHistory()])}
+            disabled={loading || historyLoading}
+            className="font-semibold"
+          >
+            {loading || historyLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Info Banner */}
@@ -353,10 +355,7 @@ export default function PeminjamanApprovalPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-muted-foreground">Memuat requests...</p>
-                </div>
+                <TableSkeleton rows={5} columns={8} />
               ) : requests.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
@@ -478,10 +477,7 @@ export default function PeminjamanApprovalPage() {
             </CardHeader>
             <CardContent>
               {historyLoading ? (
-                <div className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-muted-foreground">Memuat riwayat...</p>
-                </div>
+                <TableSkeleton rows={5} columns={7} />
               ) : history.length === 0 ? (
                 <div className="text-center py-8">
                   <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />

@@ -8,6 +8,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 import type { UploadedFile } from "@/components/features/kuis/FileUpload";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // CONSTANTS
@@ -98,14 +99,14 @@ export async function uploadLaporan(
   }
   filePath += `/${fileName}`;
 
-  console.log("📤 Uploading laporan:", {
+  logger.debug("📤 Uploading laporan:", {
     filePath,
     fileName,
     size: file.size,
     type: file.type,
   });
 
-  console.log("⏳ Starting upload...");
+  logger.debug("⏳ Starting upload...");
 
   // Upload to Supabase Storage with timeout to prevent indefinite hanging
   const UPLOAD_TIMEOUT = 120000; // 2 minutes timeout
@@ -137,8 +138,8 @@ export async function uploadLaporan(
     throw new Error(`Gagal mengupload file: ${error.message}`);
   }
 
-  console.log("✅ Upload success:", data);
-  console.log(
+  logger.debug("✅ Upload success:", data);
+  logger.debug(
     `⏱️ Upload completed for ${fileName} (${(file.size / 1024).toFixed(2)} KB)`,
   );
 
@@ -153,7 +154,7 @@ export async function uploadLaporan(
     .createSignedUrl(filePath, 60 * 60 * 24); // 24 hours validity
 
   if (signedError) {
-    console.warn("⚠️ Could not create signed URL:", signedError);
+    logger.debug("⚠️ Could not create signed URL:", signedError);
   }
 
   return {
@@ -238,7 +239,7 @@ function extractLaporanPath(source: string): string | null {
       }
     }
   } catch (error) {
-    console.warn("Failed to parse laporan URL:", error);
+    logger.debug("Failed to parse laporan URL:", error);
   }
 
   return null;
@@ -265,7 +266,7 @@ export async function resolveLaporanAccessUrl(
   try {
     return await getLaporanSignedUrl(filePath, 60 * 60 * 24);
   } catch (signedError) {
-    console.warn("Failed to generate signed URL for laporan:", signedError);
+    logger.debug("Failed to generate signed URL for laporan:", signedError);
 
     const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
     return data?.publicUrl || normalized;
@@ -381,7 +382,7 @@ export async function deleteLaporan(filePath: string): Promise<void> {
     throw new Error(`Gagal menghapus file: ${error.message}`);
   }
 
-  console.log("🗑️ File deleted:", filePath);
+  logger.debug("🗑️ File deleted:", filePath);
 }
 
 // ============================================================================

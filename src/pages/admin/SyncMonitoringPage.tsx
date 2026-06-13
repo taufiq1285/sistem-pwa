@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import type { SyncQueueItem } from "@/types/offline.types";
 import { toast } from "sonner";
+import { CardListSkeleton } from "@/components/common";
 
 export function SyncMonitoringPage() {
   // ============================================================================
@@ -183,26 +184,59 @@ export function SyncMonitoringPage() {
   // ============================================================================
   // RENDER
   // ============================================================================
-
   if (!isReady || loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        {/* Header */}
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer rounded-md" />
+            <div className="h-4 w-72 skeleton-shimmer rounded-md" />
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <div className="h-10 w-36 skeleton-shimmer rounded-md" />
+            <div className="h-10 w-24 skeleton-shimmer rounded-md" />
+          </div>
+        </div>
+
+        {/* Statistics Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-20 skeleton-shimmer rounded-xs" />
+                <div className="h-4 w-4 skeleton-shimmer rounded-xs" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="h-8 w-12 skeleton-shimmer rounded-xs" />
+                <div className="h-3 w-24 skeleton-shimmer rounded-xs" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Card Lists Skeletons */}
+        <div className="space-y-4">
+          <div className="h-6 w-32 skeleton-shimmer rounded-xs" />
+          <CardListSkeleton count={3} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-3xl font-bold">Sync Monitoring</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold text-foreground">
+            Sync Monitoring
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Monitor dan kelola offline sync queue
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <Button
             onClick={handleSyncNow}
             disabled={isProcessing || stats?.pending === 0}
@@ -219,7 +253,6 @@ export function SyncMonitoringPage() {
           </Button>
         </div>
       </div>
-
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

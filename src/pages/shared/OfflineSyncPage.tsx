@@ -70,13 +70,11 @@ export default function OfflineSyncPage() {
   };
 
   return (
-    <div className="app-container space-y-6">
-      <div className="section-shell flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            {copy.title}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+          <h1 className="text-2xl font-bold text-foreground">{copy.title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {copy.description}
           </p>
         </div>
@@ -84,7 +82,7 @@ export default function OfflineSyncPage() {
         <StatusBadge
           status={isOnline ? "online" : "offline"}
           pulse={isOnline}
-          className="w-fit"
+          className="w-fit shrink-0"
         >
           {isOnline ? (
             <>

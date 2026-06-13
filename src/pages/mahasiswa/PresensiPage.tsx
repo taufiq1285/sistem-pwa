@@ -17,10 +17,11 @@ import {
   ChevronUp,
   BookOpen,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardCard } from "@/components/ui/dashboard-card";
-import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { CardListSkeleton } from "@/components/common";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -145,10 +146,10 @@ export default function PresensiPage() {
       setRecords(data);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
-      console.log("[Presensi] Data loaded:", data.length, "records");
+      logger.debug("[Presensi] Data loaded:", data.length, "records");
     } catch (error: any) {
       if (!networkDetector.isOnline()) {
-        console.log("ℹ️ Offline mode - could not load presensi");
+        logger.debug("ℹ️ Offline mode - could not load presensi");
         setIsOfflineData(true);
         toast.info(
           error?.message ||
@@ -377,331 +378,316 @@ export default function PresensiPage() {
 
   if (loading) {
     return (
-      <div className="app-container py-4 sm:py-6 lg:py-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <DashboardSkeleton />
-          <DashboardSkeleton />
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-96 animate-pulse rounded bg-muted" />
         </div>
+        <CardListSkeleton count={4} />
       </div>
     );
   }
 
   return (
-    <div className="app-container py-4 sm:py-6 lg:py-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      {/* Header */}
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Presensi Kehadiran
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Rekap presensi umum per mata kuliah, kelas, dan tanggal sesuai
+            catatan kehadiran yang dibuat dosen.
+          </p>
+          {(isOfflineData || lastUpdatedLabel) && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              {isOfflineData && (
+                <span className="inline-flex items-center gap-1 font-medium text-warning">
+                  <WifiOff className="h-3.5 w-3.5" />
+                  Menampilkan presensi tersimpan lokal
+                </span>
+              )}
+              {lastUpdatedLabel && (
+                <span>Update terakhir: {lastUpdatedLabel}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isOfflineData && (
+        <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
+          <AlertDescription>
+            Halaman presensi tetap bisa dibuka dari cache lokal saat offline.
+            Data yang tampil adalah snapshot terakhir yang berhasil disimpan dan
+            mungkin belum memuat absensi terbaru.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {records.length > 0 && (
         <GlassCard
-          intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
+          intensity="low"
+          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
         >
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="mb-2 flex items-center gap-3">
-                <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
-                  <ClipboardCheck className="h-7 w-7" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    Presensi Kehadiran
-                  </h1>
-                  <p className="text-muted-foreground">
-                    Rekap presensi umum per mata kuliah, kelas, dan tanggal
-                    sesuai catatan kehadiran yang dibuat dosen.
-                  </p>
-                  {(isOfflineData || lastUpdatedLabel) && (
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                      {isOfflineData && (
-                        <span className="inline-flex items-center gap-1 font-medium text-warning">
-                          <WifiOff className="h-4 w-4" />
-                          Menampilkan presensi tersimpan lokal
-                        </span>
-                      )}
-                      {lastUpdatedLabel && (
-                        <span>Update terakhir: {lastUpdatedLabel}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
+          <CardHeader>
+            <CardTitle>Filter Mata Kuliah</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,360px)_1fr] lg:items-center">
+              <Select
+                value={selectedMataKuliah}
+                onValueChange={setSelectedMataKuliah}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih mata kuliah" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">
+                    Semua mata kuliah ({records.length} catatan)
+                  </SelectItem>
+                  {mataKuliahOptions.map((mk) => (
+                    <SelectItem key={mk.id} value={mk.id}>
+                      {mk.nama}
+                      {mk.kode ? ` (${mk.kode})` : ""} - {mk.total} catatan
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                {selectedMataKuliah === "__all__"
+                  ? "Menampilkan seluruh presensi yang dikelompokkan per mata kuliah. Jika satu tanggal memiliki beberapa mata kuliah, setiap mata kuliah tetap dihitung sebagai catatan terpisah."
+                  : `Menampilkan presensi untuk ${
+                      selectedMataKuliahInfo?.nama || "mata kuliah aktif"
+                    } saja.`}
+              </p>
+            </div>
+          </CardContent>
+        </GlassCard>
+      )}
+
+      {/* Summary Stats */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <DashboardCard
+          title="Catatan Presensi"
+          value={stats.total}
+          icon={Calendar}
+          color="blue"
+        />
+        <DashboardCard
+          title="Hadir"
+          value={stats.hadir}
+          icon={CheckCircle2}
+          color="green"
+        />
+        <DashboardCard
+          title="Izin"
+          value={stats.izin}
+          icon={Clock}
+          color="blue"
+        />
+        <DashboardCard
+          title="Sakit"
+          value={stats.sakit}
+          icon={AlertCircle}
+          color="amber"
+        />
+        <DashboardCard
+          title="Alpha"
+          value={stats.alpha}
+          icon={XCircle}
+          color="red"
+        />
+      </div>
+
+      {/* Persentase Kehadiran */}
+      <GlassCard
+        intensity="low"
+        className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
+      >
+        <CardHeader>
+          <CardTitle>
+            Persentase Kehadiran
+            {selectedMataKuliahInfo ? ` - ${selectedMataKuliahInfo.nama}` : ""}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+            <div className="text-5xl font-bold text-primary">
+              {stats.persentase}%
+            </div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-full rounded-full bg-muted">
+                <div
+                  className={`h-4 rounded-full transition-all ${
+                    stats.persentase >= 75
+                      ? "bg-success"
+                      : stats.persentase >= 50
+                        ? "bg-warning"
+                        : "bg-danger"
+                  }`}
+                  style={{ width: `${stats.persentase}%` }}
+                ></div>
               </div>
+              <p className="text-sm text-muted-foreground">
+                {stats.persentase >= 75
+                  ? "Kehadiran Anda sangat baik!"
+                  : stats.persentase >= 50
+                    ? "Tingkatkan kehadiran Anda"
+                    : "Perhatian! Kehadiran di bawah standar"}
+              </p>
             </div>
           </div>
-        </GlassCard>
+        </CardContent>
+      </GlassCard>
 
-        {isOfflineData && (
-          <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
-            <AlertDescription>
-              Halaman presensi tetap bisa dibuka dari cache lokal saat offline.
-              Data yang tampil adalah snapshot terakhir yang berhasil disimpan
-              dan mungkin belum memuat absensi terbaru.
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* Riwayat Presensi */}
+      <GlassCard
+        intensity="low"
+        className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
+      >
+        <CardHeader>
+          <CardTitle>Riwayat Presensi</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {records.length === 0 ? (
+            <Alert className="border-border/60 bg-muted/30">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <AlertDescription className="text-muted-foreground">
+                Belum ada data presensi. Data akan muncul setelah dosen mengisi
+                kehadiran kelas Anda.
+              </AlertDescription>
+            </Alert>
+          ) : filteredRecords.length === 0 ? (
+            <Alert className="border-border/60 bg-muted/30">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <AlertDescription className="text-muted-foreground">
+                Belum ada presensi untuk mata kuliah yang dipilih.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-4">
+              {groupedRecords.map((group) => {
+                const isExpanded =
+                  expandedGroups.has(group.id) ||
+                  selectedMataKuliah !== "__all__";
 
-        {records.length > 0 && (
-          <GlassCard
-            intensity="low"
-            className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
-          >
-            <CardHeader>
-              <CardTitle>Filter Mata Kuliah</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,360px)_1fr] lg:items-center">
-                <Select
-                  value={selectedMataKuliah}
-                  onValueChange={setSelectedMataKuliah}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih mata kuliah" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">
-                      Semua mata kuliah ({records.length} catatan)
-                    </SelectItem>
-                    {mataKuliahOptions.map((mk) => (
-                      <SelectItem key={mk.id} value={mk.id}>
-                        {mk.nama}
-                        {mk.kode ? ` (${mk.kode})` : ""} - {mk.total} catatan
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground">
-                  {selectedMataKuliah === "__all__"
-                    ? "Menampilkan seluruh presensi yang dikelompokkan per mata kuliah. Jika satu tanggal memiliki beberapa mata kuliah, setiap mata kuliah tetap dihitung sebagai catatan terpisah."
-                    : `Menampilkan presensi untuk ${
-                        selectedMataKuliahInfo?.nama || "mata kuliah aktif"
-                      } saja.`}
-                </p>
-              </div>
-            </CardContent>
-          </GlassCard>
-        )}
-
-        {/* Summary Stats */}
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <DashboardCard
-            title="Catatan Presensi"
-            value={stats.total}
-            icon={Calendar}
-            color="blue"
-          />
-          <DashboardCard
-            title="Hadir"
-            value={stats.hadir}
-            icon={CheckCircle2}
-            color="green"
-          />
-          <DashboardCard
-            title="Izin"
-            value={stats.izin}
-            icon={Clock}
-            color="blue"
-          />
-          <DashboardCard
-            title="Sakit"
-            value={stats.sakit}
-            icon={AlertCircle}
-            color="amber"
-          />
-          <DashboardCard
-            title="Alpha"
-            value={stats.alpha}
-            icon={XCircle}
-            color="red"
-          />
-        </div>
-
-        {/* Persentase Kehadiran */}
-        <GlassCard
-          intensity="low"
-          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
-        >
-          <CardHeader>
-            <CardTitle>
-              Persentase Kehadiran
-              {selectedMataKuliahInfo
-                ? ` - ${selectedMataKuliahInfo.nama}`
-                : ""}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4 md:flex-row md:items-center">
-              <div className="text-5xl font-bold text-primary">
-                {stats.persentase}%
-              </div>
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-full rounded-full bg-muted">
+                return (
                   <div
-                    className={`h-4 rounded-full transition-all ${
-                      stats.persentase >= 75
-                        ? "bg-success"
-                        : stats.persentase >= 50
-                          ? "bg-warning"
-                          : "bg-danger"
-                    }`}
-                    style={{ width: `${stats.persentase}%` }}
-                  ></div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {stats.persentase >= 75
-                    ? "Kehadiran Anda sangat baik!"
-                    : stats.persentase >= 50
-                      ? "Tingkatkan kehadiran Anda"
-                      : "Perhatian! Kehadiran di bawah standar"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </GlassCard>
-
-        {/* Riwayat Presensi */}
-        <GlassCard
-          intensity="low"
-          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
-        >
-          <CardHeader>
-            <CardTitle>Riwayat Presensi</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {records.length === 0 ? (
-              <Alert className="border-border/60 bg-muted/30">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <AlertDescription className="text-muted-foreground">
-                  Belum ada data presensi. Data akan muncul setelah dosen
-                  mengisi kehadiran kelas Anda.
-                </AlertDescription>
-              </Alert>
-            ) : filteredRecords.length === 0 ? (
-              <Alert className="border-border/60 bg-muted/30">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <AlertDescription className="text-muted-foreground">
-                  Belum ada presensi untuk mata kuliah yang dipilih.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <div className="space-y-4">
-                {groupedRecords.map((group) => {
-                  const isExpanded =
-                    expandedGroups.has(group.id) ||
-                    selectedMataKuliah !== "__all__";
-
-                  return (
-                    <div
-                      key={group.id}
-                      className="overflow-hidden rounded-2xl border border-border/60 bg-background/70"
+                    key={group.id}
+                    className="overflow-hidden rounded-2xl border border-border/60 bg-background/70"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
+                      className="flex w-full flex-col gap-4 p-4 text-left transition-colors hover:bg-muted/30"
                     >
-                      <button
-                        type="button"
-                        onClick={() => toggleGroup(group.id)}
-                        className="flex w-full flex-col gap-4 p-4 text-left transition-colors hover:bg-muted/30"
-                      >
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <BookOpen className="h-4 w-4 text-primary" />
-                              <h3 className="truncate text-base font-bold text-foreground sm:text-lg">
-                                {group.nama}
-                              </h3>
-                              {group.kode && (
-                                <Badge variant="outline">{group.kode}</Badge>
-                              )}
-                            </div>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {group.total} pertemuan tercatat •{" "}
-                              {group.persentase}% hadir
-                            </p>
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-primary" />
+                            <h3 className="truncate text-base font-bold text-foreground sm:text-lg">
+                              {group.nama}
+                            </h3>
+                            {group.kode && (
+                              <Badge variant="outline">{group.kode}</Badge>
+                            )}
                           </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge className="bg-green-50 text-green-700 border-green-200">
-                              Hadir {group.hadir}
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            {group.total} pertemuan tercatat •{" "}
+                            {group.persentase}% hadir
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className="bg-green-50 text-green-700 border-green-200">
+                            Hadir {group.hadir}
+                          </Badge>
+                          {group.izin > 0 && (
+                            <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                              Izin {group.izin}
                             </Badge>
-                            {group.izin > 0 && (
-                              <Badge className="bg-blue-50 text-blue-700 border-blue-200">
-                                Izin {group.izin}
-                              </Badge>
+                          )}
+                          {group.sakit > 0 && (
+                            <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                              Sakit {group.sakit}
+                            </Badge>
+                          )}
+                          {group.alpha > 0 && (
+                            <Badge className="bg-red-50 text-red-700 border-red-200">
+                              Alpha {group.alpha}
+                            </Badge>
+                          )}
+                          <span
+                            className={cn(
+                              "inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground",
                             )}
-                            {group.sakit > 0 && (
-                              <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                                Sakit {group.sakit}
-                              </Badge>
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
                             )}
-                            {group.alpha > 0 && (
-                              <Badge className="bg-red-50 text-red-700 border-red-200">
-                                Alpha {group.alpha}
-                              </Badge>
-                            )}
-                            <span
-                              className={cn(
-                                "inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground",
-                              )}
-                            >
-                              {isExpanded ? (
-                                <ChevronUp className="h-4 w-4" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4" />
-                              )}
-                            </span>
-                          </div>
+                          </span>
                         </div>
-                      </button>
+                      </div>
+                    </button>
 
-                      {isExpanded && (
-                        <div className="border-t border-border/60 px-4 pb-4 pt-4">
-                          <div className="overflow-hidden rounded-xl border border-border/60">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Tanggal</TableHead>
-                                  <TableHead>Kelas</TableHead>
-                                  <TableHead>Topik/Keterangan</TableHead>
-                                  <TableHead>Waktu Dicatat</TableHead>
-                                  <TableHead className="text-center">
-                                    Status
-                                  </TableHead>
+                    {isExpanded && (
+                      <div className="border-t border-border/60 px-4 pb-4 pt-4">
+                        <div className="overflow-hidden rounded-xl border border-border/60">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Tanggal</TableHead>
+                                <TableHead>Kelas</TableHead>
+                                <TableHead>Topik/Keterangan</TableHead>
+                                <TableHead>Waktu Dicatat</TableHead>
+                                <TableHead className="text-center">
+                                  Status
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {group.records.map((record) => (
+                                <TableRow key={record.id}>
+                                  <TableCell className="font-medium text-foreground">
+                                    {formatDate(
+                                      record.tanggal ||
+                                        record.jadwal?.tanggal_praktikum ||
+                                        "",
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {record.jadwal?.kelas?.nama_kelas ||
+                                      (record as any).nama_kelas ||
+                                      "-"}
+                                  </TableCell>
+                                  <TableCell className="text-sm">
+                                    {record.keterangan ||
+                                      record.jadwal?.topik ||
+                                      "Presensi perkuliahan"}
+                                  </TableCell>
+                                  <TableCell className="text-sm">
+                                    {formatRecordedTime(record.created_at)}
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {getStatusBadge(record.status)}
+                                  </TableCell>
                                 </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {group.records.map((record) => (
-                                  <TableRow key={record.id}>
-                                    <TableCell className="font-medium text-foreground">
-                                      {formatDate(
-                                        record.tanggal ||
-                                          record.jadwal?.tanggal_praktikum ||
-                                          "",
-                                      )}
-                                    </TableCell>
-                                    <TableCell>
-                                      {record.jadwal?.kelas?.nama_kelas ||
-                                        (record as any).nama_kelas ||
-                                        "-"}
-                                    </TableCell>
-                                    <TableCell className="text-sm">
-                                      {record.keterangan ||
-                                        record.jadwal?.topik ||
-                                        "Presensi perkuliahan"}
-                                    </TableCell>
-                                    <TableCell className="text-sm">
-                                      {formatRecordedTime(record.created_at)}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {getStatusBadge(record.status)}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
+                              ))}
+                            </TableBody>
+                          </Table>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </GlassCard>
-      </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </GlassCard>
     </div>
   );
 }

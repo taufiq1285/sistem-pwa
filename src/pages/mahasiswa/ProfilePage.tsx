@@ -36,7 +36,7 @@ import {
   User,
   WifiOff,
 } from "lucide-react";
-import { PageHeader } from "@/components/common/PageHeader";
+import { FormSkeleton } from "@/components/common";
 
 interface MahasiswaProfile {
   id: string;
@@ -279,23 +279,24 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="app-container">
-        <div className="mx-auto max-w-4xl animate-pulse space-y-6">
-          <div className="h-24 rounded-3xl bg-primary/10" />
-          <div className="h-72 rounded-3xl bg-muted" />
-          <div className="h-72 rounded-3xl bg-muted" />
-        </div>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="h-24 w-full skeleton-shimmer rounded-2xl" />
+        <FormSkeleton />
+        <FormSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="app-container space-y-6">
-      <PageHeader
-        title="Profil Saya"
-        description="Kelola informasi profil Anda"
-        className="section-shell"
-      />
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Profil Saya</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Kelola informasi profil Anda
+          </p>
+        </div>
+      </div>
 
       {(isOfflineData || lastUpdatedLabel) && (
         <Alert className="rounded-2xl border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
@@ -354,7 +355,7 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   value={userProfile.email}
@@ -367,7 +368,7 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="phone">No. Telepon</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="phone"
                   value={userProfile.phone}
@@ -437,7 +438,7 @@ export default function ProfilePage() {
               <Label htmlFor="gender">Jenis Kelamin</Label>
               <select
                 id="gender"
-                className="flex h-10 w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex h-11 w-full cursor-pointer rounded-lg border border-border/50 bg-background px-3.5 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/40 focus-visible:ring-[3px] focus-visible:shadow-sm"
                 value={mahasiswaProfile.gender || ""}
                 onChange={(e) =>
                   setMahasiswaProfile({
@@ -446,7 +447,9 @@ export default function ProfilePage() {
                   })
                 }
               >
-                <option value="">Pilih jenis kelamin</option>
+                <option value="" className="text-muted-foreground">
+                  Pilih jenis kelamin
+                </option>
                 <option value="L">Laki-laki</option>
                 <option value="P">Perempuan</option>
               </select>
@@ -483,7 +486,7 @@ export default function ProfilePage() {
               <textarea
                 id="address"
                 rows={3}
-                className="flex w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex min-h-[5rem] w-full rounded-lg border border-border/50 bg-transparent px-3.5 py-3 text-sm shadow-xs placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/40 focus-visible:ring-[3px] focus-visible:shadow-sm outline-none transition-[color,box-shadow] resize-none"
                 value={mahasiswaProfile.address || ""}
                 onChange={(e) =>
                   setMahasiswaProfile({

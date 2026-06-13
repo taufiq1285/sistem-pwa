@@ -140,7 +140,7 @@ export function AnswerReview({
               />
             </Button>
             {!isAnswered ? (
-              <Circle className="h-6 w-6 text-gray-400" />
+              <Circle className="h-6 w-6 text-gray-500" />
             ) : isCorrect ? (
               <CheckCircle2 className="h-6 w-6 text-green-600" />
             ) : (

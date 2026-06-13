@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import logger from "@/lib/utils/logger";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, Bug } from "lucide-react";
 
@@ -42,7 +43,7 @@ export function ErrorTest() {
 
   const triggerJSError = () => {
     const obj = null;
-    console.log((obj as any).nonExistent.property);
+    logger.debug((obj as any).nonExistent.property);
   };
 
   const triggerAsyncError = async () => {

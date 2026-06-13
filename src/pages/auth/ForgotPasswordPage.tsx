@@ -1,35 +1,29 @@
 /**
- * Forgot Password Page
- * Page for password reset request
+ * Forgot Password Page component using the shared split-panel authentication layout.
  */
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/lib/hooks/useAuth";
-import akbidLogo from "@/assets/akbid-logo-asli.png";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { GlassCard } from "@/components/ui/glass-card";
-import { ButtonEnhanced } from "@/components/ui/button-enhanced";
+  IconAlertCircle,
+  IconArrowLeft,
+  IconLoader2,
+  IconMail,
+  IconMailCheck,
+  IconSend,
+} from "@tabler/icons-react";
+import { AuthLayout } from "@/components/layout/AuthLayout";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  AlertCircle,
-  ArrowLeft,
-  CheckCircle2,
-  KeyRound,
-  Mail,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { ROUTES } from "@/config/routes.config";
+import { cn } from "@/lib/utils";
 
+/**
+ * ForgotPasswordPage component.
+ */
 export function ForgotPasswordPage() {
   const { resetPassword } = useAuth();
   const [email, setEmail] = useState("");
@@ -62,175 +56,139 @@ export function ForgotPasswordPage() {
     }
   };
 
+  const inputClassName =
+    "pl-9 pr-10 h-11 rounded-lg bg-white text-body border border-border shadow-sm transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c3aed]/15 focus-visible:border-[#7c3aed] focus-visible:outline-hidden";
+
   if (success) {
     return (
-      <div className="akbid-font-body akbid-auth-shell relative flex min-h-screen items-center justify-center overflow-hidden bg-[#FDF8F5] px-4 py-8 sm:px-6 sm:py-10">
-        <div className="pointer-events-none fixed inset-0 overflow-hidden">
-          <div className="absolute -right-32 top-0 h-72 w-72 rounded-full bg-[#7B1D3A]/10 blur-3xl" />
-          <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-[#1E293B]/20 blur-3xl" />
+      <AuthLayout variant="forgot">
+        <div className="space-y-6 text-center animate-[fade-in_300ms_ease_both]">
+          <div className="flex justify-center">
+            <div className="flex size-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+              <IconMailCheck className="size-8" aria-hidden="true" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold text-foreground">
+              Email terkirim!
+            </h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Kami telah mengirim link reset password ke email{" "}
+              <strong>{email}</strong>. Silakan periksa kotak masuk atau folder
+              spam Anda.
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <Link to={ROUTES.LOGIN} className="block w-full">
+              <Button
+                variant="outline"
+                className="h-11 w-full border-border hover:bg-slate-50 text-body font-semibold text-text-secondary flex items-center justify-center gap-2"
+              >
+                <IconArrowLeft className="size-4" />
+                Kembali ke login
+              </Button>
+            </Link>
+          </div>
+
+          <p className="text-center text-small text-text-muted">
+            Tidak menerima email?{" "}
+            <button
+              onClick={() => setSuccess(false)}
+              className="font-semibold text-[#7c3aed] hover:underline transition-colors"
+            >
+              Coba kirim lagi
+            </button>
+          </p>
         </div>
-
-        <div className="relative w-full max-w-lg">
-          <div className="absolute -inset-1 rounded-3xl bg-linear-to-r from-[#7B1D3A]/30 via-[#1E293B]/20 to-[#7B1D3A]/25 blur-lg" />
-          <GlassCard
-            intensity="high"
-            glow
-            className="relative overflow-hidden rounded-3xl border border-[#E8E0D8] bg-white/95 shadow-2xl"
-          >
-            <CardHeader className="space-y-4 bg-linear-to-br from-[#0F172A] via-[#1E293B] to-[#7B1D3A] px-6 py-8 text-center sm:px-8">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-                <img
-                  src={akbidLogo}
-                  alt="Logo Akademi Kebidanan Mega Buana"
-                  className="h-12 w-12 rounded-xl bg-white p-1 object-contain"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[13px] font-semibold text-white/80">
-                  <Sparkles className="h-3.5 w-3.5 text-[#E8A5B5]" />
-                  Tautan reset berhasil dikirim
-                </div>
-                <CardTitle className="akbid-font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                  Cek Email Anda
-                </CardTitle>
-                <CardDescription className="mx-auto max-w-sm text-[15px] text-white/75 sm:text-base">
-                  Kami telah mengirim link reset password ke{" "}
-                  <strong>{email}</strong>
-                </CardDescription>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-5 px-6 py-6 sm:px-8">
-              <Alert className="border-[#C7D2FE] bg-[#EEF2FF] text-[#1E293B]">
-                <ShieldCheck className="h-4 w-4 text-[#7B1D3A]" />
-                <AlertDescription className="text-[15px] leading-relaxed">
-                  Klik tautan pada email untuk mengatur ulang password Anda.
-                  Link akan kedaluwarsa dalam 1 jam.
-                </AlertDescription>
-              </Alert>
-
-              <div className="grid gap-3">
-                <Link to={ROUTES.LOGIN}>
-                  <ButtonEnhanced
-                    variant="outline"
-                    className="h-11 w-full border-[#E8E0D8] bg-[#FDF8F5] text-[15px] font-semibold text-[#7B1D3A] hover:bg-[#F1EBE4]"
-                    leadingIcon={<ArrowLeft className="h-4 w-4" />}
-                  >
-                    Kembali ke Login
-                  </ButtonEnhanced>
-                </Link>
-              </div>
-
-              <div className="text-center text-[15px] text-muted-foreground">
-                Tidak menerima email? Periksa folder spam atau{" "}
-                <button
-                  onClick={() => setSuccess(false)}
-                  className="font-semibold text-[#7B1D3A] transition-colors hover:text-[#9B2448]"
-                >
-                  coba lagi
-                </button>
-              </div>
-            </CardContent>
-          </GlassCard>
-        </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="akbid-font-body akbid-auth-shell relative flex min-h-screen items-center justify-center overflow-hidden bg-[#FDF8F5] px-4 py-8 sm:px-6 sm:py-10">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-[#7B1D3A]/15 blur-3xl" />
-        <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-[#1E293B]/20 blur-3xl" />
-        <div className="absolute left-1/2 top-1/2 h-128 w-lg -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0F172A]/10 blur-3xl" />
-      </div>
+    <AuthLayout variant="forgot">
+      <div className="space-y-7 animate-[fade-in_300ms_ease_both]">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold text-foreground">
+            Lupa password?
+          </h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Masukkan email Anda. Kami akan kirimkan link untuk reset password.
+          </p>
+        </div>
 
-      <div className="relative w-full max-w-lg">
-        <div className="absolute -inset-1 rounded-3xl bg-linear-to-r from-[#7B1D3A]/30 via-[#1E293B]/20 to-[#7B1D3A]/25 blur-lg" />
-        <GlassCard
-          intensity="high"
-          glow
-          className="relative overflow-hidden rounded-3xl border border-[#E8E0D8] bg-white/95 shadow-2xl"
-        >
-          <CardHeader className="space-y-4 bg-linear-to-br from-[#0F172A] via-[#1E293B] to-[#7B1D3A] px-6 py-8 text-center sm:px-8">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-              <img
-                src={akbidLogo}
-                alt="Logo Akademi Kebidanan Mega Buana"
-                className="h-12 w-12 rounded-xl bg-white p-1 object-contain"
+        {error && (
+          <Alert
+            variant="destructive"
+            className="animate-shake border-red-200 bg-red-50 flex gap-3 items-center"
+          >
+            <IconAlertCircle
+              className="size-5 shrink-0 text-red-600"
+              aria-hidden="true"
+            />
+            <AlertDescription className="text-small font-medium text-red-900">
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email">Alamat Email</Label>
+            <div className="relative input-wrapper">
+              <span className="input-icon pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">
+                <IconMail className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <Input
+                id="email"
+                type="email"
+                placeholder="nama@akmb.ac.id"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                required
+                aria-required="true"
+                className={cn(
+                  inputClassName,
+                  error &&
+                    "border-red-500 focus-visible:ring-red-500/15 focus-visible:border-red-500",
+                )}
               />
             </div>
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[13px] font-semibold text-white/80">
-                <Mail className="h-3.5 w-3.5 text-[#E8A5B5]" />
-                Pemulihan akses akun
-              </div>
-              <CardTitle className="akbid-font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                Lupa Password?
-              </CardTitle>
-              <CardDescription className="mx-auto max-w-sm text-[15px] text-white/75 sm:text-base">
-                Masukkan email Anda dan kami akan mengirimkan link untuk
-                mengatur ulang password.
-              </CardDescription>
-            </div>
-          </CardHeader>
+          </div>
 
-          <CardContent className="px-6 py-6 sm:px-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <Alert
-                  variant="destructive"
-                  className="border-destructive/20 bg-destructive/5"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="email"
-                  className="text-sm font-semibold text-[#0F172A]"
-                >
-                  Alamat Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="nama@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  required
-                  className="h-11 border-[#E8E0D8] bg-[#FDF8F5] text-[15px] focus-visible:border-[#7B1D3A] focus-visible:ring-[#7B1D3A]"
+          <Button
+            type="submit"
+            disabled={loading}
+            className="h-11 w-full bg-gradient-to-r from-[#7c3aed] to-[#4f46e5] text-white font-semibold shadow-lg hover:opacity-95 transition-opacity flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <IconLoader2
+                  className="size-4 animate-spin"
+                  aria-hidden="true"
                 />
-              </div>
+                Mengirim...
+              </>
+            ) : (
+              <>
+                <IconSend className="size-4" aria-hidden="true" />
+                Kirim link reset
+              </>
+            )}
+          </Button>
 
-              <ButtonEnhanced
-                type="submit"
-                className="h-11 w-full bg-[#7B1D3A] text-[15px] font-semibold text-white hover:bg-[#9B2448]"
-                loading={loading}
-                loadingText="Mengirim..."
-                leadingIcon={<Mail className="h-4 w-4" />}
-              >
-                Kirim Link Reset
-              </ButtonEnhanced>
-
-              <div className="text-center">
-                <Link to={ROUTES.LOGIN}>
-                  <ButtonEnhanced
-                    variant="ghost"
-                    className="h-11 w-full text-[15px] font-medium text-slate-600 hover:bg-[#F1EBE4] hover:text-[#7B1D3A]"
-                    leadingIcon={<ArrowLeft className="h-4 w-4" />}
-                  >
-                    Kembali ke Login
-                  </ButtonEnhanced>
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </GlassCard>
+          <div className="text-center pt-2">
+            <Link
+              to={ROUTES.LOGIN}
+              className="inline-flex items-center gap-2 text-small font-semibold text-[#7c3aed] hover:underline transition-colors"
+            >
+              <IconArrowLeft className="size-4" />← Kembali ke halaman masuk
+            </Link>
+          </div>
+        </form>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

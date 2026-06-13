@@ -58,15 +58,21 @@ export function ConflictNotificationBadge({
   return (
     <>
       <Button
-        variant={variant}
+        variant="ghost"
         size={showLabel ? "sm" : "icon"}
-        className={cn("relative", className)}
+        className={cn(
+          "relative flex items-center justify-center transition-colors cursor-pointer",
+          !showLabel &&
+            "h-[34px] w-[34px] rounded-sm border border-border-light bg-surface-0 text-text-muted hover:bg-surface-2 hover:text-text-muted",
+          className,
+        )}
+        style={!showLabel ? { padding: 0 } : undefined}
         onClick={() => setShowResolver(true)}
         title={`${conflictCount} data conflict${conflictCount > 1 ? "s" : ""} need${conflictCount === 1 ? "s" : ""} your attention`}
         disabled={loading}
       >
         <AlertCircle
-          className={cn("h-5 w-5", conflictCount > 0 && "text-orange-500")}
+          className={cn("h-4 w-4", conflictCount > 0 && "text-orange-500")}
         />
 
         {showLabel && <span className="ml-2">Conflicts</span>}

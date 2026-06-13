@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import logger from "@/lib/utils/logger";
 import {
   X,
   Share2,
@@ -27,19 +28,39 @@ import {
 } from "lucide-react";
 import { isIOS, isAndroid, isStandalone } from "@/lib/utils/device-detect";
 
+const INSTALL_COMPLETED_KEY = "pwa_install_completed";
+const INSTALL_DISMISSED_AT_KEY = "pwa_install_dismissed_at";
+const DISMISS_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isInstallPromptSuppressed(): boolean {
+  if (typeof window === "undefined") return true;
+
+  if (isStandalone()) {
+    localStorage.setItem(INSTALL_COMPLETED_KEY, "true");
+    return true;
+  }
+
+  if (localStorage.getItem(INSTALL_COMPLETED_KEY) === "true") {
+    return true;
+  }
+
+  const dismissedAt = Number(localStorage.getItem(INSTALL_DISMISSED_AT_KEY));
+  return Number.isFinite(dismissedAt) && Date.now() - dismissedAt < DISMISS_COOLDOWN_MS;
+}
+
 export function PWAInstallPrompt() {
   const [isOpen, setIsOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
-    // Don't show if already installed as PWA
-    if (isStandalone()) {
+    if (isInstallPromptSuppressed()) {
       return;
     }
 
     // Show prompt after 3 seconds
     const timer = setTimeout(() => {
+      if (isInstallPromptSuppressed()) return;
       setShowPrompt(true);
       if (isIOS()) {
         setIsOpen(true);
@@ -48,6 +69,7 @@ export function PWAInstallPrompt() {
 
     // Listen for beforeinstallprompt event (Chrome/Edge/Android)
     const handler = (e: Event) => {
+      if (isInstallPromptSuppressed()) return;
       // Prevent Chrome 67 and earlier from automatically showing the prompt
       e.preventDefault();
       // Stash the event so it can be triggered later
@@ -56,11 +78,21 @@ export function PWAInstallPrompt() {
       setIsOpen(true);
     };
 
+    const installedHandler = () => {
+      localStorage.setItem(INSTALL_COMPLETED_KEY, "true");
+      localStorage.removeItem(INSTALL_DISMISSED_AT_KEY);
+      setDeferredPrompt(null);
+      setIsOpen(false);
+      setShowPrompt(false);
+    };
+
     window.addEventListener("beforeinstallprompt", handler as any);
+    window.addEventListener("appinstalled", installedHandler);
 
     return () => {
       clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", handler as any);
+      window.removeEventListener("appinstalled", installedHandler);
     };
   }, []);
 
@@ -77,7 +109,11 @@ export function PWAInstallPrompt() {
 
     // Per my observation: The outcome can be 'accepted' or 'dismissed'
     if (outcome === "accepted") {
-      console.log("User accepted the install prompt");
+      logger.debug("User accepted the install prompt");
+      localStorage.setItem(INSTALL_COMPLETED_KEY, "true");
+      localStorage.removeItem(INSTALL_DISMISSED_AT_KEY);
+    } else {
+      localStorage.setItem(INSTALL_DISMISSED_AT_KEY, String(Date.now()));
     }
 
     // We've used the prompt, and can't use it again, throw it away
@@ -87,6 +123,7 @@ export function PWAInstallPrompt() {
   };
 
   const handleDismiss = () => {
+    localStorage.setItem(INSTALL_DISMISSED_AT_KEY, String(Date.now()));
     setIsOpen(false);
     setShowPrompt(false);
   };
@@ -95,7 +132,7 @@ export function PWAInstallPrompt() {
   // - Already installed as PWA
   // - No prompt to show
   // - User dismissed
-  if (isStandalone() || !showPrompt || !isOpen) {
+  if (isInstallPromptSuppressed() || !showPrompt || !isOpen) {
     return null;
   }
 
@@ -169,7 +206,7 @@ export function PWAInstallPrompt() {
                 <div className="text-center space-y-2">
                   <div className="flex justify-center items-center gap-2">
                     <Smartphone className="h-12 w-12 text-blue-500" />
-                    <ArrowRight className="h-4 w-4 text-gray-400" />
+                    <ArrowRight className="h-4 w-4 text-gray-500" />
                     <Share2 className="h-8 w-8 text-blue-500" />
                   </div>
                   <p className="text-xs text-muted-foreground">

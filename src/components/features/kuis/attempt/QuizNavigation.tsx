@@ -122,7 +122,7 @@ export function QuizNavigation({
 
             {/* Unanswered */}
             <div className="flex items-center gap-2">
-              <Circle className="h-4 w-4 text-gray-400" />
+              <Circle className="h-4 w-4 text-gray-500" />
               <div>
                 <p className="text-xs text-muted-foreground">Belum</p>
                 <p className="text-sm font-semibold">{unansweredCount}</p>

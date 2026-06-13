@@ -24,7 +24,12 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DashboardCard } from "@/components/ui/dashboard-card";
-import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import {
+  TableSkeleton,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -75,6 +80,7 @@ const invalidatePeminjamanCaches = async () => {
 };
 
 export default function PersetujuanPage() {
+  const { isOffline } = useOfflineContext();
   // State for equipment borrowing
   const [equipmentRequests, setEquipmentRequests] = useState<PendingApproval[]>(
     [],
@@ -193,41 +199,31 @@ export default function PersetujuanPage() {
   const totalPending = equipmentRequests.length;
   const isLoading = loadingEquipment;
 
+  // Offline empty state
+  if (isOffline && equipmentRequests.length === 0) {
+    return <EmptyState variant="offline" context="persetujuan" />;
+  }
+
   return (
-    <div className="app-container py-4 sm:py-6 lg:py-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <GlassCard
-          intensity="medium"
-          className="border-border/60 bg-background/80 shadow-xl"
-        >
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
-                <Package className="h-7 w-7" />
-              </div>
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  Persetujuan aktif
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    Persetujuan Peminjaman Alat
-                  </h1>
-                  <p className="text-sm text-muted-foreground sm:text-base">
-                    Tahap awal alur peminjaman alat untuk meninjau permintaan
-                    baru yang masih menunggu keputusan laboran.
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Setelah disetujui, data pindah ke menu
-                    <strong> "Peminjaman Alat"</strong> untuk proses
-                    pengembalian alat.
-                  </p>
-                </div>
-              </div>
-            </div>
+    <OfflineAwareContent
+      hasData={equipmentRequests.length > 0}
+      context="persetujuan"
+      onSync={() => loadEquipmentRequests()}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Persetujuan Peminjaman Alat
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Tahap awal alur peminjaman alat untuk meninjau permintaan baru
+              yang masih menunggu keputusan laboran.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="outline"
-              size="sm"
               onClick={handleRefresh}
               disabled={isLoading}
             >
@@ -237,7 +233,7 @@ export default function PersetujuanPage() {
               Muat Ulang
             </Button>
           </div>
-        </GlassCard>
+        </div>
 
         {totalPending > 0 && (
           <GlassCard
@@ -325,15 +321,9 @@ export default function PersetujuanPage() {
           </CardHeader>
           <CardContent className="px-0 pb-0">
             {loadingEquipment ? (
-              <DashboardSkeleton />
+              <TableSkeleton rows={5} columns={8} />
             ) : equipmentRequests.length === 0 ? (
-              <Alert className="border-border/60 bg-muted/40">
-                <Clock className="h-4 w-4" />
-                <AlertDescription className="text-sm text-muted-foreground">
-                  Tidak ada permintaan yang menunggu persetujuan. Semua
-                  permintaan peminjaman alat sudah diproses.
-                </AlertDescription>
-              </Alert>
+              <EmptyState variant="no-data" context="persetujuan" />
             ) : (
               <div className="overflow-x-auto rounded-xl border border-border/60">
                 <Table>
@@ -367,6 +357,11 @@ export default function PersetujuanPage() {
                             <div className="font-medium">
                               {request.inventaris_nama}
                             </div>
+                            {request.inventaris_detail && (
+                              <div className="text-sm text-muted-foreground">
+                                {request.inventaris_detail}
+                              </div>
+                            )}
                             <div className="text-sm text-muted-foreground">
                               {request.inventaris_kode}
                             </div>
@@ -556,6 +551,6 @@ export default function PersetujuanPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </OfflineAwareContent>
   );
 }

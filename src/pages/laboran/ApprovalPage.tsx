@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
+import { TableSkeleton } from "@/components/common";
 import {
   Dialog,
   DialogContent,
@@ -170,13 +170,17 @@ export default function ApprovalPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-extrabold">Persetujuan Peminjaman</h1>
-        <p className="text-muted-foreground">
-          Kelola dan setujui permintaan peminjaman alat dari dosen
-        </p>
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Persetujuan Peminjaman
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Kelola dan setujui permintaan peminjaman alat dari dosen
+          </p>
+        </div>
       </div>
 
       {/* Stats */}
@@ -220,10 +224,7 @@ export default function ApprovalPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
-              <p className="text-muted-foreground">Memuat requests...</p>
-            </div>
+            <TableSkeleton rows={5} columns={8} />
           ) : requests.length === 0 ? (
             <div className="text-center py-8">
               <Package className="h-8 w-8 text-muted-foreground mx-auto mb-2" />

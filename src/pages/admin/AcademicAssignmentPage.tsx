@@ -575,15 +575,14 @@ export default function AcademicAssignmentPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
+                      <button
+                        type="button"
                         onClick={() => handleEdit(kelas)}
-                        className="font-semibold border-2"
+                        className="table-action-btn table-action-btn-edit"
+                        title="Edit"
                       >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
+                        <Edit className="h-4 w-4" />
+                      </button>
                     </TableCell>
                   </TableRow>
                 ))

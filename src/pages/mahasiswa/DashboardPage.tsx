@@ -1,594 +1,480 @@
-import { useState, useEffect, useMemo } from "react";
-import { useAuth } from "@/lib/hooks/useAuth";
+/**
+ * Clean mahasiswa dashboard focused on motivation, deadlines, progress, and weekly schedule.
+ */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  BookOpen,
-  Calendar,
-  Clock,
-  MapPin,
-  Info,
-  TrendingUp,
-  CheckCircle2,
-  AlertCircle,
-  Sparkles,
-  Trophy,
-  WifiOff,
-} from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  IconAlertTriangle,
+  IconBook,
+  IconCalendar,
+  IconClock,
+  IconDownload,
+  IconNotebook,
+  IconRefresh,
+  IconSchool,
+  IconStar,
+  IconTrendingUp,
+} from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DashboardCard } from "@/components/ui/dashboard-card";
-import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
-import { GlassCard } from "@/components/ui/glass-card";
-import { networkDetector } from "@/lib/offline/network-detector";
-import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  getMahasiswaStats,
+  DashboardSkeleton,
+  EmptyState,
+  ErrorFallback,
+} from "@/components/common";
+import {
   getDashboardKelas,
+  getMahasiswaStats,
   getMyJadwal,
+  type JadwalMahasiswa,
   type MahasiswaStats,
   type MyKelas,
-  type JadwalMahasiswa,
 } from "@/lib/api/mahasiswa.api";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { cn } from "@/lib/utils";
+
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+const PULL_THRESHOLD = 70;
+
+interface AvailableQuiz {
+  id: string;
+  judul: string;
+  tanggal_selesai: string;
+  mata_kuliah_nama: string;
+}
+
+interface RecentGrade {
+  id: string;
+  nilai_akhir: number | null;
+  created_at: string;
+  mata_kuliah_nama: string;
+}
+
+function initials(name?: string | null): string {
+  return (
+    name
+      ?.split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "M"
+  );
+}
+
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(value));
+}
+
+function formatTime(value: string): string {
+  return value.slice(0, 5);
+}
+
+function countdown(value: string): string {
+  const diffMs = new Date(value).getTime() - Date.now();
+  if (diffMs <= 0) return "deadline lewat";
+  const hours = Math.ceil(diffMs / 3_600_000);
+  if (hours < 24) return `${hours} jam lagi`;
+  return `${Math.ceil(hours / 24)} hari lagi`;
+}
+
+function deadlineLevel(value: string): "urgent" | "warning" | "normal" {
+  const diffMs = new Date(value).getTime() - Date.now();
+  if (diffMs <= 24 * 3_600_000) return "urgent";
+  if (diffMs <= 3 * 24 * 3_600_000) return "warning";
+  return "normal";
+}
+
+function usePullToRefresh(onRefresh: () => void) {
+  const startYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const handleTouchStart = (event: TouchEvent) => {
+      if (window.scrollY === 0)
+        startYRef.current = event.touches[0]?.clientY ?? null;
+    };
+    const handleTouchEnd = (event: TouchEvent) => {
+      const start = startYRef.current;
+      startYRef.current = null;
+      if (start === null) return;
+      const end = event.changedTouches[0]?.clientY ?? start;
+      if (end - start >= PULL_THRESHOLD && window.scrollY === 0) onRefresh();
+    };
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [onRefresh]);
+}
+
+async function getAvailableQuizzes(): Promise<AvailableQuiz[]> {
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("kuis")
+      .select("id, judul, tanggal_selesai, mata_kuliah:mata_kuliah_id(nama_mk)")
+      .eq("status", "published")
+      .gte("tanggal_selesai", now)
+      .order("tanggal_selesai", { ascending: true })
+      .limit(5);
+
+    if (error) throw error;
+
+    return (
+      (data || []) as Array<{
+        id: string;
+        judul: string;
+        tanggal_selesai: string;
+        mata_kuliah?: { nama_mk?: string | null } | null;
+      }>
+    ).map((item) => ({
+      id: item.id,
+      judul: item.judul,
+      tanggal_selesai: item.tanggal_selesai,
+      mata_kuliah_nama: item.mata_kuliah?.nama_mk || "Mata kuliah",
+    }));
+  } catch (error) {
+    console.error("Gagal memuat kuis tersedia:", error);
+    return [];
+  }
+}
+
+async function getRecentGrades(): Promise<RecentGrade[]> {
+  try {
+    const { data, error } = await supabase
+      .from("nilai")
+      .select(
+        "id, nilai_akhir, created_at, mata_kuliah:mata_kuliah_id(nama_mk)",
+      )
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    if (error) throw error;
+
+    return (
+      (data || []) as Array<{
+        id: string;
+        nilai_akhir: number | null;
+        created_at: string;
+        mata_kuliah?: { nama_mk?: string | null } | null;
+      }>
+    ).map((item) => ({
+      id: item.id,
+      nilai_akhir: item.nilai_akhir,
+      created_at: item.created_at,
+      mata_kuliah_nama: item.mata_kuliah?.nama_mk || "Mata kuliah",
+    }));
+  } catch (error) {
+    console.error("Gagal memuat nilai terbaru:", error);
+    return [];
+  }
+}
 
 export function DashboardPage() {
   const { user } = useAuth();
-
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<MahasiswaStats | null>(null);
-  const [myKelas, setMyKelas] = useState<MyKelas[]>([]);
-  const [myJadwal, setMyJadwal] = useState<JadwalMahasiswa[]>([]);
-  const [isOfflineData, setIsOfflineData] = useState(false);
-  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
-  // ❌ REMOVED: enrollDialogOpen state
+  const [kelas, setKelas] = useState<MyKelas[]>([]);
+  const [jadwal, setJadwal] = useState<JadwalMahasiswa[]>([]);
+  const [quizzes, setQuizzes] = useState<AvailableQuiz[]>([]);
+  const [grades, setGrades] = useState<RecentGrade[]>([]);
 
-  const statsCacheKey = user?.id ? `mahasiswa_stats_${user.id}` : null;
-  const kelasCacheKey = user?.id ? `mahasiswa_kelas_${user.id}` : null;
-  const jadwalCacheKey = user?.id ? `mahasiswa_jadwal_${user.id}` : null;
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchDashboardData();
-    } else {
-      // Clear data if no user
-      setStats(null);
-      setMyKelas([]);
-      setMyJadwal([]);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!statsCacheKey || !kelasCacheKey || !jadwalCacheKey) {
-      return;
-    }
-
-    const handleCacheUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{
-        key?: string;
-        data?: MahasiswaStats | MyKelas[] | JadwalMahasiswa[];
-      }>;
-
-      if (
-        customEvent.detail?.key === statsCacheKey &&
-        customEvent.detail?.data
-      ) {
-        setStats(customEvent.detail.data as MahasiswaStats);
-        setIsOfflineData(false);
-        setLastUpdatedAt(Date.now());
-      }
-
-      if (customEvent.detail?.key === kelasCacheKey) {
-        const nextKelas = customEvent.detail?.data;
-        if (Array.isArray(nextKelas)) {
-          setMyKelas(nextKelas as MyKelas[]);
-          setIsOfflineData(false);
-          setLastUpdatedAt(Date.now());
-        }
-      }
-
-      if (customEvent.detail?.key === jadwalCacheKey) {
-        const nextJadwal = customEvent.detail?.data;
-        if (Array.isArray(nextJadwal)) {
-          setMyJadwal(nextJadwal as JadwalMahasiswa[]);
-          setIsOfflineData(false);
-          setLastUpdatedAt(Date.now());
-        }
-      }
-    };
-
-    window.addEventListener("cache:updated", handleCacheUpdated);
-
-    return () => {
-      window.removeEventListener("cache:updated", handleCacheUpdated);
-    };
-  }, [statsCacheKey, kelasCacheKey, jadwalCacheKey]);
-
-  const fetchDashboardData = async (forceRefresh = false) => {
+  const loadDashboard = useCallback(async (showRefreshing = false) => {
     try {
-      setLoading(true);
-      console.log(
-        "[Mahasiswa Dashboard] Fetching data... (forceRefresh:",
-        forceRefresh,
-        ")",
-      );
-
-      if (!statsCacheKey || !kelasCacheKey || !jadwalCacheKey) {
-        return;
-      }
-
-      const [cachedStatsEntry, cachedKelasEntry, cachedJadwalEntry] =
+      if (showRefreshing) setRefreshing(true);
+      setError(null);
+      const [nextStats, nextKelas, nextJadwal, nextQuizzes, nextGrades] =
         await Promise.all([
-          getCachedData<MahasiswaStats>(statsCacheKey),
-          getCachedData<MyKelas[]>(kelasCacheKey),
-          getCachedData<JadwalMahasiswa[]>(jadwalCacheKey),
+          getMahasiswaStats(),
+          getDashboardKelas(),
+          getMyJadwal(5),
+          getAvailableQuizzes(),
+          getRecentGrades(),
         ]);
 
-      const hasCachedStats = !!cachedStatsEntry?.data;
-      const hasCachedKelas = Array.isArray(cachedKelasEntry?.data);
-      const hasCachedJadwal = Array.isArray(cachedJadwalEntry?.data);
-      const hasAnyCachedData =
-        hasCachedStats || hasCachedKelas || hasCachedJadwal;
-
-      if (hasAnyCachedData) {
-        setStats(hasCachedStats ? cachedStatsEntry!.data : null);
-        setMyKelas(hasCachedKelas ? cachedKelasEntry!.data : []);
-        setMyJadwal(hasCachedJadwal ? cachedJadwalEntry!.data : []);
-        setIsOfflineData(!navigator.onLine);
-        setLastUpdatedAt(
-          Math.max(
-            cachedStatsEntry?.timestamp || 0,
-            cachedKelasEntry?.timestamp || 0,
-            cachedJadwalEntry?.timestamp || 0,
-          ) || null,
-        );
-        setLoading(false);
-      }
-
-      if (forceRefresh && !navigator.onLine) {
-        throw new Error(
-          hasAnyCachedData
-            ? "Perangkat sedang offline. Menampilkan ringkasan dashboard tersimpan terakhir."
-            : "Perangkat sedang offline dan belum ada data dashboard tersimpan.",
-        );
-      }
-
-      // Use cacheAPI with stale-while-revalidate for offline support
-      const [statsData, kelasData, jadwalData] = await Promise.all([
-        cacheAPI(statsCacheKey, () => getMahasiswaStats(), {
-          ttl: 10 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        }),
-        cacheAPI(kelasCacheKey, () => getDashboardKelas(), {
-          ttl: 10 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        }),
-        cacheAPI(jadwalCacheKey, () => getMyJadwal(5), {
-          ttl: 5 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        }),
-      ]);
-
-      setStats(statsData);
-      setMyKelas(kelasData);
-      setMyJadwal(jadwalData);
-      setIsOfflineData(false);
-      setLastUpdatedAt(Date.now());
-
-      console.log("[Mahasiswa Dashboard] Data loaded successfully");
-    } catch (error: any) {
-      // Handle offline mode gracefully
-      if (!networkDetector.isOnline()) {
-        console.log("ℹ️ Offline mode - showing cached dashboard data");
-        setIsOfflineData(true);
-      } else {
-        console.error("Error fetching dashboard data:", error);
-        if (stats || myKelas.length > 0 || myJadwal.length > 0) {
-          setIsOfflineData(true);
-        }
-      }
+      setStats(nextStats);
+      setKelas(nextKelas);
+      setJadwal(nextJadwal);
+      setQuizzes(nextQuizzes);
+      setGrades(nextGrades);
+    } catch (loadError: unknown) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Gagal memuat dashboard mahasiswa.",
+      );
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(date);
-  };
+  const refreshDashboard = useCallback(() => {
+    void queryClient.invalidateQueries();
+    void loadDashboard(true);
+  }, [loadDashboard, queryClient]);
 
-  const formatTime = (timeString: string) => {
-    return timeString.slice(0, 5);
-  };
+  usePullToRefresh(refreshDashboard);
 
-  const dayNames: Record<string, string> = {
-    monday: "Senin",
-    tuesday: "Selasa",
-    wednesday: "Rabu",
-    thursday: "Kamis",
-    friday: "Jumat",
-    saturday: "Sabtu",
-    sunday: "Minggu",
-    senin: "Senin",
-    selasa: "Selasa",
-    rabu: "Rabu",
-    kamis: "Kamis",
-    jumat: "Jumat",
-    sabtu: "Sabtu",
-    minggu: "Minggu",
-  };
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
 
-  const lastUpdatedLabel = useMemo(() => {
-    if (!lastUpdatedAt) {
-      return null;
-    }
+  useEffect(() => {
+    const interval = window.setInterval(refreshDashboard, AUTO_REFRESH_MS);
+    return () => window.clearInterval(interval);
+  }, [refreshDashboard]);
 
-    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  }, [lastUpdatedAt]);
+  const nearestDeadline = quizzes.find(
+    (item) => deadlineLevel(item.tanggal_selesai) !== "normal",
+  );
 
-  if (loading) {
-    return (
-      <div className="app-container py-4 sm:py-6 lg:py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <DashboardSkeleton />
-          <DashboardSkeleton />
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DashboardSkeleton role="mahasiswa" />;
+  if (error)
+    return <ErrorFallback message={error} onRetry={refreshDashboard} />;
+  if (!stats)
+    return <EmptyState variant="no-data" context="dashboard mahasiswa" />;
+
+  const primaryKelas = kelas[0];
 
   return (
-    <div className="role-page-shell surface-grid min-h-screen bg-background">
-      <div className="role-page-content app-container py-4 sm:py-6 lg:py-8">
-        <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
-          {/* Header */}
-          <GlassCard
-            intensity="high"
-            glow
-            className="overflow-hidden rounded-4xl border border-border/50 bg-background/80 px-4 py-4 shadow-xl sm:px-6"
-          >
-            <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-              <div className="shrink-0 rounded-2xl bg-linear-to-br from-primary via-accent to-primary/80 p-2.5 shadow-lg shadow-primary/25 sm:p-3">
-                <BookOpen className="h-6 w-6 text-white sm:h-8 sm:w-8" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Ringkasan pembelajaran
-                </p>
-                <h1 className="mt-1 bg-linear-to-r from-primary via-accent to-primary/80 bg-clip-text text-2xl font-extrabold leading-tight text-transparent sm:text-4xl lg:text-5xl">
-                  Dashboard Mahasiswa
-                </h1>
-                <p className="mt-2 text-sm font-semibold text-foreground/80 sm:text-base lg:text-lg">
-                  Selamat datang,{" "}
-                  <span className="text-primary">
-                    {user?.full_name || user?.email}
-                  </span>
-                </p>
-                {(isOfflineData || lastUpdatedLabel) && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                    {isOfflineData && (
-                      <span className="inline-flex items-center gap-1 font-medium text-warning">
-                        <WifiOff className="h-4 w-4" />
-                        Mode Offline
-                      </span>
-                    )}
-                    {lastUpdatedLabel && (
-                      <span>Pembaruan terakhir: {lastUpdatedLabel}</span>
-                    )}
-                  </div>
-                )}
-                <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide">
-                      Status dashboard
-                    </p>
-                    <p className="font-semibold text-foreground">
-                      {isOfflineData || !navigator.onLine
-                        ? "Mode Offline"
-                        : "Online"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide">
-                      Sumber data
-                    </p>
-                    <p className="font-semibold text-foreground">
-                      {isOfflineData || !navigator.onLine
-                        ? "Snapshot lokal"
-                        : "Data live"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide">
-                      Pembaruan terakhir
-                    </p>
-                    <p className="font-semibold text-foreground">
-                      {lastUpdatedLabel || "-"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </GlassCard>
-
-          {isOfflineData && (
-            <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
-              <AlertDescription>
-                Mode Offline aktif. Dashboard mahasiswa sedang memakai Snapshot
-                lokal dari perangkat.
-                {lastUpdatedLabel
-                  ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
-                  : ""}{" "}
-                Beberapa aksi tetap memerlukan koneksi internet.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Info Alert (Only if no classes) */}
-          {myKelas.length === 0 && (
-            <Alert className="border-info/20 bg-info/10 text-info shadow-sm">
-              <Info className="h-4 w-4" />
-              <AlertDescription className="font-medium text-info/90">
-                Saat ini tidak ada kelas aktif di dashboard. Kelas dengan
-                praktikum atau tugas yang sudah selesai bisa dilihat melalui
-                halaman riwayat terkait.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Quick Stats Cards */}
-          <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
-            <DashboardCard
-              title="Total Kelas"
-              value={stats?.totalKelasPraktikum || 0}
-              icon={BookOpen}
-              color="green"
-              description="Kelas yang masih aktif"
-            />
-            <DashboardCard
-              title="Praktikum Hari Ini"
-              value={stats?.jadwalHariIni || 0}
-              icon={Calendar}
-              color="blue"
-              description="Agenda terjadwal"
-            />
-            <DashboardCard
-              title="Minggu Ini"
-              value={myJadwal.length || 0}
-              icon={Clock}
-              color="purple"
-              description="Praktikum mendatang"
-            />
-            <DashboardCard
-              title="Progress"
-              value={
-                stats?.totalKelasPraktikum
-                  ? Math.round(
-                      ((stats?.totalKelasPraktikum || 0) /
-                        (stats?.totalKelasPraktikum || 1)) *
-                        100,
-                    )
-                  : 0
-              }
-              icon={TrendingUp}
-              color="amber"
-              suffix="%"
-              description="Kesiapan semester ini"
-            />
-          </div>
-
-          {/* Welcome Banner */}
-          {myKelas.length > 0 && (
-            <GlassCard
-              intensity="high"
-              glow
-              className="interactive-card overflow-hidden border-white/20 bg-linear-to-r from-primary/95 via-accent/90 to-primary/80 text-primary-foreground shadow-2xl"
-            >
-              <div className="absolute inset-0 bg-grid-white/10" />
-              <CardContent className="relative p-5 sm:p-8">
-                <div className="flex items-center gap-4 sm:gap-6">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm sm:h-20 sm:w-20 sm:rounded-3xl">
-                    <Sparkles className="h-7 w-7 sm:h-10 sm:w-10" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="mb-1.5 text-xl font-extrabold sm:mb-2 sm:text-3xl">
-                      Semangat Belajar! 🚀
-                    </h2>
-                    <p className="text-sm font-semibold leading-relaxed text-primary-foreground/80 sm:text-lg">
-                      Kamu terdaftar di{" "}
-                      <span className="font-extrabold text-white">
-                        {stats?.totalKelasPraktikum}
-                      </span>{" "}
-                      kelas. Praktikum yang sudah selesai bisa dilihat di
-                      riwayat jadwal.
-                    </p>
-                  </div>
-                  <div className="hidden md:block">
-                    <Trophy className="h-24 w-24 text-white/20" />
-                  </div>
-                </div>
-              </CardContent>
-            </GlassCard>
-          )}
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* My Classes */}
-            <GlassCard
-              intensity="high"
-              className="group relative overflow-hidden border-border/50 bg-background/75 shadow-xl"
-            >
-              <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
-              <CardHeader className="relative">
-                <div className="mb-2 flex items-center gap-2">
-                  <div className="rounded-xl bg-linear-to-br from-primary to-accent p-2.5 shadow-lg shadow-primary/20">
-                    <BookOpen className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold text-foreground">
-                      Kelas Saya
-                    </CardTitle>
-                    <CardDescription className="mt-1 text-base font-medium text-muted-foreground">
-                      {stats?.totalKelasPraktikum || 0} kelas yang masih aktif
-                      untuk Anda ikuti
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative">
-                {myKelas.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <div className="mb-4 inline-flex rounded-full bg-primary/10 p-4">
-                      <BookOpen className="h-12 w-12 text-primary" />
-                    </div>
-                    <p className="mb-2 text-lg font-bold text-foreground">
-                      Belum ada kelas aktif
-                    </p>
-                    <p className="mx-auto max-w-sm text-base font-medium text-muted-foreground">
-                      Jika semua praktikum dan tugas sudah selesai, kelas akan
-                      keluar dari dashboard utama dan tetap tersimpan di
-                      riwayat.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {myKelas.map((kelas) => (
-                      <div
-                        key={kelas.id}
-                        className="interactive-card group flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-primary/10 hover:shadow-md"
-                      >
-                        <div className="shrink-0">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent shadow-lg transition-transform group-hover:scale-110">
-                            <BookOpen className="h-5 w-5 text-white" />
-                          </div>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-foreground">
-                              {kelas.mata_kuliah_nama}
-                            </h4>
-                            <Badge
-                              variant="secondary"
-                              className="border-0 bg-primary/15 text-xs font-semibold text-primary"
-                            >
-                              {kelas.mata_kuliah_kode}
-                            </Badge>
-                          </div>
-                          <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                            {kelas.nama_kelas}
-                          </p>
-                          <p className="mt-1 text-xs font-semibold text-muted-foreground/80">
-                            {kelas.sks} SKS • {kelas.tahun_ajaran}
-                          </p>
-                        </div>
-                        <CheckCircle2 className="h-5 w-5 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </GlassCard>
-
-            {/* Upcoming Schedule */}
-            <GlassCard
-              intensity="high"
-              className="group relative overflow-hidden border-border/50 bg-background/75 shadow-xl"
-            >
-              <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-accent/15 blur-3xl" />
-              <CardHeader className="relative">
-                <div className="mb-2 flex items-center gap-2">
-                  <div className="rounded-xl bg-linear-to-br from-primary to-accent p-2.5 shadow-lg shadow-primary/20">
-                    <Calendar className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold text-foreground">
-                      Jadwal Praktikum
-                    </CardTitle>
-                    <CardDescription className="mt-1 text-base font-medium text-muted-foreground">
-                      {stats?.jadwalHariIni || 0} praktikum hari ini • sesi
-                      mendatang
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative">
-                {myJadwal.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <div className="mb-4 inline-flex rounded-full bg-accent/10 p-4">
-                      <Calendar className="h-12 w-12 text-accent" />
-                    </div>
-                    <p className="mb-2 text-lg font-bold text-foreground">
-                      {myKelas.length === 0
-                        ? "Belum ada jadwal praktikum"
-                        : "Tidak ada jadwal minggu ini"}
-                    </p>
-                    {myKelas.length === 0 && (
-                      <p className="mx-auto max-w-sm text-base font-medium text-muted-foreground">
-                        Jadwal akan muncul setelah Anda terdaftar di kelas
-                        praktikum
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {myJadwal.map((jadwal) => (
-                      <div
-                        key={jadwal.id}
-                        className="interactive-card group flex gap-3 rounded-2xl border border-accent/15 bg-accent/5 p-4 shadow-sm transition-all duration-300 hover:border-accent/30 hover:bg-accent/10 hover:shadow-md"
-                      >
-                        <div className="shrink-0">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent shadow-lg transition-transform group-hover:scale-110">
-                            <Calendar className="h-5 w-5 text-primary-foreground" />
-                          </div>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="truncate text-sm font-bold text-foreground">
-                            {jadwal.mata_kuliah_nama}
-                          </h4>
-                          <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
-                            {jadwal.kelas_nama}{" "}
-                            {jadwal.topik && `• ${jadwal.topik}`}
-                          </p>
-                          {jadwal.dosen_nama && jadwal.dosen_nama !== "-" ? (
-                            <p className="mt-1 text-xs font-semibold text-muted-foreground/90">
-                              Dosen: {jadwal.dosen_nama}
-                            </p>
-                          ) : null}
-                          <div className="mt-1 flex items-center gap-2 text-xs font-bold text-foreground/80">
-                            <Clock className="h-3 w-3" />
-                            {dayNames[jadwal.hari] || jadwal.hari},{" "}
-                            {formatDate(jadwal.tanggal_praktikum)},{" "}
-                            {formatTime(jadwal.jam_mulai)}-
-                            {formatTime(jadwal.jam_selesai)}
-                          </div>
-                          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-muted-foreground">
-                            <MapPin className="h-3 w-3" />
-                            {jadwal.lab_nama}
-                          </div>
-                        </div>
-                        <AlertCircle className="h-5 w-5 text-accent opacity-0 transition-opacity group-hover:opacity-100" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </GlassCard>
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div className="flex items-center gap-4">
+          <Avatar className="size-16">
+            <AvatarFallback className="bg-role-accent text-lg font-semibold text-white">
+              {initials(user?.full_name)}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              {user?.full_name || "Mahasiswa"}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              NIM {user?.mahasiswa?.nim || "-"} · Semester{" "}
+              {user?.mahasiswa?.semester || "-"} ·{" "}
+              {primaryKelas?.nama_kelas || "Belum ada kelas aktif"}
+            </p>
           </div>
         </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            onClick={refreshDashboard}
+            disabled={refreshing}
+          >
+            <IconRefresh
+              className={cn("size-4 mr-2", refreshing && "animate-spin")}
+              aria-hidden="true"
+            />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      {nearestDeadline && (
+        <Alert
+          className={cn(
+            deadlineLevel(nearestDeadline.tanggal_selesai) === "urgent"
+              ? "border-red-200 bg-red-50 text-red-950"
+              : "border-amber-200 bg-amber-50 text-amber-950",
+          )}
+        >
+          <IconAlertTriangle className="size-5" aria-hidden="true" />
+          <AlertDescription className="font-medium">
+            {nearestDeadline.judul} deadline{" "}
+            {countdown(nearestDeadline.tanggal_selesai)}.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[
+          {
+            label: "Nilai Rata-rata",
+            value: stats.rataRataNilai ?? 0,
+            suffix: "",
+            icon: IconStar,
+          },
+          {
+            label: "Kehadiran %",
+            value: stats.jadwalHariIni > 0 ? 100 : 0,
+            suffix: "%",
+            icon: IconTrendingUp,
+          },
+          {
+            label: "Logbook Terisi",
+            value: grades.length,
+            suffix: "",
+            icon: IconNotebook,
+          },
+          {
+            label: "Materi Offline",
+            value: kelas.length,
+            suffix: "",
+            icon: IconDownload,
+          },
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <Card key={item.label} className="border-border/70 bg-bg-primary">
+              <CardContent className="flex items-center justify-between p-5">
+                <div>
+                  <p className="text-small text-text-muted">{item.label}</p>
+                  <p className="mt-1 text-3xl font-semibold text-text-primary">
+                    {item.value}
+                    {item.suffix}
+                  </p>
+                </div>
+                <Icon className="size-8 text-role-accent" aria-hidden="true" />
+              </CardContent>
+            </Card>
+          );
+        })}
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-2">
+        <Card className="border-border/70 bg-bg-primary">
+          <CardHeader>
+            <CardTitle className="text-heading">Kuis Tersedia</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {quizzes.length === 0 ? (
+              <EmptyState variant="no-data" context="kuis" />
+            ) : (
+              quizzes.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-border/70 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-small font-semibold text-text-primary">
+                        {item.judul}
+                      </p>
+                      <p className="text-caption text-text-muted">
+                        {item.mata_kuliah_nama}
+                      </p>
+                    </div>
+                    <Badge variant="outline">
+                      {countdown(item.tanggal_selesai)}
+                    </Badge>
+                  </div>
+                  <Button
+                    className="mt-3 w-full"
+                    onClick={() => navigate("/mahasiswa/kuis")}
+                  >
+                    Kerjakan
+                  </Button>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-bg-primary">
+          <CardHeader>
+            <CardTitle className="text-heading">Jadwal Minggu Ini</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {jadwal.length === 0 ? (
+              <EmptyState variant="no-data" context="jadwal" />
+            ) : (
+              jadwal.slice(0, 5).map((item) => (
+                <div
+                  key={item.id}
+                  className="flex gap-3 rounded-xl border border-border/70 p-3"
+                >
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-role-accent-light text-role-accent">
+                    <IconCalendar className="size-5" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-small font-semibold text-text-primary">
+                      {item.mata_kuliah_nama}
+                    </p>
+                    <p className="text-caption text-text-muted">
+                      {formatDate(item.tanggal_praktikum)} ·{" "}
+                      {formatTime(item.jam_mulai)}-
+                      {formatTime(item.jam_selesai)}
+                    </p>
+                    <p className="text-caption text-text-muted">
+                      {item.lab_nama} · {item.kelas_nama}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-2">
+        <Card className="border-border/70 bg-bg-primary">
+          <CardHeader>
+            <CardTitle className="text-heading">Nilai Terbaru</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {grades.length === 0 ? (
+              <EmptyState variant="no-data" context="nilai" />
+            ) : (
+              grades.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-xl border border-border/70 p-3"
+                >
+                  <div>
+                    <p className="text-small font-semibold text-text-primary">
+                      {item.mata_kuliah_nama}
+                    </p>
+                    <p className="text-caption text-text-muted">
+                      {formatDate(item.created_at)}
+                    </p>
+                  </div>
+                  <Badge className="bg-role-accent text-white">
+                    {item.nilai_akhir ?? "-"}
+                  </Badge>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-bg-primary">
+          <CardHeader>
+            <CardTitle className="text-heading">Streak Kehadiran</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center gap-4">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-role-accent-light text-role-accent">
+              <IconClock className="size-7" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-3xl font-semibold text-text-primary">
+                {stats.jadwalHariIni > 0 ? 1 : 0} hari
+              </p>
+              <p className="text-small text-text-muted">
+                Streak akan bertambah saat presensi praktikum tercatat.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
+
+export default DashboardPage;

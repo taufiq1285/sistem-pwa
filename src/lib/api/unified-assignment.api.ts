@@ -7,6 +7,7 @@
 import { supabase } from "@/lib/supabase/client";
 import { handleError, logError } from "@/lib/utils/errors";
 import { requirePermission } from "@/lib/middleware";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -161,7 +162,7 @@ export async function getUnifiedAssignments(
   search?: string,
 ): Promise<UnifiedAssignmentWithSchedules[]> {
   try {
-    console.log(
+    logger.debug(
       "🔍 Fetching unified assignments with filters:",
       filters,
       "search:",
@@ -303,7 +304,7 @@ export async function getUnifiedAssignments(
       );
 
       if (jadwalError) {
-        console.warn(
+        logger.debug(
           "Error fetching jadwal details for assignment:",
           key,
           jadwalError,
@@ -332,7 +333,7 @@ export async function getUnifiedAssignments(
       });
     }
 
-    console.log(
+    logger.debug(
       `✅ Found ${assignmentsWithSchedules.length} unified assignments`,
     );
     return assignmentsWithSchedules;
@@ -353,7 +354,7 @@ export async function deleteAssignmentCascade(
   options?: DeleteAssignmentOptions,
 ): Promise<{ success: boolean; message: string; details?: any }> {
   try {
-    console.log("🗑️ Deleting assignment cascade:", {
+    logger.debug("🗑️ Deleting assignment cascade:", {
       dosenId,
       mataKuliahId,
       kelasId,
@@ -392,7 +393,7 @@ export async function deleteAssignmentCascade(
     }
 
     const totalJadwal = normalizedJadwalToDelete.length;
-    console.log(`Found ${totalJadwal} jadwal to archive`);
+    logger.debug(`Found ${totalJadwal} jadwal to archive`);
 
     if (totalJadwal === 0) {
       throw new Error(
@@ -451,7 +452,7 @@ export async function deleteAssignmentCascade(
 
     if (jadwalArchiveResult?.error) throw jadwalArchiveResult.error;
 
-    console.log(`✅ Archived ${totalJadwal} jadwal praktikum`);
+    logger.debug(`✅ Archived ${totalJadwal} jadwal praktikum`);
 
     // Step 2: Check if we should also archive the kelas
     let kelasDeleted = false;
@@ -486,7 +487,7 @@ export async function deleteAssignmentCascade(
 
           if (kelasArchiveResult?.error) throw kelasArchiveResult.error;
           kelasDeleted = true;
-          console.log(`✅ Archived kelas ${kelasId}`);
+          logger.debug(`✅ Archived kelas ${kelasId}`);
         }
       }
     }
@@ -511,7 +512,7 @@ export async function deleteAssignmentCascade(
         .eq("mata_kuliah_id", mataKuliahId);
 
       if (dmDeleteError) throw dmDeleteError;
-      console.log(`✅ Cleaned up dosen_mata_kuliah record`);
+      logger.debug(`✅ Cleaned up dosen_mata_kuliah record`);
     }
 
     // Step 4: Send notification if requested
@@ -550,7 +551,7 @@ export async function deleteAssignmentCascade(
         },
       });
 
-      console.log(`✅ Sent notification to dosen ${dosenData?.full_name}`);
+      logger.debug(`✅ Sent notification to dosen ${dosenData?.full_name}`);
     }
 
     return {

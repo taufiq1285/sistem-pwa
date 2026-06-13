@@ -17,6 +17,8 @@ import { supabase } from "@/lib/supabase/client";
 import { getKuisById } from "@/lib/api/kuis.api";
 import type { Kuis } from "@/types/kuis.types";
 import { toast } from "sonner";
+import { FormSkeleton } from "@/components/common";
+import logger from "@/lib/utils/logger";
 
 export default function KuisBuilderPage() {
   const navigate = useNavigate();
@@ -92,12 +94,12 @@ export default function KuisBuilderPage() {
   }
 
   const handleSave = (quiz?: any) => {
-    console.log("🎯 [KuisBuilderPage] Quiz saved:", quiz?.id);
+    logger.debug("🎯 [KuisBuilderPage] Quiz saved:", quiz?.id);
 
     // ✅ Wait a moment for cache invalidation to complete, then navigate
     // This ensures the list page loads fresh data instead of stale cache
     setTimeout(() => {
-      console.log("🔄 [KuisBuilderPage] Navigating back to list...");
+      logger.debug("🔄 [KuisBuilderPage] Navigating back to list...");
       navigate("/dosen/kuis");
     }, 500); // 500ms delay to ensure cache is cleared
 
@@ -125,28 +127,22 @@ export default function KuisBuilderPage() {
 
   if (isLoadingDosenId) {
     return (
-      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
-        <div className="role-page-content space-y-6">
-          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-border/60 dark:bg-card">
-            <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
-            <p className="mt-4 text-base font-semibold text-muted-foreground">
-              Memuat profil dosen...
-            </p>
-          </div>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-20 w-full skeleton-shimmer rounded-xl" />
         </div>
+        <FormSkeleton />
       </div>
     );
   }
 
   if (!dosenId && user?.role === "dosen") {
     return (
-      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
-        <div className="role-page-content space-y-6">
-          <div className="rounded-3xl border border-destructive/30 bg-destructive/5 p-10 text-center shadow-2xl dark:border-destructive/20">
-            <p className="text-base font-semibold text-destructive">
-              Data dosen tidak ditemukan. Silakan logout lalu login kembali.
-            </p>
-          </div>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center shadow-md dark:border-destructive/20">
+          <p className="text-base font-semibold text-destructive">
+            Data dosen tidak ditemukan. Silakan logout lalu login kembali.
+          </p>
         </div>
       </div>
     );
@@ -155,68 +151,49 @@ export default function KuisBuilderPage() {
   // Show loading state when fetching task data
   if (isEditing && isLoading) {
     return (
-      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
-        <div className="role-page-content space-y-6">
-          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-border/60 dark:bg-card">
-            <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
-            <p className="mt-4 text-base font-semibold text-muted-foreground">
-              Memuat data tugas praktikum...
-            </p>
-          </div>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-20 w-full skeleton-shimmer rounded-xl" />
         </div>
+        <FormSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="role-page-shell p-4 sm:p-6 lg:p-8">
-      <div className="role-page-content space-y-6 lg:space-y-8">
-        {/* Header */}
-        <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-primary via-primary/90 to-accent/85 p-6 text-primary-foreground shadow-2xl sm:p-8">
-          <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
-
-          <div className="relative z-10 space-y-4">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => navigate("/dosen/kuis")}
-              className="border border-white/40 bg-white/15 text-white hover:bg-white/25"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Kembali ke Daftar Tugas
-            </Button>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
-                  <FileText className="h-3.5 w-3.5" />
-                  Editor Tugas Praktikum
-                </div>
-                <h1 className="text-2xl font-extrabold sm:text-3xl">
-                  {isEditing
-                    ? "Edit Tugas Praktikum"
-                    : "Buat Tugas Praktikum Baru"}
-                </h1>
-                <p className="max-w-3xl text-sm text-primary-foreground/80 sm:text-base">
-                  {isEditing
-                    ? "Perbarui informasi tugas, pengaturan, dan struktur soal dengan tampilan yang lebih rapi dan konsisten."
-                    : "Susun tugas praktikum baru (pre-test, post-test, atau laporan) dengan alur yang responsif dan mudah dipakai."}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Quiz Builder */}
-        <div className="rounded-3xl border border-white/70 bg-white/95 p-3 shadow-2xl backdrop-blur-sm dark:border-border/50 dark:bg-card sm:p-4 md:p-6">
-          <QuizBuilder
-            quiz={quiz || undefined}
-            dosenId={dosenId}
-            onSave={handleSave}
-            onCancel={handleCancel}
-          />
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      {/* Header */}
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isEditing ? "Edit Tugas Praktikum" : "Buat Tugas Praktikum Baru"}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isEditing
+              ? "Perbarui informasi tugas, pengaturan, dan struktur soal dengan tampilan yang lebih rapi dan konsisten."
+              : "Susun tugas praktikum baru (pre-test, post-test, atau laporan) dengan alur yang responsif dan mudah dipakai."}
+          </p>
         </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/dosen/kuis")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Kembali
+          </Button>
+        </div>
+      </div>
+
+      {/* Quiz Builder */}
+      <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm md:p-6">
+        <QuizBuilder
+          quiz={quiz || undefined}
+          dosenId={dosenId}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        />
       </div>
     </div>
   );

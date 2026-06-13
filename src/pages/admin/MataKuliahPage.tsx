@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { TableSkeleton } from "@/components/common";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -323,21 +324,22 @@ export default function MataKuliahPage() {
         header: "Aksi",
         cell: ({ row }) => (
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
+              type="button"
               onClick={() => handleEdit(row.original)}
+              className="table-action-btn table-action-btn-edit"
+              title="Edit"
             >
               <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
+            </button>
+            <button
+              type="button"
               onClick={() => handleDelete(row.original)}
-              className="text-destructive"
+              className="table-action-btn table-action-btn-delete"
+              title="Hapus"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         ),
       },
@@ -346,23 +348,27 @@ export default function MataKuliahPage() {
   );
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-4xl font-extrabold">Mata Kuliah</h1>
-          <p className="text-lg font-semibold text-muted-foreground mt-2">
+          <h1 className="text-2xl font-bold text-foreground">Mata Kuliah</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Kelola mata kuliah untuk sistem
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => loadMataKuliah(true)}>
+        <div className="flex items-center gap-3 shrink-0">
+          <Button
+            variant="outline"
+            onClick={() => loadMataKuliah(true)}
+            className="font-semibold"
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
           <Button
             onClick={handleAdd}
-            className="font-semibold bg-linear-to-r from-primary to-accent"
+            className="font-semibold bg-linear-to-r from-primary to-accent text-primary-foreground"
           >
             <Plus className="h-4 w-4 mr-2" />
             Tambah Mata Kuliah
@@ -412,17 +418,21 @@ export default function MataKuliahPage() {
               </Select>
             </div>
           </div>
-          <DataTable
-            columns={columns}
-            data={mataKuliahList}
-            isLoading={isLoading}
-            searchable
-            searchPlaceholder="Cari mata kuliah..."
-            pageSize={20}
-            pageSizeOptions={[10, 20, 30, 50]}
-            showPagination
-            emptyMessage="Belum ada mata kuliah"
-          />
+          {isLoading ? (
+            <TableSkeleton rows={5} columns={5} />
+          ) : (
+            <DataTable
+              columns={columns}
+              data={mataKuliahList}
+              isLoading={isLoading}
+              searchable
+              searchPlaceholder="Cari mata kuliah..."
+              pageSize={20}
+              pageSizeOptions={[10, 20, 30, 50]}
+              showPagination
+              emptyMessage="Belum ada mata kuliah"
+            />
+          )}
         </CardContent>
       </Card>
 

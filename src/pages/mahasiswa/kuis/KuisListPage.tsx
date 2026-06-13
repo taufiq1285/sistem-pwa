@@ -26,6 +26,7 @@ import {
   RefreshCw,
   WifiOff,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 
 // UI Components
 import {
@@ -41,6 +42,13 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  CardListSkeleton,
+  ErrorFallback,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 
 // API & Hooks
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -108,6 +116,7 @@ function getDeadlineCountdown(tanggalSelesai: string): string | null {
 export default function KuisListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isOffline } = useOfflineContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const [quizzes, setQuizzes] = useState<UpcomingQuiz[]>([]);
   const [filteredQuizzes, setFilteredQuizzes] = useState<UpcomingQuiz[]>([]);
@@ -218,7 +227,7 @@ export default function KuisListPage() {
             table: "kuis",
           },
           (payload) => {
-            console.log("[KuisList] Kuis changed, refreshing...", payload);
+            logger.debug("[KuisList] Kuis changed, refreshing...", payload);
             // Force refresh to ensure we get the latest data
             loadQuizzes(true);
           },
@@ -356,7 +365,7 @@ export default function KuisListPage() {
       setQuizzes(await applyOfflineAttemptOverrides(data));
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
-      console.log("[KuisList] Data loaded:", data.length, "quizzes");
+      logger.debug("[KuisList] Data loaded:", data.length, "quizzes");
     } catch (err: any) {
       const errorMessage =
         err?.message || "Gagal memuat daftar tugas praktikum";
@@ -869,32 +878,26 @@ export default function KuisListPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6 max-w-7xl">
-        <div className="flex items-center justify-center min-h-100">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">
-              Memuat daftar tugas praktikum...
-            </p>
-          </div>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-96 animate-pulse rounded bg-muted" />
         </div>
+        <CardListSkeleton />
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="container mx-auto py-6 max-w-7xl">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-        <div className="mt-4">
-          <Button onClick={() => loadQuizzes(true)}>Coba Lagi</Button>
-        </div>
-      </div>
-    );
+    return <ErrorFallback message={error} onRetry={() => loadQuizzes(true)} />;
+  }
+
+  if (isOffline && quizzes.length === 0) {
+    return <EmptyState variant="offline" context="kuis" />;
+  }
+
+  if (quizzes.length === 0) {
+    return <EmptyState variant="no-data" context="kuis" />;
   }
 
   const lastUpdatedLabel = lastUpdatedAt
@@ -905,164 +908,139 @@ export default function KuisListPage() {
     : null;
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl space-y-6">
-      {(isOfflineData || !navigator.onLine) && (
-        <Alert className="border-warning/40 bg-warning/10">
-          <WifiOff className="h-4 w-4" />
-          <AlertTitle>Mode Offline</AlertTitle>
-          <AlertDescription>
-            Daftar tugas praktikum sedang menggunakan snapshot lokal dari
-            perangkat.
-            {lastUpdatedLabel
-              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
-              : ""}
-          </AlertDescription>
-        </Alert>
-      )}
-      {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-primary via-primary/90 to-accent/85 p-8 text-primary-foreground">
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-foreground/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
+    <OfflineAwareContent
+      hasData={quizzes.length > 0}
+      context="kuis"
+      onSync={() => loadQuizzes(true)}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        {(isOfflineData || !navigator.onLine) && (
+          <Alert className="border-warning/40 bg-warning/10">
+            <WifiOff className="h-4 w-4" />
+            <AlertTitle>Mode Offline</AlertTitle>
+            <AlertDescription>
+              Daftar tugas praktikum sedang menggunakan snapshot lokal dari
+              perangkat.
+              {lastUpdatedLabel
+                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                : ""}
+            </AlertDescription>
+          </Alert>
+        )}
 
-        <div className="relative flex items-start justify-between">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              📋 Tugas Praktikum
+            <h1 className="text-2xl font-bold text-foreground">
+              Tugas Praktikum
             </h1>
-            <p className="text-primary-foreground/80 mt-2 max-w-xl">
+            <p className="text-sm text-muted-foreground mt-1">
               Kerjakan tugas praktikum sesuai jadwal yang tersedia. Perhatikan
               batas waktu pengerjaan!
             </p>
-            <div className="flex gap-3 mt-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm border border-white/30">
-                🧪 TES - Pilihan Ganda
-              </span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm border border-white/30">
-                📄 LAPORAN - Upload File
-              </span>
-            </div>
           </div>
-
-          {/* Refresh Button */}
-          <Button
-            onClick={() => loadQuizzes(true)}
-            variant="secondary"
-            className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
-            title="Refresh daftar tugas"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button onClick={() => loadQuizzes(true)} variant="outline">
+              <RefreshCw
+                className={cn("size-4 mr-2", isLoading && "animate-spin")}
+              />
+              Refresh
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          {
-            status: "upcoming" as const,
-            label: "Akan Datang",
-            Icon: Clock,
-            iconWrap: "bg-primary/10",
-            iconColor: "text-primary",
-          },
-          {
-            status: "ongoing" as const,
-            label: "Berlangsung",
-            Icon: Play,
-            iconWrap: "bg-success/10",
-            iconColor: "text-success",
-          },
-          {
-            status: "history" as const,
-            label: "Riwayat",
-            Icon: CheckCircle2,
-            iconWrap: "bg-muted/60",
-            iconColor: "text-muted-foreground",
-          },
-        ].map(({ status, label, Icon, iconWrap, iconColor }) => (
-          <Card key={status}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className={cn("p-2 rounded-lg", iconWrap)}>
-                  <Icon className={cn("h-5 w-5", iconColor)} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            {
+              status: "upcoming" as const,
+              label: "Akan Datang",
+              Icon: Clock,
+              iconWrap: "bg-primary/10",
+              iconColor: "text-primary",
+            },
+            {
+              status: "ongoing" as const,
+              label: "Berlangsung",
+              Icon: Play,
+              iconWrap: "bg-success/10",
+              iconColor: "text-success",
+            },
+            {
+              status: "history" as const,
+              label: "Riwayat",
+              Icon: CheckCircle2,
+              iconWrap: "bg-muted/60",
+              iconColor: "text-muted-foreground",
+            },
+          ].map(({ status, label, Icon, iconWrap, iconColor }) => (
+            <Card key={status}>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className={cn("p-2 rounded-lg", iconWrap)}>
+                    <Icon className={cn("h-5 w-5", iconColor)} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{label}</p>
+                    <p className="text-2xl font-bold">
+                      {getCountByStatus(status)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{label}</p>
-                  <p className="text-2xl font-bold">
-                    {getCountByStatus(status)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari tugas praktikum, mata kuliah, atau kelas..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Tabs
-              value={statusFilter}
-              onValueChange={(v) => handleStatusChange(v as QuizStatus)}
-            >
-              <TabsList>
-                <TabsTrigger value="all">
-                  Semua ({getCountByStatus("all")})
-                </TabsTrigger>
-                <TabsTrigger value="upcoming">Akan Datang</TabsTrigger>
-                <TabsTrigger value="ongoing">Berlangsung</TabsTrigger>
-                <TabsTrigger value="history">
-                  Riwayat ({getCountByStatus("history")})
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </CardContent>
-      </Card>
-
-      {filteredQuizzes.length === 0 ? (
         <Card>
-          <CardContent className="py-12">
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="p-4 bg-muted rounded-full">
-                  <FileQuestion className="h-8 w-8 text-muted-foreground" />
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari tugas praktikum, mata kuliah, atau kelas..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-1">Tidak Ada Tugas</h3>
-                <p className="text-muted-foreground">
-                  {searchQuery
-                    ? "Tidak ada tugas praktikum yang sesuai dengan pencarian Anda"
-                    : statusFilter === "all"
-                      ? "Belum ada tugas praktikum yang tersedia"
-                      : statusFilter === "history"
-                        ? "Belum ada tugas praktikum yang masuk riwayat"
-                        : `Tidak ada tugas praktikum dengan status "${statusFilter}"`}
-                </p>
-              </div>
+              <Tabs
+                value={statusFilter}
+                onValueChange={(v) => handleStatusChange(v as QuizStatus)}
+              >
+                <TabsList>
+                  <TabsTrigger value="all">
+                    Semua ({getCountByStatus("all")})
+                  </TabsTrigger>
+                  <TabsTrigger value="upcoming">Akan Datang</TabsTrigger>
+                  <TabsTrigger value="ongoing">Berlangsung</TabsTrigger>
+                  <TabsTrigger value="history">
+                    Riwayat ({getCountByStatus("history")})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredQuizzes.map((quiz) => (
-            <QuizCard key={quiz.id} quiz={quiz} />
-          ))}
-        </div>
-      )}
-    </div>
+
+        {filteredQuizzes.length === 0 ? (
+          <EmptyState
+            variant="no-results"
+            actionLabel="Reset Filter"
+            onAction={() => {
+              setSearchQuery("");
+              setStatusFilter("all");
+              setSearchParams({ status: "all" });
+            }}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredQuizzes.map((quiz) => (
+              <QuizCard key={quiz.id} quiz={quiz} />
+            ))}
+          </div>
+        )}
+      </div>
+    </OfflineAwareContent>
   );
 }

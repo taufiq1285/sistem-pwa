@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import logger from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -397,7 +398,7 @@ export function ConflictResolutionDialog({
  *   };
  *
  *   const handleResolve = (winner, mergedData) => {
- *     console.log('Resolved:', winner, mergedData);
+ *     logger.debug('Resolved:', winner, mergedData);
  *     // Save resolved data
  *   };
  *

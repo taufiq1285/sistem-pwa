@@ -1,356 +1,418 @@
 /**
- * Login Form Component
- * Consistent visual style with AKBID landing pages.
+ * Modern login form with inline validation, offline PWA handling, and role-safe auth flow.
  */
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@/lib/hooks/useAuth";
-import { loginSchema, type LoginFormData } from "@/lib/validations/auth.schema";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
+import {
+  IconAlertCircle,
+  IconArrowLeft,
+  IconCheck,
+  IconEye,
+  IconEyeOff,
+  IconLoader2,
+  IconLock,
+  IconLogin,
+  IconMail,
+  IconWifiOff,
+  IconX,
+} from "@tabler/icons-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import {
-  WifiOff,
-  Mail,
-  Lock,
-  LogIn,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  GraduationCap,
-  Users,
-  FlaskConical,
-  ShieldCheck,
-  Loader2,
-} from "lucide-react";
+import { useOfflineContext } from "@/context/OfflineContext";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { loginSchema } from "@/lib/validations/auth.schema";
+import { cn } from "@/lib/utils";
+
+// Extend schema for local client-only rememberMe checkbox
+const localLoginSchema = loginSchema.extend({
+  rememberMe: z.boolean().optional(),
+});
+
+type LoginFormData = z.infer<typeof localLoginSchema>;
 
 interface LoginFormProps {
   onSuccess?: () => void;
 }
 
+const LOCK_SECONDS = 30;
+const MAX_FAILED_ATTEMPTS = 5;
+
+function getFieldState(hasValue: boolean, hasError: boolean) {
+  if (hasError) return "error";
+  if (hasValue) return "valid";
+  return "idle";
+}
+
 export function LoginForm({ onSuccess }: LoginFormProps) {
   const { login } = useAuth();
-  const [error, setError] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { isOffline } = useOfflineContext();
+  const emailRef = useRef<HTMLInputElement | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [submitMode, setSubmitMode] = useState<
-    "idle" | "online" | "offline" | "fallback"
-  >("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
 
   const {
+    control,
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    watch,
+    formState: { errors, touchedFields, isSubmitting },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(localLoginSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
   });
 
+  const email = watch("email");
+  const password = watch("password");
+  const isInstitutionEmail = email.toLowerCase().endsWith("@akmb.ac.id");
+  const remainingLockSeconds = lockedUntil
+    ? Math.max(0, Math.ceil((lockedUntil - now) / 1000))
+    : 0;
+  const isLocked = remainingLockSeconds > 0;
+
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      setError(null);
-    };
-
-    const handleOffline = () => {
-      setIsOnline(false);
-      setError(null);
-    };
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
+    emailRef.current?.focus();
   }, []);
 
+  useEffect(() => {
+    if (!lockedUntil) return undefined;
+
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+      if (Date.now() >= lockedUntil) {
+        setLockedUntil(null);
+        setFailedAttempts(0);
+      }
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [lockedUntil]);
+
+  const fieldClassName = useMemo(
+    () =>
+      "pl-9 pr-10 h-11 rounded-lg bg-white text-body border border-border shadow-sm transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c3aed]/15 focus-visible:border-[#7c3aed] focus-visible:outline-hidden",
+    [],
+  );
+
   const onSubmit = async (data: LoginFormData) => {
+    if (isLocked) return;
+
     try {
-      const currentOnlineState = navigator.onLine;
-      console.log("Login attempt:", {
+      setError(null);
+      setIsSuccess(false);
+
+      await login({
         email: data.email,
-        isOnline,
-        navigatorOnline: currentOnlineState,
+        password: data.password,
       });
 
-      setError(null);
-      setSubmitMode(currentOnlineState ? "fallback" : "offline");
-      await login(data);
-      console.log("Login successful");
+      setIsSuccess(true);
+      setFailedAttempts(0);
       onSuccess?.();
     } catch (err: unknown) {
-      console.error("Login failed:", err);
-      let errorMessage = "Login gagal. Silakan coba lagi.";
-      if (err instanceof Error) {
-        errorMessage = err.message;
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
+      if (nextAttempts >= MAX_FAILED_ATTEMPTS) {
+        setLockedUntil(Date.now() + LOCK_SECONDS * 1000);
       }
-      setError(errorMessage);
-    } finally {
-      setSubmitMode("idle");
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Login gagal. Silakan periksa kembali kredensial Anda.",
+      );
     }
   };
 
-  const isNetworkRelatedError =
-    error?.toLowerCase().includes("koneksi ke server") ||
-    error?.toLowerCase().includes("batas waktu") ||
-    error?.toLowerCase().includes("tidak stabil");
+  const emailState = getFieldState(
+    touchedFields.email && !!email,
+    !!errors.email,
+  );
+  const passwordState = getFieldState(
+    touchedFields.password && !!password,
+    !!errors.password,
+  );
+
+  const isDisabled = isSubmitting || isLocked || isSuccess;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <p className="text-center akbid-font-display text-base font-semibold text-[#0F172A] sm:text-lg">
-          Login untuk mengakses sistem sebagai:
+    <div className="space-y-7 animate-[fade-in_300ms_ease_both]">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold text-foreground">
+          Masuk ke akun Anda
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Akses dashboard praktikum sesuai role Anda di SiPraktik AKMB.
         </p>
-        <div className="flex flex-wrap justify-center gap-2">
-          <Badge
-            variant="outline"
-            className="border-[#E8E0D8] bg-[#F8F3EE] px-3 py-1 text-[13px] font-semibold text-[#7B1D3A]"
-          >
-            <GraduationCap className="mr-1 h-3.5 w-3.5" />
-            Mahasiswa
-          </Badge>
-          <Badge
-            variant="outline"
-            className="border-[#DDD4CB] bg-[#F5EEE8] px-3 py-1 text-[13px] font-semibold text-[#1E293B]"
-          >
-            <Users className="mr-1 h-3.5 w-3.5" />
-            Dosen
-          </Badge>
-          <Badge
-            variant="outline"
-            className="border-[#D9CEC2] bg-[#F4EEE7] px-3 py-1 text-[13px] font-semibold text-[#334155]"
-          >
-            <FlaskConical className="mr-1 h-3.5 w-3.5" />
-            Laboran
-          </Badge>
-          <Badge
-            variant="outline"
-            className="border-[#E8E0D8] bg-[#F1EBE4] px-3 py-1 text-[13px] font-semibold text-[#0F172A]"
-          >
-            <ShieldCheck className="mr-1 h-3.5 w-3.5" />
-            Admin
-          </Badge>
-        </div>
       </div>
 
+      {isOffline && (
+        <Alert className="border-amber-300 bg-amber-50 text-amber-950 flex gap-3 items-center">
+          <IconWifiOff
+            className="size-5 shrink-0 text-amber-700"
+            aria-hidden="true"
+          />
+          <AlertDescription className="text-small">
+            Mode offline — gunakan kredensial terakhir
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {error && (
+        <Alert
+          variant="destructive"
+          className="animate-shake border-red-200 bg-red-50 flex gap-3 items-center animate-in fade-in slide-in-from-top-1 duration-200"
+        >
+          <IconAlertCircle
+            className="size-5 shrink-0 text-red-600"
+            aria-hidden="true"
+          />
+          <AlertDescription className="text-small font-medium text-red-900">
+            {isLocked
+              ? `Terlalu banyak percobaan. Coba lagi dalam ${remainingLockSeconds} detik.`
+              : error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isSuccess && (
+        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 flex gap-3 items-center">
+          <IconCheck
+            className="size-5 shrink-0 text-emerald-600"
+            aria-hidden="true"
+          />
+          <AlertDescription className="text-small font-medium">
+            Berhasil! Mengarahkan ke dashboard...
+          </AlertDescription>
+        </Alert>
+      )}
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {!isOnline && (
-          <Alert className="border-[#C7D2FE] bg-[#EEF2FF] shadow-sm">
-            <WifiOff className="h-5 w-5 text-[#3730A3]" />
-            <AlertTitle className="text-base font-semibold text-[#1E293B]">
-              Mode Offline
-            </AlertTitle>
-            <AlertDescription className="text-sm text-[#334155]">
-              Anda sedang offline. Sistem akan memakai kredensial tersimpan
-              untuk login.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {isOnline && isSubmitting && submitMode === "fallback" && (
-          <Alert className="border-[#FCD34D] bg-[#FFFBEB] shadow-sm">
-            <Loader2 className="h-5 w-5 animate-spin text-[#B45309]" />
-            <AlertTitle className="text-base font-semibold text-[#92400E]">
-              Mencoba Login Online
-            </AlertTitle>
-            <AlertDescription className="text-sm text-[#78350F]">
-              Sistem sedang mencoba login ke server. Jika koneksi lambat atau
-              gagal dijangkau, login offline akan dicoba otomatis bila akun ini
-              sudah pernah login online di perangkat ini.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {error && (
-          <Alert
-            variant={isNetworkRelatedError ? "default" : "destructive"}
-            className={
-              isNetworkRelatedError
-                ? "border-[#FCD34D] bg-[#FFFBEB] shadow-sm"
-                : "shadow-sm"
-            }
-          >
-            <AlertCircle
-              className={`h-5 w-5 ${
-                isNetworkRelatedError ? "text-[#B45309]" : ""
-              }`}
-            />
-            <AlertTitle
-              className={`text-base font-semibold ${
-                isNetworkRelatedError ? "text-[#92400E]" : ""
-              }`}
-            >
-              {isNetworkRelatedError ? "Jaringan Belum Stabil" : "Login Gagal"}
-            </AlertTitle>
-            <AlertDescription
-              className={`text-sm ${
-                isNetworkRelatedError ? "text-[#78350F]" : ""
-              }`}
-            >
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
+        {/* Email Field */}
         <div className="space-y-2">
-          <Label
-            htmlFor="email"
-            className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]"
-          >
-            <Mail className="h-4 w-4 text-[#7B1D3A]" />
-            Email
-          </Label>
-          <div className="relative">
+          <Label htmlFor="field-login-email">Email</Label>
+          <div className="relative input-wrapper">
+            <span className="input-icon pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">
+              <IconMail className="h-4 w-4" aria-hidden="true" />
+            </span>
             <Input
-              id="email"
+              id="field-login-email"
               type="email"
-              placeholder="email@contoh.com"
+              placeholder="nama@akmb.ac.id"
+              autoComplete="email"
+              disabled={isDisabled}
+              aria-required="true"
+              aria-invalid={!!errors.email}
+              aria-describedby={cn(
+                errors.email && "field-login-email-error",
+                isInstitutionEmail && "field-login-email-hint",
+              )}
+              className={cn(
+                fieldClassName,
+                emailState === "error" &&
+                  "input-error border-red-500 focus-visible:ring-red-500/15 focus-visible:border-red-500",
+                emailState === "valid" &&
+                  "border-emerald-500 focus-visible:ring-emerald-500/15 focus-visible:border-emerald-500",
+              )}
               {...register("email")}
-              disabled={isSubmitting}
-              className="h-11 border-[#E8E0D8] bg-white pl-11 text-[15px] focus-visible:border-[#7B1D3A] focus-visible:ring-[#7B1D3A]"
+              ref={(element) => {
+                register("email").ref(element);
+                emailRef.current = element;
+              }}
             />
-            <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            {emailState === "error" && (
+              <span className="absolute inset-y-0 right-3 flex items-center">
+                <IconX className="h-4 w-4 text-red-600" aria-hidden="true" />
+              </span>
+            )}
+            {emailState === "valid" && (
+              <span className="absolute inset-y-0 right-3 flex items-center">
+                <IconCheck
+                  className="h-4 w-4 text-emerald-600"
+                  aria-hidden="true"
+                />
+              </span>
+            )}
           </div>
           {errors.email && (
-            <p className="flex items-center gap-1 text-sm font-medium text-red-600">
-              <AlertCircle className="h-3.5 w-3.5" />
+            <p
+              id="field-login-email-error"
+              role="alert"
+              className="field-error flex items-center gap-1.5 text-sm text-destructive mt-1"
+            >
+              <IconAlertCircle
+                className="h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
               {errors.email.message}
+            </p>
+          )}
+          {isInstitutionEmail && !errors.email && (
+            <p
+              id="field-login-email-hint"
+              className="text-small font-medium text-blue-700 flex items-center gap-1 mt-1.5 animate-field-error"
+            >
+              <IconCheck
+                className="size-4 shrink-0 text-blue-600"
+                aria-hidden="true"
+              />
+              Email institusi terdeteksi ✓
             </p>
           )}
         </div>
 
+        {/* Password Field */}
         <div className="space-y-2">
-          <Label
-            htmlFor="password"
-            className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]"
-          >
-            <Lock className="h-4 w-4 text-[#7B1D3A]" />
-            Password
-          </Label>
-          <div className="relative">
+          <Label htmlFor="field-login-password">Password</Label>
+          <div className="relative input-wrapper">
+            <span className="input-icon pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">
+              <IconLock className="h-4 w-4" aria-hidden="true" />
+            </span>
             <Input
-              id="password"
+              id="field-login-password"
               type={showPassword ? "text" : "password"}
-              placeholder="Masukkan password Anda"
+              placeholder="Masukkan password"
+              autoComplete="current-password"
+              disabled={isDisabled}
+              aria-required="true"
+              aria-invalid={!!errors.password}
+              aria-describedby={
+                errors.password ? "field-login-password-error" : undefined
+              }
+              className={cn(
+                fieldClassName,
+                passwordState === "error" &&
+                  "input-error border-red-500 focus-visible:ring-red-500/15 focus-visible:border-red-500",
+                passwordState === "valid" &&
+                  "border-emerald-500 focus-visible:ring-emerald-500/15 focus-visible:border-emerald-500",
+              )}
               {...register("password")}
-              disabled={isSubmitting}
-              className="h-11 border-[#E8E0D8] bg-white pl-11 pr-11 text-[15px] focus-visible:border-[#7B1D3A] focus-visible:ring-[#7B1D3A]"
             />
-            <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <button
               type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-[#7B1D3A]"
-              disabled={isSubmitting}
+              disabled={isDisabled}
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground transition-colors duration-150"
+              aria-label={
+                showPassword ? "Sembunyikan password" : "Tampilkan password"
+              }
             >
               {showPassword ? (
-                <EyeOff className="h-4 w-4" />
+                <IconEyeOff className="h-4 w-4" aria-hidden="true" />
               ) : (
-                <Eye className="h-4 w-4" />
+                <IconEye className="h-4 w-4" aria-hidden="true" />
               )}
             </button>
           </div>
           {errors.password && (
-            <p className="flex items-center gap-1 text-sm font-medium text-red-600">
-              <AlertCircle className="h-3.5 w-3.5" />
+            <p
+              id="field-login-password-error"
+              role="alert"
+              className="field-error flex items-center gap-1.5 text-sm text-destructive mt-1"
+            >
+              <IconAlertCircle
+                className="h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
               {errors.password.message}
             </p>
           )}
         </div>
 
+        {/* Remember Me & Forgot Password */}
+        <div className="flex items-center justify-between gap-4 pt-1">
+          <Controller
+            control={control}
+            name="rememberMe"
+            render={({ field }) => (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="field-login-remember"
+                  checked={field.value}
+                  onCheckedChange={(checked) =>
+                    field.onChange(checked === true)
+                  }
+                  disabled={isDisabled}
+                />
+                <Label
+                  htmlFor="field-login-remember"
+                  className="mb-0 text-small font-medium text-text-secondary cursor-pointer select-none"
+                >
+                  Ingat saya
+                </Label>
+              </div>
+            )}
+          />
+          <Link
+            to="/forgot-password"
+            className="text-small font-semibold text-[#7c3aed] hover:underline"
+          >
+            Lupa password?
+          </Link>
+        </div>
+
+        {/* Submit Button */}
         <Button
           type="submit"
-          className="h-12 w-full bg-[#7B1D3A] text-base font-semibold text-white transition-all duration-300 hover:bg-[#9B2448]"
-          disabled={isSubmitting}
-          size="lg"
+          disabled={isDisabled}
+          aria-busy={isSubmitting}
+          className="h-11 w-full bg-gradient-to-r from-[#7c3aed] to-[#4f46e5] text-white font-semibold shadow-lg hover:opacity-95 transition-opacity"
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              {!isOnline
-                ? "Login Offline..."
-                : submitMode === "fallback"
-                  ? "Coba Login & Siapkan Fallback..."
-                  : "Masuk..."}
+              <IconLoader2
+                className="mr-2 h-4 w-4 animate-spin"
+                aria-hidden="true"
+              />
+              Sedang masuk...
             </>
-          ) : !isOnline ? (
+          ) : isSuccess ? (
             <>
-              <WifiOff className="mr-2 h-5 w-5" />
-              Login Offline
+              <IconCheck className="mr-2 h-4 w-4" aria-hidden="true" />
+              Berhasil!
             </>
           ) : (
             <>
-              <LogIn className="mr-2 h-5 w-5" />
-              Masuk
+              <IconLogin className="mr-2 h-4 w-4" aria-hidden="true" />
+              Masuk sekarang
             </>
           )}
         </Button>
-
-        {!isOnline && (
-          <Alert className="border-[#C7D2FE] bg-[#EEF2FF]">
-            <AlertDescription className="text-sm text-[#1E293B]">
-              <strong>Tips Login Offline:</strong> Masukkan email dan password
-              yang sama dengan login online terakhir.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {isOnline && !isSubmitting && (
-          <Alert className="border-[#E8E0D8] bg-[#F8F3EE]">
-            <AlertDescription className="text-sm text-[#334155]">
-              Jika koneksi sedang jelek, sistem akan mencoba login online lebih
-              dulu lalu beralih otomatis ke login offline bila akun ini sudah
-              pernah login online di perangkat ini.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {!isSubmitting && (
-          <div className="border-t border-[#E8E0D8] pt-3">
-            <div className="flex items-start gap-2 text-xs text-slate-700 sm:text-[13px]">
-              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#7B1D3A]" />
-              <p>
-                {isOnline ? (
-                  <>
-                    <span className="font-semibold text-[#0F172A]">
-                      Login Aman:
-                    </span>{" "}
-                    Kredensial terenkripsi dan disimpan aman di perangkat untuk
-                    login offline.
-                  </>
-                ) : (
-                  <>
-                    <span className="font-semibold text-[#0F172A]">
-                      Mode Offline:
-                    </span>{" "}
-                    Login memakai kredensial tersimpan terenkripsi, bukan
-                    password asli.
-                  </>
-                )}
-              </p>
-            </div>
-          </div>
-        )}
       </form>
 
-      <div className="space-y-2 border-t border-[#E8E0D8] pt-4">
-        <p className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]">
-          <ShieldCheck className="h-4 w-4 text-[#7B1D3A]" />
-          Panduan Login
-        </p>
-        <ul className="space-y-1.5 text-sm text-slate-700">
-          <li>Gunakan email dan password yang didaftarkan saat registrasi.</li>
-          <li>
-            Login bisa dilakukan online, dan offline setelah login online
-            pertama.
-          </li>
-          <li>Role akan otomatis terdeteksi setelah login berhasil.</li>
-        </ul>
+      <p className="text-center text-small text-text-muted">
+        Belum punya akun?{" "}
+        <Link
+          to="/register"
+          className="font-semibold text-[#7c3aed] hover:underline"
+        >
+          Daftar
+        </Link>
+      </p>
+
+      <div className="text-center pt-2">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-small font-semibold text-text-secondary hover:text-[#7c3aed] transition-colors"
+        >
+          <IconArrowLeft className="size-4" />← Kembali ke beranda
+        </Link>
       </div>
     </div>
   );

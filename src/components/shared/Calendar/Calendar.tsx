@@ -17,6 +17,7 @@ import {
   isSameDay,
   isToday,
   parseISO,
+  isValid,
 } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,42 @@ interface CalendarDay {
 }
 
 // ============================================================================
+// HELPERS - Safe date parsing to prevent RangeError: Invalid time value
+// ============================================================================
+
+/**
+ * Safely parse an ISO date string.
+ * Returns null if the value is missing or results in an invalid date.
+ */
+function safeParseDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  try {
+    const date = parseISO(value);
+    return isValid(date) ? date : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safely format a date string using date-fns format.
+ * Returns the fallback string if the value is invalid.
+ */
+function safeFormatDate(
+  value: string | null | undefined,
+  formatStr: string,
+  fallback = "--",
+): string {
+  const date = safeParseDate(value);
+  if (!date) return fallback;
+  try {
+    return format(date, formatStr);
+  } catch {
+    return fallback;
+  }
+}
+
+// ============================================================================
 // COMPONENT
 // ============================================================================
 
@@ -68,33 +105,12 @@ export function Calendar({
   const days: CalendarDay[] = [];
   let day = calendarStart;
 
-  console.log("🔍 Calendar: Building days", {
-    calendarStart: format(calendarStart, "yyyy-MM-dd"),
-    calendarEnd: format(calendarEnd, "yyyy-MM-dd"),
-    totalEvents: events.length,
-    eventDates: events.map((e) => ({
-      id: e.id,
-      title: e.title,
-      start: e.start,
-      startDate: format(parseISO(e.start), "yyyy-MM-dd"),
-    })),
-  });
-
   while (day <= calendarEnd) {
     const dayEvents = events.filter((event) => {
-      const eventDate = parseISO(event.start);
-      const isSame = isSameDay(eventDate, day);
-
-      if (events.length > 0 && isSame) {
-        console.log("✅ Event matched for day:", {
-          day: format(day, "yyyy-MM-dd"),
-          eventStart: event.start,
-          eventDate: format(eventDate, "yyyy-MM-dd HH:mm:ss"),
-          eventTitle: event.title,
-        });
-      }
-
-      return isSame;
+      // Guard: skip events with invalid/missing start dates
+      const eventDate = safeParseDate(event.start);
+      if (!eventDate) return false;
+      return isSameDay(eventDate, day);
     });
 
     days.push({
@@ -167,12 +183,12 @@ export function Calendar({
         <div className="space-y-2">
           {/* Day Headers */}
           <div className="grid grid-cols-7 gap-2">
-            {["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((day) => (
+            {["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((d) => (
               <div
-                key={day}
+                key={d}
                 className="text-center text-sm font-medium text-muted-foreground py-2"
               >
-                {day}
+                {d}
               </div>
             ))}
           </div>
@@ -181,31 +197,31 @@ export function Calendar({
           <div className="space-y-2">
             {weeks.map((week, weekIndex) => (
               <div key={weekIndex} className="grid grid-cols-7 gap-2">
-                {week.map((day) => (
+                {week.map((calDay) => (
                   <div
-                    key={day.date.toISOString()}
-                    onClick={() => handleDateClick(day.date)}
+                    key={calDay.date.toISOString()}
+                    onClick={() => handleDateClick(calDay.date)}
                     className={cn(
                       "min-h-[80px] p-2 rounded-lg border transition-colors cursor-pointer",
                       "hover:bg-accent hover:border-accent-foreground/20",
-                      !day.isCurrentMonth &&
+                      !calDay.isCurrentMonth &&
                         "bg-muted/30 text-muted-foreground",
-                      day.isToday && "border-primary border-2 bg-primary/5",
+                      calDay.isToday && "border-primary border-2 bg-primary/5",
                     )}
                   >
                     {/* Date Number */}
                     <div
                       className={cn(
                         "text-sm font-medium mb-1",
-                        day.isToday && "text-primary font-bold",
+                        calDay.isToday && "text-primary font-bold",
                       )}
                     >
-                      {format(day.date, "d")}
+                      {format(calDay.date, "d")}
                     </div>
 
                     {/* Events */}
                     <div className="space-y-1">
-                      {day.events.slice(0, 3).map((event) => (
+                      {calDay.events.slice(0, 3).map((event) => (
                         <div
                           key={event.id}
                           onClick={(e) => handleEventClick(event, e)}
@@ -219,14 +235,14 @@ export function Calendar({
                           }}
                           title={event.title}
                         >
-                          {format(parseISO(event.start), "HH:mm")} {event.title}
+                          {safeFormatDate(event.start, "HH:mm")} {event.title}
                         </div>
                       ))}
 
                       {/* More events indicator */}
-                      {day.events.length > 3 && (
+                      {calDay.events.length > 3 && (
                         <div className="text-xs text-muted-foreground px-1.5">
-                          +{day.events.length - 3} lainnya
+                          +{calDay.events.length - 3} lainnya
                         </div>
                       )}
                     </div>

@@ -9,6 +9,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { indexedDBManager } from "@/lib/offline/indexeddb";
 import { useOffline } from "@/lib/hooks/useOffline";
+import { logger } from "@/lib/utils/logger";
 import type { UseOfflineReturn } from "@/lib/hooks/useOffline";
 
 const OFFLINE_BOOT_OVERLAY_DELAY_MS = 1200;
@@ -51,10 +52,10 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         if (mounted) {
           setIsDbReady(true);
           setShowBootOverlay(false);
-          console.log("✅ OfflineProvider: IndexedDB initialized");
+          logger.info("✅ OfflineProvider: IndexedDB initialized");
         }
       } catch (error) {
-        console.error(
+        logger.error(
           "❌ OfflineProvider: Failed to initialize IndexedDB:",
           error,
         );

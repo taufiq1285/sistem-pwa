@@ -15,6 +15,7 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "./useAuth";
 import { getNotifications } from "@/lib/api/notification.api";
+import { logger } from "@/lib/utils/logger";
 import type { Notification } from "@/types/notification.types";
 
 interface UseNotificationPollingOptions {
@@ -36,7 +37,7 @@ interface UseNotificationPollingOptions {
  * useNotificationPolling({
  *   interval: 30000, // 30 seconds
  *   onNewNotifications: (notifications) => {
- *     console.log('New notifications:', notifications.length);
+ *     logger.info('New notifications:', notifications.length);
  *   }
  * });
  * ```
@@ -63,21 +64,21 @@ export function useNotificationPolling(
       return;
     }
 
-    console.log(
-      `🔔 Notification polling started (${interval / 1000}s interval)`,
+    logger.info(
+      `ðŸ”” Notification polling started (${interval / 1000}s interval)`,
     );
 
     // Fetch function with error handling
     const fetchNotifications = async () => {
       try {
-        // ✅ Skip if tab is not visible (save resources)
+        // âœ… Skip if tab is not visible (save resources)
         if (!isTabVisibleRef.current) {
           return;
         }
 
-        // ✅ Skip if offline - prevent unnecessary network errors
+        // âœ… Skip if offline - prevent unnecessary network errors
         if (typeof navigator !== "undefined" && !navigator.onLine) {
-          console.log("⏸️ Offline - skipping notification poll");
+          logger.info("â¸ï¸ Offline - skipping notification poll");
           return;
         }
 
@@ -93,8 +94,8 @@ export function useNotificationPolling(
         ).length;
 
         if (unreadCount > lastCountRef.current && !isInitialRef.current) {
-          console.log(
-            `🔔 New notifications detected: ${unreadCount - lastCountRef.current} new`,
+          logger.info(
+            `ðŸ”” New notifications detected: ${unreadCount - lastCountRef.current} new`,
           );
 
           // Call callback if provided
@@ -106,14 +107,14 @@ export function useNotificationPolling(
         lastCountRef.current = unreadCount;
         isInitialRef.current = false;
       } catch (error) {
-        // ✅ Silent error - don't break the app, especially in offline mode
+        // âœ… Silent error - don't break the app, especially in offline mode
         const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
         if (isOffline) {
-          console.log(
-            "⏸️ Offline - notification polling paused (will retry when online)",
+          logger.info(
+            "â¸ï¸ Offline - notification polling paused (will retry when online)",
           );
         } else {
-          console.warn("⚠️ Notification polling error (non-critical):", error);
+          logger.debug("âš ï¸ Notification polling error (non-critical):", error);
         }
 
         // Call error callback if provided
@@ -135,10 +136,10 @@ export function useNotificationPolling(
 
       if (isTabVisibleRef.current) {
         // Tab became visible, fetch immediately
-        console.log("🔔 Tab visible - fetching notifications...");
+        logger.info("ðŸ”” Tab visible - fetching notifications...");
         fetchNotifications();
       } else {
-        console.log("🔔 Tab hidden - pausing notification polling");
+        logger.info("ðŸ”” Tab hidden - pausing notification polling");
       }
     };
 
@@ -146,7 +147,7 @@ export function useNotificationPolling(
 
     // Cleanup
     return () => {
-      console.log("🔔 Notification polling stopped");
+      logger.info("ðŸ”” Notification polling stopped");
 
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

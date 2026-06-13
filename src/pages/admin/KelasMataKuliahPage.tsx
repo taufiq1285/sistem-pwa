@@ -41,6 +41,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/lib/supabase/client";
 import type { Kelas, MataKuliah } from "@/types";
 
+import { TableSkeleton } from "@/components/common";
+
 type KelasWithMK = Kelas & {
   mata_kuliah?: MataKuliah | null;
 };
@@ -141,21 +143,79 @@ export default function KelasMataKuliahPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer rounded-md" />
+            <div className="h-4 w-72 skeleton-shimmer rounded-md" />
+          </div>
+        </div>
+
+        {/* Summary Stat Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Card
+              key={index}
+              className="h-[96px] w-full rounded-xl border border-border/60 bg-card/85 p-5 backdrop-blur-xs flex items-center justify-between"
+            >
+              <div className="space-y-2 flex-1 min-w-0">
+                <div className="skeleton-shimmer h-4 w-24 rounded-xs" />
+                <div className="skeleton-shimmer h-7 w-12 rounded-xs" />
+              </div>
+              <div className="skeleton-shimmer h-10 w-10 rounded-xl shrink-0" />
+            </Card>
+          ))}
+        </div>
+
+        {/* Table Card Skeleton */}
+        <Card className="border-0 shadow-xl">
+          <CardHeader className="p-6">
+            <CardTitle className="text-xl font-bold">Daftar Kelas</CardTitle>
+            <CardDescription className="text-base font-semibold mt-1">
+              Kelas yang perlu diassign mata kuliah
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TableSkeleton rows={5} columns={4} />
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-4xl font-extrabold tracking-tight">
-          Assign Mata Kuliah ke Kelas
-        </h1>
-        <p className="text-lg font-semibold text-muted-foreground mt-2">
-          Atur mata kuliah untuk kelas yang belum memiliki mata kuliah
-        </p>
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      {/* Header */}
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Assign Mata Kuliah ke Kelas
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Atur mata kuliah untuk kelas yang belum memiliki mata kuliah
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {hasChanges && (
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="font-semibold bg-linear-to-r from-primary to-accent"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Simpan Perubahan
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Summary */}
@@ -190,29 +250,6 @@ export default function KelasMataKuliahPage() {
             Simpan.
           </AlertDescription>
         </Alert>
-      )}
-
-      {/* Controls */}
-      {hasChanges && (
-        <div className="flex justify-end">
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="font-semibold bg-linear-to-r from-primary to-accent"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Simpan Perubahan
-              </>
-            )}
-          </Button>
-        </div>
       )}
 
       {/* Table */}

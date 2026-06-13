@@ -83,7 +83,7 @@ describe("Auth/Public Pages", () => {
     render(<LoginPage />);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/admin");
+      expect(mockNavigate).toHaveBeenCalledWith("/admin", { replace: true });
     });
   });
 
@@ -95,7 +95,7 @@ describe("Auth/Public Pages", () => {
     screen.getByRole("button", { name: /mock-register-success/i }).click();
     vi.advanceTimersByTime(2000);
 
-    expect(mockNavigate).toHaveBeenCalledWith("/login");
+    expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
   });
 
   it("ForgotPasswordPage memiliki input email required", () => {

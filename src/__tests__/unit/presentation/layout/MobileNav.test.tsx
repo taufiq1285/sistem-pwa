@@ -31,7 +31,8 @@ vi.mock("@/config/navigation.config", async () => {
 });
 
 vi.mock("@/lib/hooks/useRoleTheme", () => ({
-  useRoleTheme: () => ({
+  useRoleTheme: vi.fn(),
+  useRoleThemeConfig: () => ({
     sidebarBg: "bg-slate-950/95",
     headerGlow: "via-slate-400/35",
     mobileBanner: "from-slate-500/15 via-slate-400/5 to-transparent",

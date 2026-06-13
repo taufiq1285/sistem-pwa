@@ -164,7 +164,7 @@ export default function OfflineSyncPage() {
   };
 
   return (
-    <div className="app-container space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       <div className="section-shell flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">

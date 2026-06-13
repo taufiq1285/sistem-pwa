@@ -11,6 +11,7 @@
 
 import type { Soal, Jawaban } from "@/types/kuis.types";
 import { TIPE_SOAL } from "@/types/kuis.types";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -213,7 +214,7 @@ export function getCorrectAnswerLabel(soal: Soal): string {
     }
 
     // ✅ DEBUG: Log if not found for troubleshooting
-    console.warn(
+    logger.debug(
       "⚠️ [getCorrectAnswerLabel] Correct answer not found in options:",
       {
         jawaban_benar: soal.jawaban_benar,
@@ -262,7 +263,7 @@ export function getAnswerLabel(soal: Soal, jawaban: string): string {
     }
 
     // ✅ DEBUG: Log if not found for troubleshooting
-    console.warn("⚠️ [getAnswerLabel] Answer not found in options:", {
+    logger.debug("⚠️ [getAnswerLabel] Answer not found in options:", {
       jawaban,
       opsi_jawaban: soal.opsi_jawaban,
       pertanyaan: soal.pertanyaan?.substring(0, 50),

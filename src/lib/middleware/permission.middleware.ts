@@ -30,6 +30,7 @@ import {
   AuthenticationError,
   RoleNotFoundError,
 } from "@/lib/errors/permission.errors";
+import logger from "@/lib/utils/logger";
 import { restoreOfflineSession } from "@/lib/offline/offline-auth";
 
 // ============================================================================
@@ -70,10 +71,10 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 menit
 const DEBUG_PERMISSION_LOGS =
   import.meta.env.DEV && import.meta.env.MODE !== "test";
 const debugLog = (...args: unknown[]) => {
-  if (DEBUG_PERMISSION_LOGS) console.log(...args);
+  if (DEBUG_PERMISSION_LOGS) logger.debug(...args);
 };
 const debugWarn = (...args: unknown[]) => {
-  if (DEBUG_PERMISSION_LOGS) console.warn(...args);
+  if (DEBUG_PERMISSION_LOGS) logger.debug(...args);
 };
 const debugError = (...args: unknown[]) => {
   if (DEBUG_PERMISSION_LOGS) console.error(...args);

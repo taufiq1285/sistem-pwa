@@ -61,9 +61,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { QuestionEditor } from "@/components/features/kuis/builder/QuestionEditor";
+import {
+  CardListSkeleton,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 
 export default function BankSoalPage() {
   const { user } = useAuth();
+  const { isOffline } = useOfflineContext();
   const [dosenId, setDosenId] = useState<string>("");
 
   const [questions, setQuestions] = useState<BankSoal[]>([]);
@@ -264,26 +271,26 @@ export default function BankSoalPage() {
   }
 
   return (
-    <div className="role-page-shell">
-      <div className="role-page-content space-y-4 sm:space-y-6">
+    <OfflineAwareContent
+      hasData={questions.length > 0}
+      context="soal"
+      onSync={() => loadQuestions()}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
           <div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold bg-clip-text text-transparent bg-linear-to-r from-primary to-accent">
-              Bank Soal
-            </h1>
-            <p className="text-sm sm:text-lg font-semibold text-muted-foreground">
+            <h1 className="text-2xl font-bold text-foreground">Bank Soal</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Kelola soal yang dapat digunakan kembali untuk kuis
             </p>
           </div>
-
-          <Button
-            onClick={() => setShowEditor(true)}
-            className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/30"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Buat Soal Baru
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button onClick={() => setShowEditor(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Buat Soal Baru
+            </Button>
+          </div>
         </div>
 
         {/* Statistics Cards - Only Pilihan Ganda */}
@@ -388,32 +395,29 @@ export default function BankSoalPage() {
         {/* Questions List */}
         <div className="space-y-3">
           {isLoading ? (
-            <Card className="interactive-card border-0 shadow-xl p-8 sm:p-12">
-              <CardContent className="text-center">
-                <p className="text-base font-semibold">Memuat soal...</p>
-              </CardContent>
-            </Card>
+            <CardListSkeleton count={4} />
           ) : filteredQuestions.length === 0 ? (
-            <Card className="interactive-card border-0 shadow-xl bg-linear-to-br from-white to-primary/5 dark:from-slate-900 dark:to-primary/10 p-8 sm:p-12 overflow-hidden relative">
-              <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-linear-to-br from-primary/20 to-accent/20 blur-3xl -mr-20 -mt-20" />
-              <CardContent className="text-center relative">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-accent shadow-lg shadow-primary/30">
-                  <BookOpen className="h-8 w-8 text-primary-foreground" />
-                </div>
-                <p className="text-lg font-bold mb-2">Belum ada soal di bank</p>
-                <p className="text-sm text-muted-foreground mb-5">
-                  Mulai dengan membuat soal pilihan ganda pertama untuk
-                  memperkaya bank soal.
-                </p>
-                <Button
-                  onClick={() => setShowEditor(true)}
-                  className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Buat Soal Pertama
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyState
+              variant={
+                searchQuery.trim() || discussionFilter !== "all"
+                  ? "no-results"
+                  : "no-data"
+              }
+              context="soal"
+              actionLabel={
+                searchQuery.trim() || discussionFilter !== "all"
+                  ? "Reset Filter"
+                  : "Buat Soal Pertama"
+              }
+              onAction={
+                searchQuery.trim() || discussionFilter !== "all"
+                  ? () => {
+                      setSearchQuery("");
+                      setDiscussionFilter("all");
+                    }
+                  : () => setShowEditor(true)
+              }
+            />
           ) : (
             visibleQuestions.map((q) => (
               <Card
@@ -633,6 +637,6 @@ export default function BankSoalPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </OfflineAwareContent>
   );
 }

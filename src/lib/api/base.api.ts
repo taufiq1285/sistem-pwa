@@ -1,7 +1,7 @@
 /**
  * Base API Layer
  * Core API utilities for all API modules - CRUD operations with error handling
- * ✅ Enhanced with offline caching support using cacheAPI
+ * âœ… Enhanced with offline caching support using cacheAPI
  */
 
 import { supabase } from "@/lib/supabase/client";
@@ -19,6 +19,7 @@ import {
   BaseApiError,
   NotFoundError,
 } from "@/lib/utils/errors";
+import { logger } from "@/lib/utils/logger";
 
 // =NPM==========================================================================
 // TYPE DEFINITIONS
@@ -35,6 +36,8 @@ interface BaseQueryOptions extends SupabaseQueryOptions {
   cacheTTL?: number;
   /** Use stale-while-revalidate (default: true if caching enabled) */
   staleWhileRevalidate?: boolean;
+  /** Force refresh cache (default: false) */
+  forceRefresh?: boolean;
 }
 
 /**
@@ -161,13 +164,13 @@ export async function queryWithFilters<T = any>(
   // Generate cache key from query parameters
   const cacheKey = `query_filtered_${table}_${JSON.stringify({ filters, options })}`;
 
-  console.log(`🔍 [queryWithFilters] Table: ${table}, Filters:`, filters);
+  logger.debug(`ðŸ” [queryWithFilters] Table: ${table}, Filters:`, filters);
 
   // Define the fetch function
   const fetchQuery = async (): Promise<T[]> => {
     // Check if offline - return empty array instead of throwing error
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      console.log(`⚠️ [queryWithFilters] Offline, returning empty array`);
+      logger.debug(`âš ï¸ [queryWithFilters] Offline, returning empty array`);
       return [] as T[];
     }
 
@@ -181,7 +184,7 @@ export async function queryWithFilters<T = any>(
       // Apply filters
       filters.forEach((filter) => {
         const operator = filter.operator || "eq";
-        console.log(`  → Filter: ${filter.column} ${operator} ${filter.value}`);
+        logger.debug(`  â†’ Filter: ${filter.column} ${operator} ${filter.value}`);
         switch (operator) {
           case "eq":
             queryBuilder = queryBuilder.eq(filter.column, filter.value);
@@ -238,8 +241,8 @@ export async function queryWithFilters<T = any>(
 
       const { data, error } = await queryBuilder;
 
-      console.log(
-        `✅ [queryWithFilters] Result: ${data?.length || 0} rows, Error:`,
+      logger.debug(
+        `âœ… [queryWithFilters] Result: ${data?.length || 0} rows, Error:`,
         error,
       );
 
@@ -253,22 +256,23 @@ export async function queryWithFilters<T = any>(
 
       return (data || []) as T[];
     } catch (error) {
-      console.error(`❌ [queryWithFilters] Error:`, error);
+      logger.error(`âŒ [queryWithFilters] Error:`, error);
       const apiError = handleError(error);
       logError(apiError, `queryWithFilters:${table}`);
       throw apiError;
     }
   };
 
-  // Use cache if enabled
-  if (options.enableCache) {
+  // Use cache if enabled (only when not force refreshing from high-level cacheAPI)
+  if (options.enableCache && !options.forceRefresh) {
     return cacheAPI(cacheKey, fetchQuery, {
       ttl: options.cacheTTL || 5 * 60 * 1000, // 5 minutes default
       staleWhileRevalidate: options.staleWhileRevalidate !== false, // default true
     });
   }
 
-  // Direct fetch without cache
+  // Direct fetch without cache (force refresh or cache disabled)
+  logger.debug(`[queryWithFilters] Direct fetch (no cache) for table: ${table}`);
   return fetchQuery();
 }
 
@@ -292,7 +296,7 @@ export async function getById<T = any>(
       .from(table as any)
       .select(options.select || "*")
       .eq("id", id)
-      .maybeSingle(); // ✅ FIXED: maybeSingle() returns null instead of PGRST116
+      .maybeSingle(); // âœ… FIXED: maybeSingle() returns null instead of PGRST116
 
     if (error) {
       throw handleError(error);
@@ -411,7 +415,7 @@ export async function insert<T = any>(
   data: Partial<T>,
 ): Promise<T> {
   try {
-    console.log("🔍 DEBUG: insert called with table:", table, "data:", data);
+    logger.debug("ðŸ” DEBUG: insert called with table:", table, "data:", data);
     const { data: result, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
 
@@ -420,22 +424,22 @@ export async function insert<T = any>(
       .select()
       .single();
 
-    console.log("🔍 DEBUG: insert result:", { result, error });
+    logger.debug("ðŸ” DEBUG: insert result:", { result, error });
 
     if (error) {
-      console.error("❌ DEBUG: insert error:", error);
+      logger.error("âŒ DEBUG: insert error:", error);
       throw handleError(error);
     }
 
     if (!result) {
-      console.error("❌ DEBUG: insert failed - no data returned");
+      logger.error("âŒ DEBUG: insert failed - no data returned");
       throw new BaseApiError("Insert failed - no data returned");
     }
 
-    console.log("✅ DEBUG: insert success:", result);
+    logger.debug("âœ… DEBUG: insert success:", result);
     return result as T;
   } catch (error) {
-    console.error("❌ DEBUG: insert catch error:", error);
+    logger.error("âŒ DEBUG: insert catch error:", error);
     const apiError = handleError(error);
     logError(apiError, `insert:${table}`);
     throw apiError;
@@ -592,9 +596,9 @@ export async function updateMany<T = any>(
  */
 export async function remove(table: string, id: string): Promise<boolean> {
   try {
-    console.log(`🗑️ Deleting from ${table} where id = ${id}`);
+    logger.debug(`ðŸ—‘ï¸ Deleting from ${table} where id = ${id}`);
 
-    // ✅ FIXED: Different soft delete strategies based on table
+    // âœ… FIXED: Different soft delete strategies based on table
     let softDeleteUpdate: any = null;
 
     // Tables with 'is_active' column (exclude kelas because of trigger issue)
@@ -607,7 +611,7 @@ export async function remove(table: string, id: string): Promise<boolean> {
       "kelas",
       "mata_kuliah",
       "materi",
-      "jadwal_praktikum", // ✅ FIX: Add jadwal_praktikum for soft delete
+      "jadwal_praktikum", // âœ… FIX: Add jadwal_praktikum for soft delete
     ];
 
     // Tables that should use hard delete
@@ -618,38 +622,38 @@ export async function remove(table: string, id: string): Promise<boolean> {
 
     // Check for hard delete tables first
     if (hardDeleteTables.includes(table)) {
-      console.log(`🔧 Using hard delete for ${table}`);
+      logger.debug(`ðŸ”§ Using hard delete for ${table}`);
       const { error, count } = await supabase
         .from(table as any)
         .delete()
         .eq("id", id);
 
-      console.log(`📊 Hard delete result: error=${!!error}, count=${count}`);
+      logger.debug(`ðŸ“Š Hard delete result: error=${!!error}, count=${count}`);
 
       if (error) {
-        console.error(`❌ Delete failed for ${table}:${id}:`, error);
+        logger.error(`âŒ Delete failed for ${table}:${id}:`, error);
         throw handleError(error);
       }
 
       return true;
     } else if (hasIsActive.includes(table)) {
-      console.log(`🔧 Using soft delete: is_active = false for ${table}`);
+      logger.debug(`ðŸ”§ Using soft delete: is_active = false for ${table}`);
       softDeleteUpdate = { is_active: false };
     } else if (hasStatus.includes(table)) {
-      console.log(`🔧 Using soft delete: status = 'archived' for ${table}`);
+      logger.debug(`ðŸ”§ Using soft delete: status = 'archived' for ${table}`);
       softDeleteUpdate = { status: "archived" };
     } else {
       // Hard delete for tables without soft delete support
-      console.log(`🔧 Using hard delete for ${table}`);
+      logger.debug(`ðŸ”§ Using hard delete for ${table}`);
       const { error, count } = await supabase
         .from(table as any)
         .delete()
         .eq("id", id);
 
-      console.log(`📊 Hard delete result: error=${!!error}, count=${count}`);
+      logger.debug(`ðŸ“Š Hard delete result: error=${!!error}, count=${count}`);
 
       if (error) {
-        console.error(`❌ Delete failed for ${table}:${id}:`, error);
+        logger.error(`âŒ Delete failed for ${table}:${id}:`, error);
         throw handleError(error);
       }
 
@@ -664,14 +668,14 @@ export async function remove(table: string, id: string): Promise<boolean> {
       .select("id")
       .single();
 
-    console.log(`📊 Soft delete result:`, { updateResult, updateError });
+    logger.debug(`ðŸ“Š Soft delete result:`, { updateResult, updateError });
 
     if (updateError) {
-      console.error(`❌ Soft delete failed for ${table}:${id}:`, updateError);
+      logger.error(`âŒ Soft delete failed for ${table}:${id}:`, updateError);
       throw handleError(updateError);
     }
 
-    // ✅ IMMEDIATE REFRESH: Trigger custom event for kuis table deletion
+    // âœ… IMMEDIATE REFRESH: Trigger custom event for kuis table deletion
     // This ensures KuisListPage updates immediately without waiting for cache invalidation
     if (table === "kuis") {
       try {
@@ -689,23 +693,23 @@ export async function remove(table: string, id: string): Promise<boolean> {
               detail: { action: "deleted", kuisId: id, dosenId },
             }),
           );
-          console.log(
-            `📢 Event dispatched: kuis:changed (deleted) for dosen: ${dosenId}`,
+          logger.debug(
+            `ðŸ“¢ Event dispatched: kuis:changed (deleted) for dosen: ${dosenId}`,
           );
         }
       } catch (eventError) {
-        console.warn(`⚠️ Failed to dispatch kuis:changed event:`, eventError);
+        logger.debug(`âš ï¸ Failed to dispatch kuis:changed event:`, eventError);
       }
     }
 
-    // ✅ CACHE INVALIDATION: Non-blocking fire-and-forget cache invalidation
+    // âœ… CACHE INVALIDATION: Non-blocking fire-and-forget cache invalidation
     // This ensures the UI reflects the deletion immediately
     Promise.resolve().then(async () => {
       try {
         await invalidateCachePattern(`*${table}*`);
-        console.log(`🧹 Cache invalidated for table: ${table}`);
+        logger.debug(`ðŸ§¹ Cache invalidated for table: ${table}`);
       } catch (cacheError) {
-        console.warn(`⚠️ Failed to invalidate cache for ${table}:`, cacheError);
+        logger.debug(`âš ï¸ Failed to invalidate cache for ${table}:`, cacheError);
       }
     });
 

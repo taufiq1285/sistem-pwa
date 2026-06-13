@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 
 vi.mock("@/components/common", async () => {
@@ -20,7 +21,8 @@ vi.mock("@/components/layout/ConflictNotificationBadge", () => ({
 }));
 
 vi.mock("@/lib/hooks/useRoleTheme", () => ({
-  useRoleTheme: () => ({
+  useRoleTheme: vi.fn(),
+  useRoleThemeConfig: () => ({
     accentBorder: "border-t-4 border-slate-600",
     primaryBtn: "bg-slate-800 hover:bg-slate-900 text-white shadow-sm",
   }),
@@ -33,13 +35,15 @@ describe("Header", () => {
     const onNotificationClick = vi.fn();
 
     render(
-      <Header
-        userName="Admin"
-        userEmail="admin@example.com"
-        onMenuClick={onMenuClick}
-        onNotificationClick={onNotificationClick}
-        notificationCount={3}
-      />,
+      <MemoryRouter>
+        <Header
+          userName="Admin"
+          userEmail="admin@example.com"
+          onMenuClick={onMenuClick}
+          onNotificationClick={onNotificationClick}
+          notificationCount={3}
+        />
+      </MemoryRouter>,
     );
 
     await user.click(screen.getByRole("button", { name: /toggle menu/i }));
@@ -55,7 +59,11 @@ describe("Header", () => {
   });
 
   it("menampilkan NotificationDropdown saat showNotificationDropdown=true", () => {
-    render(<Header showNotificationDropdown />);
+    render(
+      <MemoryRouter>
+        <Header showNotificationDropdown />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByTestId("notification-dropdown")).toBeInTheDocument();
   });

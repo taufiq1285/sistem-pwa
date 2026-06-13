@@ -7,6 +7,7 @@
  */
 
 import { indexedDBManager } from "./indexeddb";
+import { logger } from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -48,7 +49,7 @@ export async function cacheAPI<T>(
   try {
     await indexedDBManager.initialize();
 
-    console.log(
+    logger.debug(
       `[API Cache] cacheAPI called: key=${key}, forceRefresh=${forceRefresh}, staleWhileRevalidate=${staleWhileRevalidate}`,
     );
 
@@ -60,38 +61,40 @@ export async function cacheAPI<T>(
         const isExpired = Date.now() >= cached.expiresAt;
 
         if (!isExpired) {
-          console.log(`[API Cache] HIT: ${key}`);
+          logger.debug(`[API Cache] HIT: ${key}`);
           return cached.data;
         }
 
         // Stale data available
         if (staleWhileRevalidate) {
-          console.log(`[API Cache] STALE: ${key} (revalidating in background)`);
+          logger.debug(`[API Cache] STALE: ${key} (revalidating in background)`);
 
           // Return stale data immediately
           // Fetch fresh data in background
-          fetchAndCache(key, fetcher, ttl).catch(console.error);
+          fetchAndCache(key, fetcher, ttl).catch((error) => {
+            logger.error(`[API Cache] Background update failed: ${key}`, error);
+          });
 
           return cached.data;
         }
       }
     } else {
-      console.log(`[API Cache] forceRefresh=true, skipping cache for ${key}`);
+      logger.debug(`[API Cache] forceRefresh=true, skipping cache for ${key}`);
     }
 
     // Try to fetch fresh data
     try {
-      console.log(`[API Cache] MISS: ${key} (fetching fresh data...)`);
+      logger.debug(`[API Cache] MISS: ${key} (fetching fresh data...)`);
       const freshData = await fetcher();
       await setCachedData(key, freshData, ttl);
-      console.log(`[API Cache] Fresh data fetched and cached for ${key}`);
+      logger.debug(`[API Cache] Fresh data fetched and cached for ${key}`);
       return freshData;
     } catch (networkError) {
       // Network failed - try to use stale cache as fallback
       const staleCache = await getCachedData<T>(key);
 
       if (staleCache) {
-        console.warn(`[API Cache] Network failed, using stale cache: ${key}`);
+        logger.debug(`[API Cache] Network failed, using stale cache: ${key}`);
         return staleCache.data;
       }
 
@@ -99,7 +102,7 @@ export async function cacheAPI<T>(
       throw networkError;
     }
   } catch (error) {
-    console.error(`[API Cache] Error for ${key}:`, error);
+    logger.error(`[API Cache] Error for ${key}:`, error);
     throw error;
   }
 }
@@ -118,7 +121,7 @@ export async function getCachedData<T>(
       | undefined;
     return cached || null;
   } catch (error) {
-    console.error(`[API Cache] Failed to get cache for ${key}:`, error);
+    logger.error(`[API Cache] Failed to get cache for ${key}:`, error);
     return null;
   }
 }
@@ -140,9 +143,9 @@ async function setCachedData<T>(
     };
 
     await indexedDBManager.setMetadata(`cache_${key}`, entry);
-    console.log(`[API Cache] Cached: ${key} (TTL: ${ttl}ms)`);
+    logger.debug(`[API Cache] Cached: ${key} (TTL: ${ttl}ms)`);
   } catch (error) {
-    console.error(`[API Cache] Failed to cache ${key}:`, error);
+    logger.error(`[API Cache] Failed to cache ${key}:`, error);
   }
 }
 
@@ -158,7 +161,7 @@ async function fetchAndCache<T>(
   try {
     const data = await fetcher();
     await setCachedData(key, data, ttl);
-    console.log(`[API Cache] Background update completed: ${key}`);
+    logger.debug(`[API Cache] Background update completed: ${key}`);
 
     // ✅ Dispatch event to notify UI that cache has been updated
     // Components can listen for this event to re-render with fresh data
@@ -168,15 +171,15 @@ async function fetchAndCache<T>(
           detail: { key, data },
         }),
       );
-      console.log(`[API Cache] Event dispatched: cache:updated (${key})`);
+      logger.debug(`[API Cache] Event dispatched: cache:updated (${key})`);
     } catch (eventError) {
-      console.warn(
+      logger.debug(
         `[API Cache] Failed to dispatch cache:updated event:`,
         eventError,
       );
     }
   } catch (error) {
-    console.error(`[API Cache] Background update failed: ${key}`, error);
+    logger.error(`[API Cache] Background update failed: ${key}`, error);
   }
 }
 
@@ -187,9 +190,9 @@ export async function invalidateCache(key: string): Promise<void> {
   try {
     await indexedDBManager.initialize();
     await indexedDBManager.setMetadata(`cache_${key}`, null);
-    console.log(`[API Cache] Invalidated: ${key}`);
+    logger.debug(`[API Cache] Invalidated: ${key}`);
   } catch (error) {
-    console.error(`[API Cache] Failed to invalidate ${key}:`, error);
+    logger.error(`[API Cache] Failed to invalidate ${key}:`, error);
   }
 }
 
@@ -202,38 +205,38 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
 
   const db = (indexedDBManager as any).db as IDBDatabase | null;
   if (!db) {
-    console.warn("[API Cache] IndexedDB not available");
+    logger.debug("[API Cache] IndexedDB not available");
     return 0;
   }
 
   const transaction = db.transaction(["metadata"], "readwrite");
   const store = transaction.objectStore("metadata");
 
-  // Convert wildcard pattern to simple match function
-  const searchPattern = pattern.replace(/\*/g, "").replace(/\?/g, "");
+  // Convert wildcard pattern - only remove asterisks, keep underscores and other chars
+  const searchPattern = pattern.replace(/\*/g, "");
 
-  console.log(`[API Cache] Searching for keys containing: "${searchPattern}"`);
+  logger.debug(`[API Cache] Searching for keys containing: "${searchPattern}"`);
 
   return new Promise((resolve, reject) => {
     let deletedCount = 0;
 
     // ✅ CRITICAL: Wait for transaction to complete, not just cursor
     transaction.oncomplete = () => {
-      console.log(
+      logger.debug(
         `[API Cache] Transaction committed successfully, deleted ${deletedCount} entries`,
       );
       resolve(deletedCount);
     };
 
     transaction.onerror = () => {
-      console.error(`[API Cache] Transaction error:`, transaction.error);
+      logger.error(`[API Cache] Transaction error:`, transaction.error);
       reject(transaction.error);
     };
 
     const request = store.openCursor();
 
     request.onerror = () => {
-      console.error(`[API Cache] Cursor error:`, request.error);
+      logger.error(`[API Cache] Cursor error:`, request.error);
       reject(request.error);
     };
 
@@ -247,7 +250,7 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
           const actualKey = key.substring(6);
 
           if (actualKey.includes(searchPattern)) {
-            console.log(`[API Cache] Deleting: ${key}`);
+            logger.debug(`[API Cache] Deleting: ${key}`);
             cursor.delete();
             deletedCount++;
           }
@@ -255,7 +258,7 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
 
         cursor.continue();
       } else {
-        console.log(
+        logger.debug(
           `[API Cache] Cursor completed, waiting for transaction commit... (${deletedCount} entries marked for deletion)`,
         );
         // Don't resolve here - wait for transaction.oncomplete
@@ -276,16 +279,16 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
 export async function invalidateCachePatternSync(
   pattern: string,
 ): Promise<number> {
-  console.log(`[API Cache] Starting SYNC cache invalidation: ${pattern}`);
+  logger.debug(`[API Cache] Starting SYNC cache invalidation: ${pattern}`);
 
   try {
     const deletedCount = await invalidateCachePatternImpl(pattern);
-    console.log(
+    logger.debug(
       `[API Cache] SYNC invalidation completed: ${pattern} (${deletedCount} entries deleted)`,
     );
     return deletedCount;
   } catch (error) {
-    console.error(
+    logger.error(
       `[API Cache] SYNC invalidation failed for ${pattern}:`,
       error,
     );
@@ -302,7 +305,7 @@ export async function invalidateCachePatternSync(
  * Use this for non-urgent cleanup where immediate freshness is not critical.
  */
 export async function invalidateCachePattern(pattern: string): Promise<void> {
-  console.log(
+  logger.debug(
     `[API Cache] Starting non-blocking cache invalidation: ${pattern}`,
   );
 
@@ -311,9 +314,9 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
   setTimeout(async () => {
     try {
       await invalidateCachePatternImpl(pattern);
-      console.log(`[API Cache] Background invalidation completed: ${pattern}`);
+      logger.debug(`[API Cache] Background invalidation completed: ${pattern}`);
     } catch (error) {
-      console.error(
+      logger.error(
         `[API Cache] Background: Failed to invalidate pattern ${pattern}:`,
         error,
       );
@@ -321,7 +324,7 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
   }, 0);
 
   // Return immediately - don't wait for the background process
-  console.log(
+  logger.debug(
     `[API Cache] invalidateCachePattern returned immediately (running in background)`,
   );
 }
@@ -335,41 +338,41 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
  * @returns Promise that resolves when cache is cleared
  */
 export async function clearAllCacheSync(): Promise<number> {
-  console.log("[API Cache] Starting SYNC clear all cache...");
+  logger.debug("[API Cache] Starting SYNC clear all cache...");
 
   try {
     await indexedDBManager.initialize();
 
     const db = (indexedDBManager as any).db as IDBDatabase | null;
     if (!db) {
-      console.warn("[API Cache] IndexedDB not available");
+      logger.debug("[API Cache] IndexedDB not available");
       return 0;
     }
 
     const transaction = db.transaction(["metadata"], "readwrite");
     const store = transaction.objectStore("metadata");
 
-    console.log("[API Cache] Clearing all cache entries...");
+    logger.debug("[API Cache] Clearing all cache entries...");
 
     return new Promise((resolve, reject) => {
       let clearedCount = 0;
 
       transaction.oncomplete = () => {
-        console.log(
+        logger.debug(
           `[API Cache] SYNC clear all completed, cleared ${clearedCount} entries`,
         );
         resolve(clearedCount);
       };
 
       transaction.onerror = () => {
-        console.error("[API Cache] Transaction error:", transaction.error);
+        logger.error("[API Cache] Transaction error:", transaction.error);
         reject(transaction.error);
       };
 
       const request = store.openCursor();
 
       request.onerror = () => {
-        console.error("[API Cache] Cursor error:", request.error);
+        logger.error("[API Cache] Cursor error:", request.error);
         reject(request.error);
       };
 
@@ -380,7 +383,7 @@ export async function clearAllCacheSync(): Promise<number> {
           const key = cursor.key;
 
           if (typeof key === "string" && key.startsWith("cache_")) {
-            console.log(`[API Cache] Deleting: ${key}`);
+            logger.debug(`[API Cache] Deleting: ${key}`);
             cursor.delete();
             clearedCount++;
           }
@@ -390,7 +393,7 @@ export async function clearAllCacheSync(): Promise<number> {
       };
     });
   } catch (error) {
-    console.error("[API Cache] SYNC clear all failed:", error);
+    logger.error("[API Cache] SYNC clear all failed:", error);
     return 0;
   }
 }
@@ -402,7 +405,7 @@ export async function clearAllCacheSync(): Promise<number> {
  * Cache deletion happens asynchronously without blocking the caller.
  */
 export async function clearAllCache(): Promise<void> {
-  console.log("[API Cache] Starting non-blocking clear all cache...");
+  logger.debug("[API Cache] Starting non-blocking clear all cache...");
 
   // Use setTimeout to run this completely in the background
   setTimeout(async () => {
@@ -411,19 +414,19 @@ export async function clearAllCache(): Promise<void> {
 
       const db = (indexedDBManager as any).db as IDBDatabase | null;
       if (!db) {
-        console.warn("[API Cache] IndexedDB not available");
+        logger.debug("[API Cache] IndexedDB not available");
         return;
       }
 
       const transaction = db.transaction(["metadata"], "readwrite");
       const store = transaction.objectStore("metadata");
 
-      console.log("[API Cache] Background: Clearing all cache entries...");
+      logger.debug("[API Cache] Background: Clearing all cache entries...");
 
       const request = store.openCursor();
 
       request.onerror = () => {
-        console.error("[API Cache] Background: Cursor error:", request.error);
+        logger.error("[API Cache] Background: Cursor error:", request.error);
       };
 
       let clearedCount = 0;
@@ -435,14 +438,14 @@ export async function clearAllCache(): Promise<void> {
           const key = cursor.key;
 
           if (typeof key === "string" && key.startsWith("cache_")) {
-            console.log(`[API Cache] Background: Deleting: ${key}`);
+            logger.debug(`[API Cache] Background: Deleting: ${key}`);
             cursor.delete();
             clearedCount++;
           }
 
           cursor.continue();
         } else {
-          console.log(
+          logger.debug(
             `[API Cache] Background: Completed, cleared ${clearedCount} entries`,
           );
         }
@@ -450,14 +453,14 @@ export async function clearAllCache(): Promise<void> {
 
       // Transaction will auto-commit
     } catch (error) {
-      console.error(
+      logger.error(
         "[API Cache] Background: Failed to clear all cache:",
         error,
       );
     }
   }, 0);
 
-  console.log(
+  logger.debug(
     "[API Cache] clearAllCache returned immediately (running in background)",
   );
 }
@@ -494,7 +497,7 @@ export async function optimisticUpdate<T>(
         await setCachedData(key, serverData, ttl);
         return serverData;
       } catch (error) {
-        console.error(
+        logger.error(
           `[API Cache] Optimistic update failed for ${key}, keeping local:`,
           error,
         );
@@ -506,7 +509,7 @@ export async function optimisticUpdate<T>(
     // Offline - just return local data
     return data;
   } catch (error) {
-    console.error(`[API Cache] Optimistic update error for ${key}:`, error);
+    logger.error(`[API Cache] Optimistic update error for ${key}:`, error);
     throw error;
   }
 }

@@ -69,7 +69,7 @@ export function KelasStudentsCard() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
           </div>
         </CardContent>
       </Card>
@@ -114,7 +114,7 @@ export function KelasStudentsCard() {
           {/* Classes List */}
           {kelasList.length === 0 ? (
             <div className="text-center py-8">
-              <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-500">Belum ada kelas aktif</p>
             </div>
           ) : (

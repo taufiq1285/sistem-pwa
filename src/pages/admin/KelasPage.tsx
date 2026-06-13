@@ -21,6 +21,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { toast } from "sonner";
 import { normalize } from "@/lib/utils/normalize";
 
@@ -188,7 +189,7 @@ export default function KelasPage() {
         },
       );
       const endTime = performance.now();
-      console.log(`⏱️ Load kelas took: ${(endTime - startTime).toFixed(2)}ms`);
+      logger.debug(`⏱️ Load kelas took: ${(endTime - startTime).toFixed(2)}ms`);
       setKelasList(data);
     } catch (error: any) {
       console.error("Error loading kelas:", error);
@@ -255,7 +256,7 @@ export default function KelasPage() {
         const startTime = performance.now();
         await updateKelas(editingKelas.id, normalizedFormData);
         const endTime = performance.now();
-        console.log(
+        logger.debug(
           `⏱️ Update kelas took: ${(endTime - startTime).toFixed(2)}ms`,
         );
         toast.success("Kelas berhasil diupdate");
@@ -263,7 +264,7 @@ export default function KelasPage() {
         const startTime = performance.now();
         await createKelas({ ...normalizedFormData, is_active: true });
         const endTime = performance.now();
-        console.log(
+        logger.debug(
           `⏱️ Create kelas took: ${(endTime - startTime).toFixed(2)}ms`,
         );
         toast.success("Kelas berhasil dibuat");
@@ -757,28 +758,30 @@ export default function KelasPage() {
                       {columnVisibility.actions && (
                         <EnhancedTableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <button
+                              type="button"
                               onClick={() => handleManageStudents(kelas)}
+                              className="table-action-btn table-action-btn-view"
+                              title="Kelola Mahasiswa"
                             >
-                              <Users className="h-4 w-4 mr-1" />
-                              Kelola
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
+                              <Users className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleEdit(kelas)}
+                              className="table-action-btn table-action-btn-edit"
+                              title="Edit"
                             >
                               <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleDelete(kelas)}
+                              className="table-action-btn table-action-btn-delete"
+                              title="Hapus"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </button>
                           </div>
                         </EnhancedTableCell>
                       )}
@@ -973,15 +976,16 @@ export default function KelasPage() {
                         </Button>
                       </EnhancedTableCell>
                       <EnhancedTableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() =>
                             handleRemoveStudent(enrollment.mahasiswa_id)
                           }
+                          className="table-action-btn table-action-btn-delete"
+                          title="Hapus Mahasiswa"
                         >
                           <UserMinus className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </EnhancedTableCell>
                     </EnhancedTableRow>
                   ))}

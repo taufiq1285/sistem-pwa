@@ -11,6 +11,7 @@
 import { supabase } from "@/lib/supabase/client";
 import { requirePermission } from "@/lib/middleware";
 import type { Database } from "@/types/database.types";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -94,7 +95,7 @@ export async function getSemesterRecommendations(
     });
 
     if (rpcError) {
-      console.warn(
+      logger.debug(
         "RPC error getting recommendations, returning empty:",
         rpcError,
       );
@@ -160,7 +161,7 @@ async function updateMahasiswaSemesterImpl(
     });
 
     if (auditError) {
-      console.warn("Warning: Audit log creation failed:", auditError);
+      logger.debug("Warning: Audit log creation failed:", auditError);
     }
 
     // 5. Get recommendations untuk kelas baru

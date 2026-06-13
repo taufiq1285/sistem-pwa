@@ -19,6 +19,7 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -38,6 +39,13 @@ import type { Kuis, KuisFilters, UI_LABELS } from "@/types/kuis.types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  CardListSkeleton,
+  ErrorFallback,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
@@ -149,6 +157,7 @@ async function enrichQuizListStats(quizzes: Kuis[]): Promise<Kuis[]> {
 export default function KuisListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isOffline } = useOfflineContext();
 
   // State
   const [quizzes, setQuizzes] = useState<Kuis[]>([]);
@@ -184,7 +193,7 @@ export default function KuisListPage() {
 
       // Set new timeout (300ms debounce)
       loadTimeoutRef.current = setTimeout(() => {
-        console.log("[Dosen KuisList] 🔄 Debounced load executing...");
+        logger.debug("[Dosen KuisList] 🔄 Debounced load executing...");
         loadQuizzes(forceRefresh);
       }, 300);
     };
@@ -203,7 +212,7 @@ export default function KuisListPage() {
             table: "kuis",
           },
           (payload) => {
-            console.log("[Dosen KuisList] Raw payload received:", payload);
+            logger.debug("[Dosen KuisList] Raw payload received:", payload);
 
             // Only refresh if this kuis belongs to current dosen
             const oldData = payload.old as any;
@@ -213,12 +222,12 @@ export default function KuisListPage() {
               (oldData && oldData.dosen_id === user.dosen.id) ||
               (newData && newData.dosen_id === user.dosen.id)
             ) {
-              console.log(
+              logger.debug(
                 "[Dosen KuisList] Kuis changed for current dosen, debounced refresh...",
               );
               debouncedLoad(true);
             } else {
-              console.log(
+              logger.debug(
                 "[Dosen KuisList] Kuis changed but not for current dosen, ignoring",
               );
             }
@@ -232,7 +241,7 @@ export default function KuisListPage() {
             table: "attempt_kuis",
           },
           () => {
-            console.log(
+            logger.debug(
               "[Dosen KuisList] Attempt changed, refreshing quiz stats...",
             );
             debouncedLoad(true);
@@ -240,7 +249,7 @@ export default function KuisListPage() {
         )
         .subscribe();
 
-      console.log(
+      logger.debug(
         "[Dosen KuisList] ✅ Realtime subscription active for dosen:",
         user.dosen.id,
       );
@@ -250,7 +259,7 @@ export default function KuisListPage() {
     // This ensures instant UI update when createKuis/updateKuis/deleteKuis is called
     const handleKuisChanged = (event: any) => {
       const { action, kuis, dosenId } = event.detail;
-      console.log("[Dosen KuisList] 📢 Custom event received:", {
+      logger.debug("[Dosen KuisList] 📢 Custom event received:", {
         action,
         kuisId: kuis?.id,
         dosenId,
@@ -258,7 +267,7 @@ export default function KuisListPage() {
 
       // Only refresh if this kuis belongs to current dosen
       if (dosenId === user?.dosen?.id) {
-        console.log(
+        logger.debug(
           "[Dosen KuisList] 🔄 Refreshing after custom event (debounced)...",
         );
         debouncedLoad(true); // Force refresh with debounce
@@ -273,8 +282,8 @@ export default function KuisListPage() {
 
       // Only reload if this cache key is relevant
       if (key === cacheKey) {
-        console.log("[Dosen KuisList] 📢 Cache updated event received:", key);
-        console.log(
+        logger.debug("[Dosen KuisList] 📢 Cache updated event received:", key);
+        logger.debug(
           "[Dosen KuisList] 🔄 Reloading data with fresh cache (debounced)...",
         );
         debouncedLoad(true); // Force refresh with debounce
@@ -293,7 +302,7 @@ export default function KuisListPage() {
       }
 
       if (subscription) {
-        console.log("[Dosen KuisList] Cleaning up subscription");
+        logger.debug("[Dosen KuisList] Cleaning up subscription");
         subscription.unsubscribe();
       }
       window.removeEventListener("kuis:changed", handleKuisChanged);
@@ -308,7 +317,7 @@ export default function KuisListPage() {
   useEffect(() => {
     const refreshTimer = setTimeout(() => {
       // Force refresh on mount to get fresh data
-      console.log(
+      logger.debug(
         "[Dosen KuisList] 🔁 Auto-refreshing on mount to ensure fresh data...",
       );
       loadQuizzes(true);
@@ -347,7 +356,7 @@ export default function KuisListPage() {
       // This prevents stale cache after creating/updating/deleting kuis
       let data: Kuis[];
       if (forceRefresh) {
-        console.log(
+        logger.debug(
           "[Dosen KuisList] 🔁 Force refresh - bypassing cacheAPI...",
         );
         // Bypass cache, call API directly
@@ -366,9 +375,9 @@ export default function KuisListPage() {
       }
 
       // ✅ DETAILED LOGGING: Log each quiz with ID and title to identify duplicates
-      console.log("[Dosen KuisList] Data loaded:", data.length, "quizzes");
+      logger.debug("[Dosen KuisList] Data loaded:", data.length, "quizzes");
       data.forEach((quiz, index) => {
-        console.log(`[Dosen KuisList] Quiz ${index + 1}:`, {
+        logger.debug(`[Dosen KuisList] Quiz ${index + 1}:`, {
           id: quiz.id,
           judul: quiz.judul,
           status: quiz.status,
@@ -382,7 +391,7 @@ export default function KuisListPage() {
         (title, index) => titles.indexOf(title) !== index,
       );
       if (duplicates.length > 0) {
-        console.warn(
+        logger.debug(
           "[Dosen KuisList] ⚠️ Potential duplicate quiz titles detected:",
           duplicates,
         );
@@ -480,47 +489,40 @@ export default function KuisListPage() {
   };
 
   // ============================================================================
-  // RENDER - LOADING
-  // ============================================================================
-
+  // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-primary/5 via-background to-accent/5 dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center min-h-100">
-            <div className="text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-              <p className="text-lg font-semibold text-muted-foreground">
-                Memuat daftar tugas praktikum...
-              </p>
-            </div>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer rounded-md" />
+            <div className="h-4 w-72 skeleton-shimmer rounded-md" />
           </div>
         </div>
+        <CardListSkeleton />
       </div>
     );
   }
 
-  // ============================================================================
-  // RENDER - ERROR
-  // ============================================================================
-
+  // Error state
   if (error) {
+    return <ErrorFallback message={error} onRetry={() => loadQuizzes(true)} />;
+  }
+
+  // Offline state forced
+  if (isOffline && !quizzes?.length) {
+    return <EmptyState variant="offline" context="kuis" />;
+  }
+
+  // Empty state
+  if (!quizzes?.length) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-primary/5 via-background to-accent/5 dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 p-8">
-        <div className="max-w-7xl mx-auto">
-          <Alert variant="destructive" className="border-2 shadow-xl">
-            <AlertCircle className="h-5 w-5" />
-            <AlertDescription className="text-base font-semibold">
-              {error}
-            </AlertDescription>
-          </Alert>
-          <div className="mt-6">
-            <Button onClick={() => loadQuizzes(true)} className="font-semibold">
-              Coba Lagi
-            </Button>
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        variant="no-data"
+        context="kuis"
+        actionLabel="Buat Tugas Pertama"
+        onAction={handleCreateQuiz}
+      />
     );
   }
 
@@ -529,60 +531,39 @@ export default function KuisListPage() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-primary/5 via-background to-accent/5 dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Enhanced Hero Header */}
-        <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-linear-to-r from-primary via-primary/90 to-accent/85 p-10 text-primary-foreground">
-          {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-40 translate-x-40 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/20 rounded-full translate-y-32 -translate-x-32 blur-3xl" />
-
-          <div className="relative flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-2xl shadow-xl">
-                  📋
-                </div>
-                <h1 className="text-5xl font-extrabold">
-                  Daftar Tugas Praktikum
-                </h1>
-              </div>
-              <p className="text-xl font-semibold text-primary-foreground/80 mt-3 max-w-2xl">
-                Kelola tugas praktikum untuk mahasiswa. Fitur ini bersifat
-                opsional - buat hanya jika diperlukan untuk praktikum tertentu.
-              </p>
-              <div className="flex flex-wrap gap-3 mt-6">
-                <span className="inline-flex items-center px-4 py-2 rounded-full text-base font-bold bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-lg">
-                  📝 Pre-Test
-                </span>
-                <span className="inline-flex items-center px-4 py-2 rounded-full text-base font-bold bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-lg">
-                  📊 Post-Test
-                </span>
-                <span className="inline-flex items-center px-4 py-2 rounded-full text-base font-bold bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-lg">
-                  📄 Laporan
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                onClick={() => loadQuizzes(true)}
-                size="lg"
-                variant="ghost"
-                className="gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-primary-foreground hover:bg-white/20 shadow-lg"
-                title="Refresh daftar tugas"
-              >
-                <RefreshCw className="h-5 w-5" />
-              </Button>
-              <Button
-                onClick={handleCreateQuiz}
-                size="lg"
-                className="gap-3 bg-white/15 backdrop-blur-sm border border-white/30 text-primary-foreground hover:bg-white/25 shadow-xl font-bold text-lg px-8 py-6"
-              >
-                <Plus className="h-6 w-6" />
-                Buat Tugas Baru
-              </Button>
-            </div>
+    <OfflineAwareContent
+      hasData={quizzes.length > 0}
+      context="kuis"
+      onSync={() => loadQuizzes(true)}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        {/* Header */}
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Daftar Tugas Praktikum
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Kelola tugas praktikum untuk mahasiswa. Fitur ini bersifat
+              opsional - buat hanya jika diperlukan untuk praktikum tertentu.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              onClick={() => loadQuizzes(true)}
+              variant="outline"
+              className="font-semibold"
+              title="Refresh daftar tugas"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={handleCreateQuiz}
+              className="bg-linear-to-r from-primary to-accent text-primary-foreground font-semibold"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Buat Tugas Baru
+            </Button>
           </div>
         </div>
 
@@ -670,36 +651,15 @@ export default function KuisListPage() {
 
         {/* Enhanced Task List/Grid */}
         {filteredQuizzes.length === 0 ? (
-          <Card className="border-0 shadow-xl bg-linear-to-br from-muted/30 to-primary/5 p-16">
-            <div className="text-center space-y-6">
-              <div className="mx-auto w-24 h-24 bg-linear-to-br from-primary/10 to-accent/10 rounded-full flex items-center justify-center shadow-xl">
-                <AlertCircle className="h-12 w-12 text-primary/60" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-extrabold text-foreground mb-3">
-                  Tidak ada tugas praktikum
-                </h3>
-                <p className="text-lg font-semibold text-muted-foreground">
-                  {searchQuery ||
-                  statusFilter !== "all" ||
-                  kelasFilter !== "all"
-                    ? "Tidak ada tugas yang sesuai dengan filter"
-                    : "Belum ada tugas praktikum yang dibuat"}
-                </p>
-              </div>
-              {!searchQuery &&
-                statusFilter === "all" &&
-                kelasFilter === "all" && (
-                  <Button
-                    onClick={handleCreateQuiz}
-                    className="gap-2 bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold px-8 py-6 shadow-xl text-lg"
-                  >
-                    <Plus className="h-5 w-5" />
-                    Buat Tugas Pertama
-                  </Button>
-                )}
-            </div>
-          </Card>
+          <EmptyState
+            variant="no-results"
+            actionLabel="Reset Filter"
+            onAction={() => {
+              setSearchQuery("");
+              setStatusFilter("all");
+              setKelasFilter("all");
+            }}
+          />
         ) : (
           <div
             className={cn(
@@ -735,7 +695,7 @@ export default function KuisListPage() {
           </div>
         )}
       </div>
-    </div>
+    </OfflineAwareContent>
   );
 }
 

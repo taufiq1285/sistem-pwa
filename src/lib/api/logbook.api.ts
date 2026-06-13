@@ -18,6 +18,7 @@ import {
   remove,
   withApiResponse,
 } from "./base.api";
+import logger from "@/lib/utils/logger";
 import { supabase } from "@/lib/supabase/client";
 import type {
   LogbookEntry,
@@ -53,7 +54,7 @@ export async function getLogbook(
 ): Promise<LogbookEntry[]> {
   try {
     if (DEBUG_LOGBOOK)
-      console.log("📖 getLogbook called with filters:", filters);
+      logger.debug("📖 getLogbook called with filters:", filters);
 
     const filterConditions = [];
 
@@ -139,7 +140,7 @@ export async function getLogbook(
     );
 
     if (DEBUG_LOGBOOK)
-      console.log(`📖 getLogbook returning ${data?.length || 0} items`);
+      logger.debug(`📖 getLogbook returning ${data?.length || 0} items`);
     const filteredData = data.filter((item) => {
       if (filters?.kelas_id && item.jadwal?.kelas_id !== filters.kelas_id) {
         return false;
@@ -168,7 +169,7 @@ export async function getLogbook(
  */
 export async function getLogbookById(id: string): Promise<LogbookEntry> {
   try {
-    if (DEBUG_LOGBOOK) console.log("📖 getLogbookById called:", id);
+    if (DEBUG_LOGBOOK) logger.debug("📖 getLogbookById called:", id);
 
     const data = await getById<LogbookEntry>("logbook_entries", id, {
       select: `
@@ -223,7 +224,7 @@ export async function getLogbookStats(
 ): Promise<LogbookStats> {
   try {
     if (DEBUG_LOGBOOK)
-      console.log("📊 getLogbookStats called with filters:", filters);
+      logger.debug("📊 getLogbookStats called with filters:", filters);
 
     // Get all logbooks with filters
     const allLogbooks = await getLogbook(filters);
@@ -313,7 +314,7 @@ export async function createLogbook(
       status: "draft",
     });
 
-    if (DEBUG_LOGBOOK) console.log("✅ Logbook created:", newLogbook);
+    if (DEBUG_LOGBOOK) logger.debug("✅ Logbook created:", newLogbook);
     return newLogbook;
   } catch (error) {
     const apiError = handleError(error);
@@ -379,7 +380,7 @@ export async function updateLogbook(
       status: data.status,
     });
 
-    if (DEBUG_LOGBOOK) console.log("✅ Logbook updated:", updated);
+    if (DEBUG_LOGBOOK) logger.debug("✅ Logbook updated:", updated);
     return updated;
   } catch (error) {
     const apiError = handleError(error);
@@ -451,7 +452,7 @@ export async function submitLogbook(
       submitted_at: new Date().toISOString(),
     });
 
-    if (DEBUG_LOGBOOK) console.log("✅ Logbook submitted:", submitted);
+    if (DEBUG_LOGBOOK) logger.debug("✅ Logbook submitted:", submitted);
     return submitted;
   } catch (error) {
     const apiError = handleError(error);
@@ -512,7 +513,7 @@ export async function reviewLogbook(
       reviewed_at: new Date().toISOString(),
     });
 
-    if (DEBUG_LOGBOOK) console.log("✅ Logbook reviewed:", reviewed);
+    if (DEBUG_LOGBOOK) logger.debug("✅ Logbook reviewed:", reviewed);
     return reviewed;
   } catch (error) {
     const apiError = handleError(error);
@@ -582,7 +583,7 @@ export async function gradeLogbook(
       updatePayload,
     );
 
-    if (DEBUG_LOGBOOK) console.log("✅ Logbook graded:", graded);
+    if (DEBUG_LOGBOOK) logger.debug("✅ Logbook graded:", graded);
     return graded;
   } catch (error) {
     const apiError = handleError(error);
@@ -634,7 +635,7 @@ export async function deleteLogbook(id: string): Promise<void> {
     // Delete logbook
     await remove("logbook_entries", id);
 
-    if (DEBUG_LOGBOOK) console.log("✅ Logbook deleted:", id);
+    if (DEBUG_LOGBOOK) logger.debug("✅ Logbook deleted:", id);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, "deleteLogbook");

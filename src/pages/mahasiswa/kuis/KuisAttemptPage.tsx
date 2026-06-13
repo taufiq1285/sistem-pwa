@@ -18,12 +18,14 @@ import { getKuisForAttempt } from "@/lib/api/kuis-secure.api";
 import { getKuisByIdOffline } from "@/lib/api/kuis.api";
 import type { Kuis } from "@/types/kuis.types";
 import { toast } from "sonner";
+import { CardListSkeleton } from "@/components/common";
+import logger from "@/lib/utils/logger";
 
 // Debug logging (disabled in tests and production)
 const DEBUG_KUIS_ATTEMPT_PAGE_LOGS =
   import.meta.env.DEV && import.meta.env.MODE !== "test";
 const debugLog = (...args: unknown[]) => {
-  if (DEBUG_KUIS_ATTEMPT_PAGE_LOGS) console.log(...args);
+  if (DEBUG_KUIS_ATTEMPT_PAGE_LOGS) logger.debug(...args);
 };
 
 export default function KuisAttemptPage() {
@@ -146,13 +148,13 @@ export default function KuisAttemptPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6 max-w-7xl">
-        <div className="flex items-center justify-center min-h-100">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">Memuat tugas praktikum...</p>
-          </div>
+      <div className="container mx-auto py-6 max-w-7xl space-y-6">
+        <div className="h-[96px] w-full skeleton-shimmer rounded-2xl" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="h-[100px] md:col-span-3 skeleton-shimmer rounded-xl" />
+          <div className="h-[100px] md:col-span-1 skeleton-shimmer rounded-xl" />
         </div>
+        <CardListSkeleton count={4} />
       </div>
     );
   }

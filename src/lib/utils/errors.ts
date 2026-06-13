@@ -5,6 +5,7 @@
 
 import type { ApiError } from "@/types/api.types";
 import { ApiErrorCode } from "@/types/api.types";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // CUSTOM ERROR CLASSES
@@ -355,7 +356,7 @@ export function logError(error: BaseApiError, context?: string): void {
   if (import.meta.env.DEV) {
     // Skip noisy network errors - only show brief warning
     if (isNetworkError(error)) {
-      console.warn(`⚠️ Offline ${context ? `(${context})` : ""}`);
+      logger.debug(`⚠️ Offline ${context ? `(${context})` : ""}`);
       return;
     }
 

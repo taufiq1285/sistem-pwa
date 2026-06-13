@@ -10,6 +10,7 @@
  */
 
 import { indexedDBManager } from "./indexeddb";
+import { logger } from "@/lib/utils/logger";
 import type {
   SyncQueueItem,
   SyncOperation,
@@ -115,7 +116,7 @@ export class QueueManager {
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) {
-      console.warn("QueueManager already initialized");
+      logger.warn("QueueManager already initialized");
       return;
     }
 
@@ -125,7 +126,7 @@ export class QueueManager {
     }
 
     this.isInitialized = true;
-    console.log("✅ QueueManager initialized");
+    logger.info("✅ QueueManager initialized");
 
     // Auto-process if enabled
     if (this.config.autoProcess && this.processor) {
@@ -162,7 +163,7 @@ export class QueueManager {
 
     await indexedDBManager.create("sync_queue", item);
 
-    console.log(`📥 Enqueued ${entity} ${operation}:`, item.id);
+    logger.info(`📥 Enqueued ${entity} ${operation}:`, item.id);
 
     this.emitEvent({
       type: "added",
@@ -174,7 +175,7 @@ export class QueueManager {
     if (this.config.autoProcess && this.processor && !this.isProcessing) {
       // Process in background (don't await)
       this.processQueue().catch((error) => {
-        console.error("Auto-process failed:", error);
+        logger.error("Auto-process failed:", error);
       });
     }
 
@@ -211,7 +212,7 @@ export class QueueManager {
     }
 
     if (this.isProcessing) {
-      console.warn("Queue processing already in progress");
+      logger.warn("Queue processing already in progress");
       return {
         processed: 0,
         succeeded: 0,
@@ -233,11 +234,11 @@ export class QueueManager {
       const batch = await this.getNextBatch();
 
       if (batch.length === 0) {
-        console.log("📭 Queue is empty");
+        logger.info("📭 Queue is empty");
         return result;
       }
 
-      console.log(`🔄 Processing ${batch.length} items from queue`);
+      logger.info(`🔄 Processing ${batch.length} items from queue`);
 
       for (const item of batch) {
         try {
@@ -264,7 +265,7 @@ export class QueueManager {
             timestamp: Date.now(),
           });
 
-          console.log(
+          logger.info(
             `✅ Processed ${item.entity} ${item.operation}:`,
             item.id,
           );
@@ -285,7 +286,7 @@ export class QueueManager {
             timestamp: Date.now(),
           });
 
-          console.error(
+          logger.error(
             `❌ Failed to process ${item.entity} ${item.operation}:`,
             errorMessage,
           );
@@ -294,7 +295,7 @@ export class QueueManager {
         result.processed++;
       }
 
-      console.log(
+      logger.info(
         `✨ Queue processing complete: ${result.succeeded}/${result.processed} succeeded`,
       );
     } finally {
@@ -323,11 +324,11 @@ export class QueueManager {
     await indexedDBManager.update("sync_queue", updatedItem);
 
     if (updatedItem.status === "failed") {
-      console.warn(
+      logger.warn(
         `⚠️  Item ${item.id} failed after ${this.config.maxRetries} retries`,
       );
     } else {
-      console.log(
+      logger.info(
         `🔄 Item ${item.id} will be retried (attempt ${updatedItem.retryCount + 1}/${this.config.maxRetries})`,
       );
     }
@@ -353,12 +354,12 @@ export class QueueManager {
       await indexedDBManager.update("sync_queue", updatedItem);
     }
 
-    console.log(`🔄 Reset ${failedItems.length} failed items to pending`);
+    logger.info(`🔄 Reset ${failedItems.length} failed items to pending`);
 
     // Auto-process if enabled
     if (this.config.autoProcess && this.processor && !this.isProcessing) {
       this.processQueue().catch((error) => {
-        console.error("Auto-process after retry failed:", error);
+        logger.error("Auto-process after retry failed:", error);
       });
     }
 
@@ -379,7 +380,7 @@ export class QueueManager {
     const ids = completedItems.map((item) => item.id);
     await indexedDBManager.batchDelete("sync_queue", ids);
 
-    console.log(`🗑️  Cleared ${ids.length} completed items`);
+    logger.info(`🗑️  Cleared ${ids.length} completed items`);
 
     this.emitEvent({
       type: "cleared",
@@ -402,7 +403,7 @@ export class QueueManager {
     const ids = failedItems.map((item) => item.id);
     await indexedDBManager.batchDelete("sync_queue", ids);
 
-    console.log(`🗑️  Cleared ${ids.length} failed items`);
+    logger.info(`🗑️  Cleared ${ids.length} failed items`);
 
     this.emitEvent({
       type: "cleared",
@@ -422,7 +423,7 @@ export class QueueManager {
     const count = await indexedDBManager.count("sync_queue");
     await indexedDBManager.clear("sync_queue");
 
-    console.log(`🗑️  Cleared all ${count} queue items`);
+    logger.info(`🗑️  Cleared all ${count} queue items`);
 
     this.emitEvent({
       type: "cleared",
@@ -562,7 +563,7 @@ export class QueueManager {
       try {
         listener(event);
       } catch (error) {
-        console.error("Error in queue listener:", error);
+        logger.error("Error in queue listener:", error);
       }
     });
 

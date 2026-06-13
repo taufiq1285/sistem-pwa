@@ -1,16 +1,26 @@
 /**
  * Theme Provider
- * Provides theme (dark/light mode) state and methods
+ * Provides theme state and injects the active theme into the document root.
  */
 
-import { useState, useEffect, useMemo } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from "react";
+import logger from "@/lib/utils/logger";
 import { ThemeContext, type Theme } from "@/context/ThemeContext";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const THEME_STORAGE_KEY = "theme-preference";
+const THEME_STORAGE_KEY = "sipraktik-theme";
+const THEME_QUERY = "(prefers-color-scheme: dark)";
 
 // ============================================================================
 // HELPERS
@@ -18,18 +28,31 @@ const THEME_STORAGE_KEY = "theme-preference";
 
 function getSystemTheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  if (typeof window.matchMedia !== "function") return "light";
+  return window.matchMedia(THEME_QUERY).matches ? "dark" : "light";
 }
 
 function getStoredTheme(): Theme | null {
   if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
-  if (stored === "light" || stored === "dark" || stored === "system") {
-    return stored;
+
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark" || stored === "system") {
+      return stored;
+    }
+  } catch (error) {
+    logger.debug("ThemeProvider: failed to read stored theme", error);
   }
+
   return null;
+}
+
+function persistTheme(theme: Theme): void {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (error) {
+    logger.debug("ThemeProvider: failed to persist theme", error);
+  }
 }
 
 // ============================================================================
@@ -37,14 +60,14 @@ function getStoredTheme(): Theme | null {
 // ============================================================================
 
 interface ThemeProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
   defaultTheme?: Theme;
 }
 
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-}: ThemeProviderProps) {
+}: ThemeProviderProps): ReactElement {
   const [theme, setThemeState] = useState<Theme>(() => {
     return getStoredTheme() ?? defaultTheme;
   });
@@ -53,9 +76,10 @@ export function ThemeProvider({
     getSystemTheme(),
   );
 
-  // Listen to system theme changes
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    if (typeof window.matchMedia !== "function") return;
+
+    const mediaQuery = window.matchMedia(THEME_QUERY);
 
     const handleChange = (e: MediaQueryListEvent) => {
       setSystemTheme(e.matches ? "dark" : "light");
@@ -65,39 +89,30 @@ export function ThemeProvider({
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  // Calculate effective theme
-  const effectiveTheme = useMemo(() => {
+  const resolvedTheme = useMemo<"light" | "dark">(() => {
     return theme === "system" ? systemTheme : theme;
   }, [theme, systemTheme]);
 
-  // Apply theme to document
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(effectiveTheme);
-  }, [effectiveTheme]);
+    root.setAttribute("data-theme", resolvedTheme);
+    root.style.colorScheme = resolvedTheme;
 
-  // Set theme and persist
-  const setTheme = (newTheme: Theme) => {
+    return () => {
+      root.removeAttribute("data-theme");
+      root.style.removeProperty("color-scheme");
+    };
+  }, [resolvedTheme]);
+
+  const setTheme = useCallback((newTheme: Theme): void => {
     setThemeState(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-  };
-
-  // Toggle between light and dark
-  const toggleTheme = () => {
-    if (theme === "system") {
-      setTheme(systemTheme === "dark" ? "light" : "dark");
-    } else {
-      setTheme(theme === "dark" ? "light" : "dark");
-    }
-  };
+    persistTheme(newTheme);
+  }, []);
 
   const value = {
     theme,
-    systemTheme,
-    effectiveTheme,
+    resolvedTheme,
     setTheme,
-    toggleTheme,
   };
 
   return (

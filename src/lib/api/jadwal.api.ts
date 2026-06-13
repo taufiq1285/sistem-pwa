@@ -64,7 +64,7 @@ function dispatchJadwalChanged(
       }),
     );
   } catch (error) {
-    console.warn("Failed to dispatch jadwal:changed event:", error);
+    logger.debug("Failed to dispatch jadwal:changed event:", error);
   }
 }
 
@@ -77,10 +77,13 @@ function dispatchJadwalChanged(
  * @param filters - Filter options
  * @returns Array of jadwal
  */
-export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
+export async function getJadwal(
+  filters?: JadwalFilters,
+  forceRefresh = false,
+): Promise<Jadwal[]> {
   try {
     if (DEBUG_JADWAL_LOGS)
-      console.log("📋 getJadwal called with filters:", filters);
+      logger.debug("📋 getJadwal called with filters:", filters);
     const filterConditions = [];
 
     // ✅ NEW LOGIC: Tampilkan SEMUA jadwal aktif (riwayat praktikum lengkap)
@@ -104,7 +107,7 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
     }
 
     // ✅ DEBUG: Log current dosen for troubleshooting
-    console.log("🔍 DEBUG getJadwal:", {
+    logger.debug("🔍 DEBUG getJadwal:", {
       userId: user?.id,
       currentDosenId,
       willFilterByDosenId: !!currentDosenId,
@@ -203,6 +206,7 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
       enableCache: true,
       cacheTTL: 5 * 60 * 1000, // 5 minutes
       staleWhileRevalidate: true,
+      forceRefresh,
     };
 
     // ✅ Query semua jadwal aktif dengan info dosen pembuat
@@ -213,7 +217,7 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
     );
 
     if (DEBUG_JADWAL_LOGS) {
-      console.log(`📋 getJadwal returning ${data?.length || 0} items`);
+      logger.debug(`📋 getJadwal returning ${data?.length || 0} items`);
     }
     return data;
   } catch (error) {
@@ -308,7 +312,7 @@ export async function getCalendarEvents(
   },
 ): Promise<CalendarEvent[]> {
   try {
-    console.log("🚨 getCalendarEvents CALLED - DATES:", {
+    logger.debug("🚨 getCalendarEvents CALLED - DATES:", {
       start: format(startDate, "yyyy-MM-dd"),
       end: format(endDate, "yyyy-MM-dd"),
       additionalFilters,
@@ -444,7 +448,7 @@ export async function getCalendarEvents(
     );
 
     // 🔍 DEBUG: Log hasil query
-    console.log("🔍 Query result:", {
+    logger.debug("🔍 Query result:", {
       count: jadwalList.length,
       dates: jadwalList.map((j) => ({
         id: j.id,
@@ -463,7 +467,7 @@ export async function getCalendarEvents(
       try {
         // Skip if tanggal_praktikum is null
         if (!j.tanggal_praktikum) {
-          console.warn("⚠️ Skipping jadwal with null tanggal_praktikum:", j.id);
+          logger.debug("⚠️ Skipping jadwal with null tanggal_praktikum:", j.id);
           return;
         }
 
@@ -478,7 +482,7 @@ export async function getCalendarEvents(
 
         // Validate parsed dates
         if (isNaN(jamMulaiDate.getTime()) || isNaN(jamSelesaiDate.getTime())) {
-          console.warn(
+          logger.debug(
             "⚠️ Invalid time after parsing:",
             j.id,
             j.jam_mulai,
@@ -536,16 +540,16 @@ export async function getCalendarEvents(
 
         events.push(event);
       } catch (parseError) {
-        console.warn("❌ Error parsing jadwal event:", j.id, parseError);
+        logger.debug("❌ Error parsing jadwal event:", j.id, parseError);
       }
     });
 
-    console.log(
+    logger.debug(
       `✅ Generated ${events.length} calendar events from ${jadwalList.length} jadwal`,
     );
 
     // 🔍 DEBUG: Log final events
-    console.log("🔍 Final events:", events);
+    logger.debug("🔍 Final events:", events);
 
     return events;
   } catch (error) {
@@ -567,7 +571,7 @@ export async function getCalendarEvents(
  */
 async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
   try {
-    console.log("🔍 DEBUG: createJadwalImpl called with:", data);
+    logger.debug("🔍 DEBUG: createJadwalImpl called with:", data);
 
     // Auto-compute hari from tanggal_praktikum
     const tanggalPraktikum =
@@ -651,15 +655,15 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
       status: "pending" as const, // ✅ WORKFLOW: Start as pending, needs laboran approval
     };
 
-    console.log("🔍 DEBUG: Insert data:", insertData);
-    console.log("🔍 DEBUG: Memanggil insert function...");
+    logger.debug("🔍 DEBUG: Insert data:", insertData);
+    logger.debug("🔍 DEBUG: Memanggil insert function...");
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
     // ✅ HYBRID APPROVAL: Auto-approve if no conflict (conflict already checked above)
     const result = await insert<Jadwal>("jadwal_praktikum", insertData);
     await invalidateJadwalCaches();
     dispatchJadwalChanged("created", result.id);
-    console.log("✅ DEBUG: Insert success:", result);
+    logger.debug("✅ DEBUG: Insert success:", result);
     return result;
   } catch (error) {
     const apiError = handleError(error);
@@ -837,7 +841,7 @@ export const deleteJadwal = requirePermissionAndOwnership(
  */
 async function approveJadwalImpl(id: string): Promise<Jadwal> {
   try {
-    console.log("✅ Approving jadwal:", id);
+    logger.debug("✅ Approving jadwal:", id);
 
     const updated = await update<Jadwal>("jadwal_praktikum", id, {
       status: "approved",
@@ -845,7 +849,7 @@ async function approveJadwalImpl(id: string): Promise<Jadwal> {
     await invalidateJadwalCaches();
     dispatchJadwalChanged("approved", id);
 
-    console.log("✅ Jadwal approved successfully:", id);
+    logger.debug("✅ Jadwal approved successfully:", id);
     return updated;
   } catch (error) {
     const apiError = handleError(error);
@@ -868,7 +872,7 @@ export const approveJadwal = requirePermission(
  */
 async function rejectJadwalImpl(id: string, reason?: string): Promise<Jadwal> {
   try {
-    console.log("❌ Rejecting jadwal:", id, "reason:", reason);
+    logger.debug("❌ Rejecting jadwal:", id, "reason:", reason);
 
     const updated = await update<Jadwal>("jadwal_praktikum", id, {
       status: "rejected", // ✅ WORKFLOW: Laboran rejects the booking
@@ -877,7 +881,7 @@ async function rejectJadwalImpl(id: string, reason?: string): Promise<Jadwal> {
     await invalidateJadwalCaches();
     dispatchJadwalChanged("rejected", id);
 
-    console.log("❌ Jadwal rejected successfully:", id);
+    logger.debug("❌ Jadwal rejected successfully:", id);
     return updated;
   } catch (error) {
     const apiError = handleError(error);
@@ -998,7 +1002,7 @@ async function getAllJadwalForLaboranImpl(filters?: {
     }> = [];
 
     // ✅ DEBUG: Log incoming filters
-    console.log("🔍 DEBUG getAllJadwalForLaboran:", {
+    logger.debug("🔍 DEBUG getAllJadwalForLaboran:", {
       filters,
       willFilterByStatus: filters?.status && filters.status !== "all",
     });
@@ -1085,7 +1089,7 @@ async function getAllJadwalForLaboranImpl(filters?: {
     );
 
     // ✅ DEBUG: Log hasil query
-    console.log("✅ DEBUG getAllJadwalForLaboran result:", {
+    logger.debug("✅ DEBUG getAllJadwalForLaboran result:", {
       totalJadwal: jadwalList.length,
       statusBreakdown: {
         pending: jadwalList.filter((j) => j.status === "pending").length,

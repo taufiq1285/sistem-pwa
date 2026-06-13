@@ -9,6 +9,7 @@ import {
   requirePermission,
   requirePermissionAndOwnership,
 } from "@/lib/middleware";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -670,9 +671,9 @@ export async function getDashboardKelas(): Promise<MyKelas[]> {
 
 export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
   try {
-    console.log("🚨 getMyJadwal CALLED");
+    logger.debug("🚨 getMyJadwal CALLED");
     const mahasiswaId = await getMahasiswaId();
-    console.log("🔍 Mahasiswa ID:", mahasiswaId);
+    logger.debug("🔍 Mahasiswa ID:", mahasiswaId);
 
     if (!mahasiswaId) return [];
 
@@ -682,16 +683,16 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
       .eq("mahasiswa_id", mahasiswaId)
       .eq("is_active", true);
 
-    console.log("🔍 Enrolled data:", enrolledData);
-    console.log("🔍 Enroll error:", enrollError);
+    logger.debug("🔍 Enrolled data:", enrolledData);
+    logger.debug("🔍 Enroll error:", enrollError);
 
     if (!enrolledData || enrolledData.length === 0) {
-      console.log("⚠️ No enrolled kelas found");
+      logger.debug("⚠️ No enrolled kelas found");
       return [];
     }
 
     const kelasIds = enrolledData.map((e: any) => e.kelas_id);
-    console.log("🔍 Kelas IDs:", kelasIds);
+    logger.debug("🔍 Kelas IDs:", kelasIds);
 
     // Prioritaskan jadwal yang akan datang agar dashboard menampilkan
     // praktikum terbaru, bukan sesi lampau.
@@ -710,11 +711,11 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
     const todayStr = formatDate(today);
     const futureDateStr = formatDate(futureDate);
 
-    console.log("🔍 Date range:", {
+    logger.debug("🔍 Date range:", {
       today: todayStr,
       future: futureDateStr,
     });
-    console.log("🔍 Kelas IDs filter:", kelasIds);
+    logger.debug("🔍 Kelas IDs filter:", kelasIds);
 
     const { data: jadwalData, error: jadwalError } = await (supabase as any)
       .from("jadwal_praktikum")
@@ -730,14 +731,14 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
       .order("jam_mulai", { ascending: true })
       .limit(limit || 50);
 
-    console.log("🔍 Jadwal query result:", { jadwalData, jadwalError });
+    logger.debug("🔍 Jadwal query result:", { jadwalData, jadwalError });
 
     if (!jadwalData || jadwalData.length === 0) {
-      console.log("No jadwal found");
+      logger.debug("No jadwal found");
       return [];
     }
 
-    console.log("Found", jadwalData.length, "jadwal");
+    logger.debug("Found", jadwalData.length, "jadwal");
 
     const result = await Promise.all(
       jadwalData.map(async (item: any) => {

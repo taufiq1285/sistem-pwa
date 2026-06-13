@@ -33,6 +33,7 @@ import {
   Loader2,
   Search,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -66,6 +67,7 @@ import { openLaporanFileInNewTab } from "@/lib/api/laporan-storage.api";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CardListSkeleton } from "@/components/common";
 import {
   checkAnswerCorrect,
   getAnswerLabel,
@@ -139,7 +141,7 @@ export default function KuisResultsPage() {
     if (!quizData?.soal || quizData.soal.length === 0) return false;
 
     // ✅ DEBUG: Log soal types for troubleshooting
-    console.log("🔍 [isAutoGradedQuiz] Checking quiz:", {
+    logger.debug("🔍 [isAutoGradedQuiz] Checking quiz:", {
       judul: quizData.judul,
       soal_count: quizData.soal.length,
       soal_types: quizData.soal.map((s: any) => ({
@@ -158,7 +160,7 @@ export default function KuisResultsPage() {
       );
     });
 
-    console.log("✅ [isAutoGradedQuiz] Result:", result);
+    logger.debug("✅ [isAutoGradedQuiz] Result:", result);
     return result;
   };
 
@@ -586,7 +588,7 @@ export default function KuisResultsPage() {
       const finalizedAttempt = await finalizeAttemptGrading(selectedAttempt.id);
 
       if (!hasReviewedAnswer) {
-        console.warn(
+        logger.debug(
           "[KuisResultsPage] Laporan disimpan tanpa jawaban yang digrade, attempt tetap dipaksa graded:",
           selectedAttempt.id,
         );
@@ -622,7 +624,7 @@ export default function KuisResultsPage() {
           );
         }
       } else {
-        console.warn(
+        logger.debug(
           "[KuisResultsPage] Notification skipped because attempt is not graded yet:",
           finalizedAttempt.id,
           finalizedAttempt.status,
@@ -775,15 +777,17 @@ export default function KuisResultsPage() {
 
   if (isLoading) {
     return (
-      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
-        <div className="role-page-content">
-          <div className="rounded-3xl border border-border/60 bg-white/90 p-10 text-center shadow-2xl dark:bg-card">
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
-            <p className="mt-4 text-base font-semibold text-muted-foreground">
-              Memuat hasil tugas praktikum...
-            </p>
-          </div>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-20 w-full skeleton-shimmer rounded-xl" />
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="h-[96px] skeleton-shimmer rounded-xl" />
+          <div className="h-[96px] skeleton-shimmer rounded-xl" />
+          <div className="h-[96px] skeleton-shimmer rounded-xl" />
+          <div className="h-[96px] skeleton-shimmer rounded-xl" />
+        </div>
+        <CardListSkeleton count={4} />
       </div>
     );
   }
@@ -794,31 +798,23 @@ export default function KuisResultsPage() {
 
   if (error || !quiz || !statistics) {
     return (
-      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
-        <div className="role-page-content max-w-7xl space-y-4">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleBack}
-            className="w-fit"
-          >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell flex items-center justify-between rounded-2xl p-5">
+          <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Kembali
           </Button>
+        </div>
 
-          <Alert
-            variant="destructive"
-            className="rounded-2xl border-2 shadow-xl"
-          >
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {error || "Gagal memuat data hasil tugas praktikum"}
-            </AlertDescription>
-          </Alert>
+        <Alert variant="destructive" className="rounded-2xl border-2 shadow-sm">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error || "Gagal memuat data hasil tugas praktikum"}
+          </AlertDescription>
+        </Alert>
 
-          <div>
-            <Button onClick={loadQuizData}>Coba Lagi</Button>
-          </div>
+        <div>
+          <Button onClick={loadQuizData}>Coba Lagi</Button>
         </div>
       </div>
     );
@@ -855,656 +851,1222 @@ export default function KuisResultsPage() {
   );
 
   return (
-    <div className="role-page-shell p-4 sm:p-6 lg:p-8">
-      <div className="role-page-content max-w-7xl space-y-6 lg:space-y-8">
-        {/* Header */}
-        <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-primary via-primary/90 to-accent/85 p-6 text-primary-foreground shadow-2xl sm:p-8">
-          <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
-
-          <div className="relative z-10 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleBack}
-                className="border border-white/40 bg-white/15 text-white hover:bg-white/25"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Kembali ke Daftar Tugas
-              </Button>
-
-              <Button
-                onClick={handleExport}
-                variant="secondary"
-                className="gap-2 border border-white/40 bg-white/15 text-white hover:bg-white/25"
-              >
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-            </div>
-
-            <div>
-              <h1 className="text-2xl font-extrabold sm:text-3xl">
-                {quiz.judul}
-              </h1>
-              <p className="mt-1 text-sm text-primary-foreground/80 sm:text-base">
-                Hasil & Analisis Tugas Praktikum
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {laporanMode ? (
-            // LAPORAN MODE: Show submission status
-            <>
-              {/* Total Submissions */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Submission
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {statistics.totalAttempts}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {statistics.completedAttempts} mahasiswa
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Sudah Upload */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Sudah Upload
-                  </CardTitle>
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-success">
-                    {statistics.completedAttempts}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Laporan diterima
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Belum Upload */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Belum Upload
-                  </CardTitle>
-                  <AlertCircle className="h-4 w-4 text-warning" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-warning">
-                    {statistics.totalAttempts - statistics.completedAttempts}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Menunggu submission
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Completion Rate */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Tingkat Penyelesaian
-                  </CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {statistics.totalAttempts > 0
-                      ? (
-                          (statistics.completedAttempts /
-                            statistics.totalAttempts) *
-                          100
-                        ).toFixed(0)
-                      : 0}
-                    %
-                  </div>
-                  <Progress
-                    value={
-                      statistics.totalAttempts > 0
-                        ? (statistics.completedAttempts /
-                            statistics.totalAttempts) *
-                          100
-                        : 0
-                    }
-                    className="mt-2"
-                  />
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            // CBT MODE: Show score statistics
-            <>
-              {/* Total Students */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Peserta
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {statistics.totalAttempts}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {statistics.completedAttempts} sudah mengerjakan
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Average Score */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Rata-rata Skor
-                  </CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {statistics.averageScore.toFixed(1)}%
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    berbasis total poin kuis
-                  </p>
-                  <Progress value={statistics.averageScore} className="mt-1" />
-                </CardContent>
-              </Card>
-
-              {/* Highest Score */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Skor Tertinggi
-                  </CardTitle>
-                  <Award className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-success">
-                    {statistics.highestScore.toFixed(1)}%
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Terendah: {statistics.lowestScore.toFixed(1)}%
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Pass Rate */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Tingkat Kelulusan
-                  </CardTitle>
-                  <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {statistics.passRate.toFixed(0)}%
-                  </div>
-                  <Progress value={statistics.passRate} className="mt-2" />
-                </CardContent>
-              </Card>
-            </>
-          )}
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      {/* Header */}
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{quiz.judul}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Hasil & Analisis Tugas Praktikum
+          </p>
         </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="outline" size="sm" onClick={handleBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Kembali
+          </Button>
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
+      </div>
 
-        {isAutoGradedQuiz(quiz) && (
-          <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-            <Card className="border border-border/60 bg-white/95 shadow-xl dark:bg-card">
-              <CardHeader className="space-y-4">
-                <div>
-                  <CardTitle>Daftar Mahasiswa</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Pilih mahasiswa untuk melihat ringkasan nilai otomatis dan
-                    rincian hasil CBT di panel kanan.
-                  </p>
-                </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari mahasiswa..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {laporanMode ? (
+          // LAPORAN MODE: Show submission status
+          <>
+            {/* Total Submissions */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Submission
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="space-y-3">
-                {filteredAttempts.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <AlertCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">
-                      {searchQuery
-                        ? "Tidak ada hasil yang sesuai."
-                        : "Belum ada mahasiswa yang mengerjakan tugas ini."}
-                    </p>
-                  </div>
-                ) : (
-                  filteredAttempts.map((attempt) => {
-                    const isSelected = selectedCbtAttempt?.id === attempt.id;
-                    const isPassed = isAttemptPassed(attempt, quiz);
-                    const scorePercentage = getAttemptPercentage(attempt, quiz);
-
-                    return (
-                      <button
-                        key={attempt.id}
-                        type="button"
-                        onClick={() => setSelectedCbtAttemptId(attempt.id)}
-                        className={cn(
-                          "w-full rounded-2xl border px-4 py-3 text-left transition",
-                          isSelected
-                            ? "border-primary bg-primary/5 shadow-sm"
-                            : "border-border/60 bg-background hover:border-primary/40 hover:bg-muted/40",
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <Avatar className="mt-0.5">
-                            <AvatarFallback>
-                              {attempt.mahasiswa?.user?.full_name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase() || "M"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1 space-y-2">
-                            <div>
-                              <p className="truncate font-medium">
-                                {attempt.mahasiswa?.user?.full_name ||
-                                  "Unknown"}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {attempt.mahasiswa?.nim || "-"}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <StatusBadge
-                                status={isPassed ? "success" : "error"}
-                                pulse={false}
-                              >
-                                {isPassed ? "Lulus" : "Tidak Lulus"}
-                              </StatusBadge>
-                            </div>
-                            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                              <span>
-                                {attempt.submitted_at && attempt.started_at
-                                  ? calculateDuration(
-                                      attempt.started_at,
-                                      attempt.submitted_at,
-                                    )
-                                  : "-"}
-                              </span>
-                              <span className="font-semibold text-foreground">
-                                {scorePercentage.toFixed(0)}%
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {statistics.totalAttempts}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {statistics.completedAttempts} mahasiswa
+                </p>
               </CardContent>
             </Card>
 
-            <Card className="border border-primary/20 bg-white/95 shadow-xl dark:bg-card">
-              <CardHeader className="space-y-2">
-                <div>
-                  <CardTitle>Panel Review Hasil CBT</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Nilai CBT dihitung otomatis. Panel ini dipakai untuk
-                    meninjau hasil mahasiswa dan membuka detail lengkap bila
-                    diperlukan.
-                  </p>
-                </div>
+            {/* Sudah Upload */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Sudah Upload
+                </CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-success" />
               </CardHeader>
               <CardContent>
-                {!selectedCbtAttempt ? (
-                  <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 p-8 text-center">
-                    <div className="max-w-md space-y-3">
-                      <Award className="mx-auto h-10 w-10 text-muted-foreground" />
-                      <p className="font-medium text-foreground">
-                        Belum ada mahasiswa yang dipilih
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Pilih satu mahasiswa dari panel kiri untuk melihat hasil
-                        otomatis dan ringkasan CBT.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base">
-                            Informasi Mahasiswa
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                          <p className="font-semibold">
-                            {selectedCbtAttempt.mahasiswa?.user?.full_name ||
-                              "Unknown"}
-                          </p>
-                          <p className="text-muted-foreground">
-                            NIM: {selectedCbtAttempt.mahasiswa?.nim || "-"}
-                          </p>
-                          <div className="pt-2">
+                <div className="text-2xl font-bold text-success">
+                  {statistics.completedAttempts}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Laporan diterima
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Belum Upload */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Belum Upload
+                </CardTitle>
+                <AlertCircle className="h-4 w-4 text-warning" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-warning">
+                  {statistics.totalAttempts - statistics.completedAttempts}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Menunggu submission
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Completion Rate */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Tingkat Penyelesaian
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {statistics.totalAttempts > 0
+                    ? (
+                        (statistics.completedAttempts /
+                          statistics.totalAttempts) *
+                        100
+                      ).toFixed(0)
+                    : 0}
+                  %
+                </div>
+                <Progress
+                  value={
+                    statistics.totalAttempts > 0
+                      ? (statistics.completedAttempts /
+                          statistics.totalAttempts) *
+                        100
+                      : 0
+                  }
+                  className="mt-2"
+                />
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          // CBT MODE: Show score statistics
+          <>
+            {/* Total Students */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Peserta
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {statistics.totalAttempts}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {statistics.completedAttempts} sudah mengerjakan
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Average Score */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Rata-rata Skor
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {statistics.averageScore.toFixed(1)}%
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  berbasis total poin kuis
+                </p>
+                <Progress value={statistics.averageScore} className="mt-1" />
+              </CardContent>
+            </Card>
+
+            {/* Highest Score */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Skor Tertinggi
+                </CardTitle>
+                <Award className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-success">
+                  {statistics.highestScore.toFixed(1)}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Terendah: {statistics.lowestScore.toFixed(1)}%
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Pass Rate */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Tingkat Kelulusan
+                </CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {statistics.passRate.toFixed(0)}%
+                </div>
+                <Progress value={statistics.passRate} className="mt-2" />
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+
+      {isAutoGradedQuiz(quiz) && (
+        <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+          <Card className="border border-border/60 bg-white/95 shadow-xl dark:bg-card">
+            <CardHeader className="space-y-4">
+              <div>
+                <CardTitle>Daftar Mahasiswa</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Pilih mahasiswa untuk melihat ringkasan nilai otomatis dan
+                  rincian hasil CBT di panel kanan.
+                </p>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Cari mahasiswa..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {filteredAttempts.length === 0 ? (
+                <div className="py-12 text-center">
+                  <AlertCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    {searchQuery
+                      ? "Tidak ada hasil yang sesuai."
+                      : "Belum ada mahasiswa yang mengerjakan tugas ini."}
+                  </p>
+                </div>
+              ) : (
+                filteredAttempts.map((attempt) => {
+                  const isSelected = selectedCbtAttempt?.id === attempt.id;
+                  const isPassed = isAttemptPassed(attempt, quiz);
+                  const scorePercentage = getAttemptPercentage(attempt, quiz);
+
+                  return (
+                    <button
+                      key={attempt.id}
+                      type="button"
+                      onClick={() => setSelectedCbtAttemptId(attempt.id)}
+                      className={cn(
+                        "w-full rounded-2xl border px-4 py-3 text-left transition",
+                        isSelected
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border/60 bg-background hover:border-primary/40 hover:bg-muted/40",
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Avatar className="mt-0.5">
+                          <AvatarFallback>
+                            {attempt.mahasiswa?.user?.full_name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase() || "M"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div>
+                            <p className="truncate font-medium">
+                              {attempt.mahasiswa?.user?.full_name || "Unknown"}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {attempt.mahasiswa?.nim || "-"}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
                             <StatusBadge
-                              status={selectedCbtPassed ? "success" : "error"}
+                              status={isPassed ? "success" : "error"}
                               pulse={false}
                             >
-                              {selectedCbtPassed ? "Lulus" : "Tidak Lulus"}
+                              {isPassed ? "Lulus" : "Tidak Lulus"}
                             </StatusBadge>
                           </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base">
-                            Ringkasan Hasil
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                          <p className="text-3xl font-bold">
-                            {selectedCbtTotalPoin}
-                          </p>
-                          <p className="text-muted-foreground">
-                            dari {getQuizMaxPoin(quiz)} poin
-                          </p>
-                          <Progress
-                            value={selectedCbtScorePercentage}
-                            className="mt-2"
-                          />
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base">
-                            Jawaban Otomatis
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Benar</span>
-                            <span className="font-semibold text-success">
-                              {selectedCbtCorrectCount}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Salah</span>
-                            <span className="font-semibold text-destructive">
-                              {selectedCbtWrongCount}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Durasi
-                            </span>
-                            <span className="font-medium">
-                              {selectedCbtAttempt.submitted_at &&
-                              selectedCbtAttempt.started_at
+                          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                            <span>
+                              {attempt.submitted_at && attempt.started_at
                                 ? calculateDuration(
-                                    selectedCbtAttempt.started_at,
-                                    selectedCbtAttempt.submitted_at,
+                                    attempt.started_at,
+                                    attempt.submitted_at,
                                   )
                                 : "-"}
                             </span>
+                            <span className="font-semibold text-foreground">
+                              {scorePercentage.toFixed(0)}%
+                            </span>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div className="rounded-2xl border border-info/25 bg-info/8 px-4 py-3 text-sm text-info">
-                      Nilai CBT dihitung otomatis oleh sistem berdasarkan
-                      jawaban benar dan salah. Rincian per soal sekarang bisa
-                      ditinjau langsung di panel ini tanpa pindah halaman.
-                    </div>
-
-                    <div className="rounded-2xl border border-border/60 bg-white/80 p-4 shadow-sm dark:bg-card/80">
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <div>
-                          <h3 className="text-base font-semibold text-foreground">
-                            Rincian Per Soal
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Review jawaban mahasiswa terhadap kunci jawaban
-                            langsung dari halaman hasil CBT.
-                          </p>
-                        </div>
-                        <div className="rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
-                          {quiz?.soal?.length || 0} soal
                         </div>
                       </div>
+                    </button>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
 
-                      <div className="space-y-2">
-                        {(quiz?.soal || []).map((soal: any, index) => {
-                          const normalizedSoal = {
-                            ...soal,
-                            tipe_soal: soal?.tipe_soal || soal?.tipe,
-                            opsi_jawaban:
-                              soal?.opsi_jawaban ||
-                              soal?.pilihan_jawaban ||
-                              null,
-                          };
-                          const jawaban = (
-                            selectedCbtAttempt?.jawaban || []
-                          ).find(
-                            (item: any) => item?.soal_id === normalizedSoal.id,
-                          );
-                          const jawabanMahasiswa =
-                            jawaban?.jawaban ??
-                            jawaban?.jawaban_mahasiswa ??
-                            "";
-                          const isCorrect =
-                            typeof jawaban?.is_correct === "boolean"
-                              ? jawaban.is_correct
-                              : checkAnswerCorrect(
-                                  normalizedSoal,
-                                  jawabanMahasiswa,
-                                );
+          <Card className="border border-primary/20 bg-white/95 shadow-xl dark:bg-card">
+            <CardHeader className="space-y-2">
+              <div>
+                <CardTitle>Panel Review Hasil CBT</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Nilai CBT dihitung otomatis. Panel ini dipakai untuk meninjau
+                  hasil mahasiswa dan membuka detail lengkap bila diperlukan.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!selectedCbtAttempt ? (
+                <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 p-8 text-center">
+                  <div className="max-w-md space-y-3">
+                    <Award className="mx-auto h-10 w-10 text-muted-foreground" />
+                    <p className="font-medium text-foreground">
+                      Belum ada mahasiswa yang dipilih
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Pilih satu mahasiswa dari panel kiri untuk melihat hasil
+                      otomatis dan ringkasan CBT.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">
+                          Informasi Mahasiswa
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        <p className="font-semibold">
+                          {selectedCbtAttempt.mahasiswa?.user?.full_name ||
+                            "Unknown"}
+                        </p>
+                        <p className="text-muted-foreground">
+                          NIM: {selectedCbtAttempt.mahasiswa?.nim || "-"}
+                        </p>
+                        <div className="pt-2">
+                          <StatusBadge
+                            status={selectedCbtPassed ? "success" : "error"}
+                            pulse={false}
+                          >
+                            {selectedCbtPassed ? "Lulus" : "Tidak Lulus"}
+                          </StatusBadge>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                          return (
-                            <div
-                              key={normalizedSoal.id}
-                              className="rounded-xl border border-border/60 bg-background/80 px-4 py-3"
-                            >
-                              <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                                  {index + 1}
-                                </div>
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">
+                          Ringkasan Hasil
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        <p className="text-3xl font-bold">
+                          {selectedCbtTotalPoin}
+                        </p>
+                        <p className="text-muted-foreground">
+                          dari {getQuizMaxPoin(quiz)} poin
+                        </p>
+                        <Progress
+                          value={selectedCbtScorePercentage}
+                          className="mt-2"
+                        />
+                      </CardContent>
+                    </Card>
 
-                                <div className="min-w-0 flex-1 space-y-2">
-                                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-                                    <div className="space-y-1">
-                                      <p className="line-clamp-1 text-sm font-semibold text-foreground">
-                                        {normalizedSoal.pertanyaan}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">
+                          Jawaban Otomatis
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Benar</span>
+                          <span className="font-semibold text-success">
+                            {selectedCbtCorrectCount}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Salah</span>
+                          <span className="font-semibold text-destructive">
+                            {selectedCbtWrongCount}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Durasi</span>
+                          <span className="font-medium">
+                            {selectedCbtAttempt.submitted_at &&
+                            selectedCbtAttempt.started_at
+                              ? calculateDuration(
+                                  selectedCbtAttempt.started_at,
+                                  selectedCbtAttempt.submitted_at,
+                                )
+                              : "-"}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="rounded-2xl border border-info/25 bg-info/8 px-4 py-3 text-sm text-info">
+                    Nilai CBT dihitung otomatis oleh sistem berdasarkan jawaban
+                    benar dan salah. Rincian per soal sekarang bisa ditinjau
+                    langsung di panel ini tanpa pindah halaman.
+                  </div>
+
+                  <div className="rounded-2xl border border-border/60 bg-white/80 p-4 shadow-sm dark:bg-card/80">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-semibold text-foreground">
+                          Rincian Per Soal
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Review jawaban mahasiswa terhadap kunci jawaban
+                          langsung dari halaman hasil CBT.
+                        </p>
+                      </div>
+                      <div className="rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+                        {quiz?.soal?.length || 0} soal
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      {(quiz?.soal || []).map((soal: any, index) => {
+                        const normalizedSoal = {
+                          ...soal,
+                          tipe_soal: soal?.tipe_soal || soal?.tipe,
+                          opsi_jawaban:
+                            soal?.opsi_jawaban || soal?.pilihan_jawaban || null,
+                        };
+                        const jawaban = (
+                          selectedCbtAttempt?.jawaban || []
+                        ).find(
+                          (item: any) => item?.soal_id === normalizedSoal.id,
+                        );
+                        const jawabanMahasiswa =
+                          jawaban?.jawaban ?? jawaban?.jawaban_mahasiswa ?? "";
+                        const isCorrect =
+                          typeof jawaban?.is_correct === "boolean"
+                            ? jawaban.is_correct
+                            : checkAnswerCorrect(
+                                normalizedSoal,
+                                jawabanMahasiswa,
+                              );
+
+                        return (
+                          <div
+                            key={normalizedSoal.id}
+                            className="rounded-xl border border-border/60 bg-background/80 px-4 py-3"
+                          >
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                                {index + 1}
+                              </div>
+
+                              <div className="min-w-0 flex-1 space-y-2">
+                                <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                                  <div className="space-y-1">
+                                    <p className="line-clamp-1 text-sm font-semibold text-foreground">
+                                      {normalizedSoal.pertanyaan}
+                                    </p>
+                                    {normalizedSoal.penjelasan && (
+                                      <p className="line-clamp-1 text-xs text-muted-foreground">
+                                        {normalizedSoal.penjelasan}
                                       </p>
-                                      {normalizedSoal.penjelasan && (
-                                        <p className="line-clamp-1 text-xs text-muted-foreground">
-                                          {normalizedSoal.penjelasan}
-                                        </p>
-                                      )}
-                                    </div>
-
-                                    <span
-                                      className={cn(
-                                        "inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold",
-                                        isCorrect
-                                          ? "bg-success/10 text-success"
-                                          : "bg-destructive/10 text-destructive",
-                                      )}
-                                    >
-                                      {isCorrect ? "Benar" : "Salah"}
-                                    </span>
+                                    )}
                                   </div>
 
-                                  <div className="grid gap-2 md:grid-cols-2">
-                                    <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5">
-                                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                        Jawaban
-                                      </p>
-                                      <p className="mt-1 line-clamp-1 text-sm font-medium text-foreground">
-                                        {getAnswerLabel(
-                                          normalizedSoal,
-                                          jawabanMahasiswa,
-                                        )}
-                                      </p>
-                                    </div>
+                                  <span
+                                    className={cn(
+                                      "inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold",
+                                      isCorrect
+                                        ? "bg-success/10 text-success"
+                                        : "bg-destructive/10 text-destructive",
+                                    )}
+                                  >
+                                    {isCorrect ? "Benar" : "Salah"}
+                                  </span>
+                                </div>
 
-                                    <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5">
-                                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                        Kunci
-                                      </p>
-                                      <p className="mt-1 line-clamp-1 text-sm font-medium text-primary">
-                                        {getCorrectAnswerLabel(normalizedSoal)}
-                                      </p>
-                                    </div>
+                                <div className="grid gap-2 md:grid-cols-2">
+                                  <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                      Jawaban
+                                    </p>
+                                    <p className="mt-1 line-clamp-1 text-sm font-medium text-foreground">
+                                      {getAnswerLabel(
+                                        normalizedSoal,
+                                        jawabanMahasiswa,
+                                      )}
+                                    </p>
+                                  </div>
+
+                                  <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                      Kunci
+                                    </p>
+                                    <p className="mt-1 line-clamp-1 text-sm font-medium text-primary">
+                                      {getCorrectAnswerLabel(normalizedSoal)}
+                                    </p>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          );
-                        })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {laporanMode && (
+        <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+          <Card className="border border-border/60 bg-white/95 shadow-xl dark:bg-card">
+            <CardHeader className="space-y-4">
+              <div>
+                <CardTitle>Daftar Mahasiswa</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Pilih mahasiswa di sini, lalu panel kanan langsung berubah
+                  menjadi area review dan penilaian.
+                </p>
+                {/* Counter: sudah dinilai / total */}
+                {filteredAttempts.length > 0 &&
+                  (() => {
+                    const gradedCount = filteredAttempts.filter((a) =>
+                      attemptHasReviewResult(a),
+                    ).length;
+                    const submittedCount = filteredAttempts.filter(
+                      (a) =>
+                        a.status === "submitted" && !attemptHasReviewResult(a),
+                    ).length;
+                    return (
+                      <div className="flex gap-2 flex-wrap mt-2">
+                        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {gradedCount} dinilai
+                        </span>
+                        {submittedCount > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 animate-pulse">
+                            <AlertCircle className="h-3 w-3" />
+                            {submittedCount} menunggu review
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
+                          {filteredAttempts.length} total
+                        </span>
                       </div>
+                    );
+                  })()}
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Cari mahasiswa..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {filteredAttempts.length === 0 ? (
+                <div className="py-12 text-center">
+                  <AlertCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    {searchQuery
+                      ? "Tidak ada mahasiswa yang cocok dengan pencarian."
+                      : "Belum ada data laporan untuk tugas ini."}
+                  </p>
+                </div>
+              ) : (
+                filteredAttempts.map((attempt) => {
+                  const isSelected = selectedAttempt?.id === attempt.id;
+                  const isGraded = attemptHasReviewResult(attempt);
+                  const isSubmitted = attempt.status === "submitted";
+
+                  // Color-code: graded=hijau, submitted=kuning, belum submit=abu
+                  const rowBg = isGraded
+                    ? "border-green-200 bg-green-50/60 dark:border-green-800 dark:bg-green-900/20"
+                    : isSubmitted
+                      ? "border-amber-200 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-900/20"
+                      : "border-border/60 bg-background";
+
+                  return (
+                    <button
+                      key={attempt.id}
+                      type="button"
+                      onClick={() =>
+                        void handleOpenLaporanReview(attempt.id, true)
+                      }
+                      className={cn(
+                        "w-full rounded-2xl border px-4 py-3 text-left transition hover:shadow-sm",
+                        isSelected
+                          ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/40"
+                          : rowBg + " hover:border-primary/40",
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Avatar className="mt-0.5">
+                          <AvatarFallback>
+                            {attempt.mahasiswa?.user?.full_name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase() || "M"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div>
+                            <p className="truncate font-medium">
+                              {attempt.mahasiswa?.user?.full_name || "Unknown"}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {attempt.mahasiswa?.nim || "-"}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {getLaporanUploadBadge(attempt)}
+                            {getLaporanReviewBadge(attempt)}
+                          </div>
+                          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                            <span>
+                              {attempt.submitted_at
+                                ? new Date(attempt.submitted_at).toLocaleString(
+                                    "id-ID",
+                                    {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )
+                                : "Belum submit"}
+                            </span>
+                            <span className="font-semibold text-foreground">
+                              {isGraded
+                                ? getAttemptEffectivePoints(attempt, quiz)
+                                : "-"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border border-primary/20 bg-white/95 shadow-xl dark:bg-card">
+            <CardHeader className="space-y-2">
+              <div>
+                <CardTitle>Panel Penilaian Laporan</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Semua aktivitas review dilakukan di sini: lihat file, tulis
+                  feedback, beri nilai, lalu simpan.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {reviewLoading ? (
+                <div className="space-y-4">
+                  <div className="h-6 w-1/3 skeleton-shimmer rounded-xs" />
+                  <div className="h-10 w-full skeleton-shimmer rounded-md" />
+                  <div className="h-32 w-full skeleton-shimmer rounded-md" />
+                </div>
+              ) : !selectedAttempt ? (
+                <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 p-8 text-center">
+                  <div className="max-w-md space-y-3">
+                    <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
+                    <p className="font-medium text-foreground">
+                      Belum ada mahasiswa yang dipilih
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Pilih satu mahasiswa dari panel kiri agar file laporan dan
+                      form penilaian muncul di sini.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">
+                          Informasi Mahasiswa
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        <p className="font-semibold">
+                          {selectedAttempt.mahasiswa?.user?.full_name ||
+                            "Unknown"}
+                        </p>
+                        <p className="text-muted-foreground">
+                          NIM: {selectedAttempt.mahasiswa?.nim || "-"}
+                        </p>
+                        <div className="pt-2">
+                          {getLaporanReviewBadge(
+                            selectedAttempt as AttemptWithStudent,
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">
+                          Informasi Tugas
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        <p className="font-semibold">
+                          {selectedAttempt.kuis?.judul || "-"}
+                        </p>
+                        <p className="text-muted-foreground">
+                          Mata kuliah:{" "}
+                          {(selectedAttempt.kuis as any)?.mata_kuliah
+                            ?.nama_mk ||
+                            (selectedAttempt.kuis as any)?.kelas?.mata_kuliah
+                              ?.nama_mk ||
+                            "-"}
+                        </p>
+                        <p className="text-muted-foreground">
+                          Kelas:{" "}
+                          {(selectedAttempt.kuis as any)?.kelas?.nama_kelas ||
+                            "-"}
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">
+                          Ringkasan Nilai
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        <p className="text-3xl font-bold">
+                          {calculateReviewTotalScore()}
+                        </p>
+                        <p className="text-muted-foreground">
+                          dari{" "}
+                          {selectedAttempt.kuis?.soal?.reduce(
+                            (sum, soal) => sum + soal.poin,
+                            0,
+                          ) || 0}{" "}
+                          poin
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="space-y-4">
+                    {selectedAttempt.kuis?.soal?.map((soal, index) => {
+                      const jawaban = getReviewJawabanForSoal(soal);
+                      const grading = jawaban
+                        ? reviewGradingState[jawaban.id]
+                        : null;
+                      const tipeSoal =
+                        (soal as any).tipe_soal || (soal as any).tipe;
+
+                      return (
+                        <Card key={soal.id} className="border border-border/60">
+                          <CardHeader className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <StatusBadge status="info" pulse={false}>
+                                Soal {index + 1}
+                              </StatusBadge>
+                              <StatusBadge status="offline" pulse={false}>
+                                {tipeSoal === "file_upload"
+                                  ? "Upload File"
+                                  : "Jawaban Teks"}
+                              </StatusBadge>
+                            </div>
+                            <CardTitle className="text-base">
+                              {soal.pertanyaan}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {tipeSoal === "file_upload" &&
+                            getResolvedReviewFileSubmission(jawaban).url ? (
+                              <div className="rounded-xl border border-orange-200 bg-orange-50/60 dark:border-orange-800 dark:bg-orange-950/30 p-4">
+                                <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 mb-3 uppercase tracking-wide">
+                                  📎 File yang dikirim mahasiswa
+                                </p>
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2.5 rounded-lg bg-orange-100 dark:bg-orange-900 shrink-0">
+                                      <FileText className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="font-medium truncate text-sm">
+                                        {
+                                          getResolvedReviewFileSubmission(
+                                            jawaban,
+                                          ).name
+                                        }
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {getResolvedReviewFileSubmission(
+                                          jawaban,
+                                        ).type || "PDF / Word / Gambar"}
+                                        {getResolvedReviewFileSubmission(
+                                          jawaban,
+                                        ).size > 0 && (
+                                          <span className="ml-1">
+                                            •{" "}
+                                            {(
+                                              getResolvedReviewFileSubmission(
+                                                jawaban,
+                                              ).size / 1024
+                                            ).toFixed(0)}{" "}
+                                            KB
+                                          </span>
+                                        )}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    className="shrink-0 gap-2 bg-orange-600 hover:bg-orange-700 text-white"
+                                    onClick={() =>
+                                      void handleOpenReviewFile(jawaban)
+                                    }
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    Buka File
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : tipeSoal === "file_upload" ? (
+                              <div className="rounded-xl border border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20 p-4">
+                                <div className="flex items-center gap-3">
+                                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-sm text-amber-800 dark:text-amber-200">
+                                      File belum dikirim
+                                    </p>
+                                    <p className="text-xs text-amber-700/70 dark:text-amber-400/70">
+                                      Mahasiswa belum mengupload file laporan
+                                      untuk soal ini
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : jawaban?.jawaban_mahasiswa ? (
+                              <div className="rounded-xl border bg-muted/30 p-4">
+                                <Label className="mb-2 block text-sm text-muted-foreground">
+                                  Jawaban mahasiswa
+                                </Label>
+                                <p className="whitespace-pre-wrap text-sm">
+                                  {jawaban.jawaban_mahasiswa}
+                                </p>
+                              </div>
+                            ) : (
+                              <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>
+                                  Mahasiswa belum mengirim file atau jawaban.
+                                </AlertDescription>
+                              </Alert>
+                            )}
+
+                            {jawaban && (
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                  <Label htmlFor={`review-poin-${jawaban.id}`}>
+                                    Poin (Max: {soal.poin})
+                                  </Label>
+                                  <Input
+                                    id={`review-poin-${jawaban.id}`}
+                                    type="number"
+                                    min="0"
+                                    max={soal.poin}
+                                    value={grading?.poin_diperoleh || 0}
+                                    onChange={(e) =>
+                                      handleReviewGradeChange(
+                                        jawaban.id,
+                                        "poin_diperoleh",
+                                        Number(e.target.value),
+                                      )
+                                    }
+                                    className="mt-2"
+                                  />
+                                </div>
+                                <div>
+                                  <Label
+                                    htmlFor={`review-feedback-${jawaban.id}`}
+                                  >
+                                    Feedback
+                                  </Label>
+                                  <Textarea
+                                    id={`review-feedback-${jawaban.id}`}
+                                    value={grading?.feedback || ""}
+                                    onChange={(e) =>
+                                      handleReviewGradeChange(
+                                        jawaban.id,
+                                        "feedback",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="mt-2"
+                                    rows={4}
+                                    placeholder="Tambahkan catatan penilaian..."
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={handleSaveLaporanReview}
+                      disabled={reviewSaving || reviewLoading}
+                      className="gap-2"
+                    >
+                      {reviewSaving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4" />
+                      )}
+                      Simpan Penilaian
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* Tabs - Hide for CBT mode and laporan mode */}
+      {!isAutoGradedQuiz(quiz) && !laporanMode && (
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
+          <TabsList className="h-auto rounded-xl border border-primary/20 bg-white/85 p-1 shadow-sm dark:border-primary/20 dark:bg-card/70">
+            <TabsTrigger
+              value="overview"
+              className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="attempts"
+              className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Submissions ({attempts.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informasi Tugas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {laporanMode ? (
+                  // LAPORAN MODE: Show submission info
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Tipe Tugas</Label>
+                      <p className="text-2xl font-bold">Laporan Praktikum</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">
+                        Total Mahasiswa
+                      </Label>
+                      <p className="text-2xl font-bold">
+                        {statistics.totalAttempts}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">
+                        Sudah Submit
+                      </Label>
+                      <p className="text-2xl font-bold text-success">
+                        {statistics.completedAttempts}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  // CBT MODE: Show score info
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Total Soal</Label>
+                      <p className="text-2xl font-bold">
+                        {(quiz as any).total_soal || 0}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Total Poin</Label>
+                      <p className="text-2xl font-bold">
+                        {getQuizMaxPoin(quiz)}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Durasi</Label>
+                      <p className="text-2xl font-bold">
+                        {(quiz as any).durasi ||
+                          (quiz as any).durasi_menit ||
+                          0}{" "}
+                        menit
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">
+                        Waktu Rata-rata
+                      </Label>
+                      <p className="text-2xl font-bold">
+                        {statistics.averageTime.toFixed(0)} menit
+                      </p>
                     </div>
                   </div>
                 )}
               </CardContent>
             </Card>
-          </section>
-        )}
 
-        {laporanMode && (
-          <section className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-            <Card className="border border-border/60 bg-white/95 shadow-xl dark:bg-card">
-              <CardHeader className="space-y-4">
-                <div>
-                  <CardTitle>Daftar Mahasiswa</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Pilih mahasiswa di sini, lalu panel kanan langsung berubah
-                    menjadi area review dan penilaian.
-                  </p>
-                  {/* Counter: sudah dinilai / total */}
-                  {filteredAttempts.length > 0 &&
-                    (() => {
-                      const gradedCount = filteredAttempts.filter((a) =>
-                        attemptHasReviewResult(a),
-                      ).length;
-                      const submittedCount = filteredAttempts.filter(
-                        (a) =>
-                          a.status === "submitted" &&
-                          !attemptHasReviewResult(a),
-                      ).length;
-                      return (
-                        <div className="flex gap-2 flex-wrap mt-2">
-                          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                            <CheckCircle2 className="h-3 w-3" />
-                            {gradedCount} dinilai
+            {/* Score Distribution - Only for CBT */}
+            {!laporanMode && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Distribusi Skor</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {getScoreDistribution(attempts, quiz).map((range) => (
+                      <div key={range.label}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">
+                            {range.label}
                           </span>
-                          {submittedCount > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 animate-pulse">
-                              <AlertCircle className="h-3 w-3" />
-                              {submittedCount} menunggu review
-                            </span>
-                          )}
-                          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
-                            {filteredAttempts.length} total
+                          <span className="text-sm text-muted-foreground">
+                            {range.count} mahasiswa
                           </span>
                         </div>
-                      );
-                    })()}
-                </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari mahasiswa..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+                        <Progress
+                          value={
+                            attempts.length > 0
+                              ? (range.count / attempts.length) * 100
+                              : 0
+                          }
+                          className="h-2"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Attempts Tab */}
+          <TabsContent value="attempts" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Daftar Percobaan</CardTitle>
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Cari mahasiswa..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent>
                 {filteredAttempts.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <AlertCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <div className="text-center py-12">
+                    <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">
                       {searchQuery
-                        ? "Tidak ada mahasiswa yang cocok dengan pencarian."
-                        : "Belum ada data laporan untuk tugas ini."}
+                        ? "Tidak ada hasil yang sesuai"
+                        : "Belum ada mahasiswa yang mengerjakan tugas ini"}
                     </p>
                   </div>
                 ) : (
-                  filteredAttempts.map((attempt) => {
-                    const isSelected = selectedAttempt?.id === attempt.id;
-                    const isGraded = attemptHasReviewResult(attempt);
-                    const isSubmitted = attempt.status === "submitted";
-
-                    // Color-code: graded=hijau, submitted=kuning, belum submit=abu
-                    const rowBg = isGraded
-                      ? "border-green-200 bg-green-50/60 dark:border-green-800 dark:bg-green-900/20"
-                      : isSubmitted
-                        ? "border-amber-200 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-900/20"
-                        : "border-border/60 bg-background";
-
-                    return (
-                      <button
-                        key={attempt.id}
-                        type="button"
-                        onClick={() =>
-                          void handleOpenLaporanReview(attempt.id, true)
-                        }
-                        className={cn(
-                          "w-full rounded-2xl border px-4 py-3 text-left transition hover:shadow-sm",
-                          isSelected
-                            ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/40"
-                            : rowBg + " hover:border-primary/40",
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Mahasiswa</TableHead>
+                        <TableHead>Status</TableHead>
+                        {!laporanMode && (
+                          <>
+                            <TableHead className="text-right">Skor</TableHead>
+                            <TableHead className="text-right">Waktu</TableHead>
+                          </>
                         )}
-                      >
-                        <div className="flex items-start gap-3">
-                          <Avatar className="mt-0.5">
-                            <AvatarFallback>
-                              {attempt.mahasiswa?.user?.full_name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase() || "M"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1 space-y-2">
-                            <div>
-                              <p className="truncate font-medium">
-                                {attempt.mahasiswa?.user?.full_name ||
-                                  "Unknown"}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {attempt.mahasiswa?.nim || "-"}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {getLaporanUploadBadge(attempt)}
-                              {getLaporanReviewBadge(attempt)}
-                            </div>
-                            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                              <span>
+                        {laporanMode && <TableHead>Waktu Submit</TableHead>}
+                        <TableHead className="text-center">Aksi</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredAttempts.map((attempt) => {
+                        const isGraded = attemptHasReviewResult(attempt);
+                        const isPassed = isAttemptPassed(attempt, quiz);
+                        const quizMaxPoin = getQuizMaxPoin(quiz);
+                        const scorePercentage = getAttemptPercentage(
+                          attempt,
+                          quiz,
+                        );
+
+                        return (
+                          <TableRow key={attempt.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar>
+                                  <AvatarFallback>
+                                    {attempt.mahasiswa?.user?.full_name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")
+                                      .toUpperCase() || "M"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium">
+                                    {attempt.mahasiswa?.user?.full_name ||
+                                      "Unknown"}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {attempt.mahasiswa?.nim || "-"}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+
+                            <TableCell>
+                              {laporanMode ? (
+                                getLaporanReviewBadge(attempt)
+                              ) : (
+                                // CBT MODE: Show pass/fail status
+                                <>
+                                  {isGraded ? (
+                                    <StatusBadge
+                                      status={isPassed ? "success" : "error"}
+                                      pulse={false}
+                                    >
+                                      {isPassed ? (
+                                        <>
+                                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                                          Lulus
+                                        </>
+                                      ) : (
+                                        <>
+                                          <XCircle className="h-3 w-3 mr-1" />
+                                          Tidak Lulus
+                                        </>
+                                      )}
+                                    </StatusBadge>
+                                  ) : attempt.status === "submitted" ? (
+                                    <StatusBadge status="warning" pulse={false}>
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Menunggu Penilaian
+                                    </StatusBadge>
+                                  ) : (
+                                    <StatusBadge status="info" pulse={false}>
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Sedang Dikerjakan
+                                    </StatusBadge>
+                                  )}
+                                </>
+                              )}
+                            </TableCell>
+
+                            {!laporanMode && (
+                              <>
+                                <TableCell className="text-right">
+                                  <span
+                                    className={cn(
+                                      "font-semibold",
+                                      isPassed ? "text-success" : "text-danger",
+                                    )}
+                                  >
+                                    {/* FIXED: Changed nilai to total_poin */}
+                                    {getAttemptEffectivePoints(attempt, quiz)}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    {" / "}
+                                    {quizMaxPoin}
+                                  </span>
+                                  <div className="text-xs text-muted-foreground">
+                                    {scorePercentage.toFixed(1)}%
+                                  </div>
+                                </TableCell>
+
+                                <TableCell className="text-right text-sm text-muted-foreground">
+                                  {/* FIXED: Changed property names */}
+                                  {attempt.submitted_at && attempt.started_at
+                                    ? calculateDuration(
+                                        attempt.started_at,
+                                        attempt.submitted_at,
+                                      )
+                                    : "-"}
+                                </TableCell>
+                              </>
+                            )}
+
+                            {laporanMode && (
+                              <TableCell className="text-sm text-muted-foreground">
                                 {attempt.submitted_at
                                   ? new Date(
                                       attempt.submitted_at,
@@ -1515,658 +2077,49 @@ export default function KuisResultsPage() {
                                       hour: "2-digit",
                                       minute: "2-digit",
                                     })
-                                  : "Belum submit"}
-                              </span>
-                              <span className="font-semibold text-foreground">
-                                {isGraded
-                                  ? getAttemptEffectivePoints(attempt, quiz)
                                   : "-"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border border-primary/20 bg-white/95 shadow-xl dark:bg-card">
-              <CardHeader className="space-y-2">
-                <div>
-                  <CardTitle>Panel Penilaian Laporan</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Semua aktivitas review dilakukan di sini: lihat file, tulis
-                    feedback, beri nilai, lalu simpan.
-                  </p>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {reviewLoading ? (
-                  <div className="py-12 text-center">
-                    <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Memuat detail laporan...
-                    </p>
-                  </div>
-                ) : !selectedAttempt ? (
-                  <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 p-8 text-center">
-                    <div className="max-w-md space-y-3">
-                      <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
-                      <p className="font-medium text-foreground">
-                        Belum ada mahasiswa yang dipilih
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Pilih satu mahasiswa dari panel kiri agar file laporan
-                        dan form penilaian muncul di sini.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base">
-                            Informasi Mahasiswa
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                          <p className="font-semibold">
-                            {selectedAttempt.mahasiswa?.user?.full_name ||
-                              "Unknown"}
-                          </p>
-                          <p className="text-muted-foreground">
-                            NIM: {selectedAttempt.mahasiswa?.nim || "-"}
-                          </p>
-                          <div className="pt-2">
-                            {getLaporanReviewBadge(
-                              selectedAttempt as AttemptWithStudent,
+                              </TableCell>
                             )}
-                          </div>
-                        </CardContent>
-                      </Card>
 
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base">
-                            Informasi Tugas
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                          <p className="font-semibold">
-                            {selectedAttempt.kuis?.judul || "-"}
-                          </p>
-                          <p className="text-muted-foreground">
-                            Mata kuliah:{" "}
-                            {(selectedAttempt.kuis as any)?.mata_kuliah
-                              ?.nama_mk ||
-                              (selectedAttempt.kuis as any)?.kelas?.mata_kuliah
-                                ?.nama_mk ||
-                              "-"}
-                          </p>
-                          <p className="text-muted-foreground">
-                            Kelas:{" "}
-                            {(selectedAttempt.kuis as any)?.kelas?.nama_kelas ||
-                              "-"}
-                          </p>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base">
-                            Ringkasan Nilai
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                          <p className="text-3xl font-bold">
-                            {calculateReviewTotalScore()}
-                          </p>
-                          <p className="text-muted-foreground">
-                            dari{" "}
-                            {selectedAttempt.kuis?.soal?.reduce(
-                              (sum, soal) => sum + soal.poin,
-                              0,
-                            ) || 0}{" "}
-                            poin
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div className="space-y-4">
-                      {selectedAttempt.kuis?.soal?.map((soal, index) => {
-                        const jawaban = getReviewJawabanForSoal(soal);
-                        const grading = jawaban
-                          ? reviewGradingState[jawaban.id]
-                          : null;
-                        const tipeSoal =
-                          (soal as any).tipe_soal || (soal as any).tipe;
-
-                        return (
-                          <Card
-                            key={soal.id}
-                            className="border border-border/60"
-                          >
-                            <CardHeader className="space-y-2">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <StatusBadge status="info" pulse={false}>
-                                  Soal {index + 1}
-                                </StatusBadge>
-                                <StatusBadge status="offline" pulse={false}>
-                                  {tipeSoal === "file_upload"
-                                    ? "Upload File"
-                                    : "Jawaban Teks"}
-                                </StatusBadge>
-                              </div>
-                              <CardTitle className="text-base">
-                                {soal.pertanyaan}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                              {tipeSoal === "file_upload" &&
-                              getResolvedReviewFileSubmission(jawaban).url ? (
-                                <div className="rounded-xl border border-orange-200 bg-orange-50/60 dark:border-orange-800 dark:bg-orange-950/30 p-4">
-                                  <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 mb-3 uppercase tracking-wide">
-                                    📎 File yang dikirim mahasiswa
-                                  </p>
-                                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="flex items-center gap-3">
-                                      <div className="p-2.5 rounded-lg bg-orange-100 dark:bg-orange-900 shrink-0">
-                                        <FileText className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                                      </div>
-                                      <div className="min-w-0">
-                                        <p className="font-medium truncate text-sm">
-                                          {
-                                            getResolvedReviewFileSubmission(
-                                              jawaban,
-                                            ).name
-                                          }
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                          {getResolvedReviewFileSubmission(
-                                            jawaban,
-                                          ).type || "PDF / Word / Gambar"}
-                                          {getResolvedReviewFileSubmission(
-                                            jawaban,
-                                          ).size > 0 && (
-                                            <span className="ml-1">
-                                              •{" "}
-                                              {(
-                                                getResolvedReviewFileSubmission(
-                                                  jawaban,
-                                                ).size / 1024
-                                              ).toFixed(0)}{" "}
-                                              KB
-                                            </span>
-                                          )}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      className="shrink-0 gap-2 bg-orange-600 hover:bg-orange-700 text-white"
-                                      onClick={() =>
-                                        void handleOpenReviewFile(jawaban)
-                                      }
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                      Buka File
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : tipeSoal === "file_upload" ? (
-                                <div className="rounded-xl border border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20 p-4">
-                                  <div className="flex items-center gap-3">
-                                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
-                                    <div>
-                                      <p className="font-medium text-sm text-amber-800 dark:text-amber-200">
-                                        File belum dikirim
-                                      </p>
-                                      <p className="text-xs text-amber-700/70 dark:text-amber-400/70">
-                                        Mahasiswa belum mengupload file laporan
-                                        untuk soal ini
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : jawaban?.jawaban_mahasiswa ? (
-                                <div className="rounded-xl border bg-muted/30 p-4">
-                                  <Label className="mb-2 block text-sm text-muted-foreground">
-                                    Jawaban mahasiswa
-                                  </Label>
-                                  <p className="whitespace-pre-wrap text-sm">
-                                    {jawaban.jawaban_mahasiswa}
-                                  </p>
-                                </div>
-                              ) : (
-                                <Alert variant="destructive">
-                                  <AlertCircle className="h-4 w-4" />
-                                  <AlertDescription>
-                                    Mahasiswa belum mengirim file atau jawaban.
-                                  </AlertDescription>
-                                </Alert>
-                              )}
-
-                              {jawaban && (
-                                <div className="grid gap-4 md:grid-cols-2">
-                                  <div>
-                                    <Label
-                                      htmlFor={`review-poin-${jawaban.id}`}
-                                    >
-                                      Poin (Max: {soal.poin})
-                                    </Label>
-                                    <Input
-                                      id={`review-poin-${jawaban.id}`}
-                                      type="number"
-                                      min="0"
-                                      max={soal.poin}
-                                      value={grading?.poin_diperoleh || 0}
-                                      onChange={(e) =>
-                                        handleReviewGradeChange(
-                                          jawaban.id,
-                                          "poin_diperoleh",
-                                          Number(e.target.value),
-                                        )
-                                      }
-                                      className="mt-2"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label
-                                      htmlFor={`review-feedback-${jawaban.id}`}
-                                    >
-                                      Feedback
-                                    </Label>
-                                    <Textarea
-                                      id={`review-feedback-${jawaban.id}`}
-                                      value={grading?.feedback || ""}
-                                      onChange={(e) =>
-                                        handleReviewGradeChange(
-                                          jawaban.id,
-                                          "feedback",
-                                          e.target.value,
-                                        )
-                                      }
-                                      className="mt-2"
-                                      rows={4}
-                                      placeholder="Tambahkan catatan penilaian..."
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
+                            <TableCell className="text-center">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewAttempt(attempt.id)}
+                                title={
+                                  laporanMode
+                                    ? "Lihat & Nilai Laporan"
+                                    : "Tampilkan di Panel CBT"
+                                }
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
-                    </div>
-
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={handleSaveLaporanReview}
-                        disabled={reviewSaving || reviewLoading}
-                        className="gap-2"
-                      >
-                        {reviewSaving ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="h-4 w-4" />
-                        )}
-                        Simpan Penilaian
-                      </Button>
-                    </div>
-                  </div>
+                    </TableBody>
+                  </Table>
                 )}
               </CardContent>
             </Card>
-          </section>
-        )}
+          </TabsContent>
 
-        {/* Tabs - Hide for CBT mode and laporan mode */}
-        {!isAutoGradedQuiz(quiz) && !laporanMode && (
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="space-y-4"
-          >
-            <TabsList className="h-auto rounded-xl border border-primary/20 bg-white/85 p-1 shadow-sm dark:border-primary/20 dark:bg-card/70">
-              <TabsTrigger
-                value="overview"
-                className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger
-                value="attempts"
-                className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                Submissions ({attempts.length})
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Informasi Tugas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {laporanMode ? (
-                    // LAPORAN MODE: Show submission info
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium">
-                          Tipe Tugas
-                        </Label>
-                        <p className="text-2xl font-bold">Laporan Praktikum</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">
-                          Total Mahasiswa
-                        </Label>
-                        <p className="text-2xl font-bold">
-                          {statistics.totalAttempts}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">
-                          Sudah Submit
-                        </Label>
-                        <p className="text-2xl font-bold text-success">
-                          {statistics.completedAttempts}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    // CBT MODE: Show score info
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium">
-                          Total Soal
-                        </Label>
-                        <p className="text-2xl font-bold">
-                          {(quiz as any).total_soal || 0}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">
-                          Total Poin
-                        </Label>
-                        <p className="text-2xl font-bold">
-                          {getQuizMaxPoin(quiz)}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Durasi</Label>
-                        <p className="text-2xl font-bold">
-                          {(quiz as any).durasi ||
-                            (quiz as any).durasi_menit ||
-                            0}{" "}
-                          menit
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">
-                          Waktu Rata-rata
-                        </Label>
-                        <p className="text-2xl font-bold">
-                          {statistics.averageTime.toFixed(0)} menit
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Score Distribution - Only for CBT */}
-              {!laporanMode && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Distribusi Skor</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {getScoreDistribution(attempts, quiz).map((range) => (
-                        <div key={range.label}>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium">
-                              {range.label}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              {range.count} mahasiswa
-                            </span>
-                          </div>
-                          <Progress
-                            value={
-                              attempts.length > 0
-                                ? (range.count / attempts.length) * 100
-                                : 0
-                            }
-                            className="h-2"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            {/* Attempts Tab */}
-            <TabsContent value="attempts" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Daftar Percobaan</CardTitle>
-                    <div className="relative w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Cari mahasiswa..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {filteredAttempts.length === 0 ? (
-                    <div className="text-center py-12">
-                      <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">
-                        {searchQuery
-                          ? "Tidak ada hasil yang sesuai"
-                          : "Belum ada mahasiswa yang mengerjakan tugas ini"}
-                      </p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Mahasiswa</TableHead>
-                          <TableHead>Status</TableHead>
-                          {!laporanMode && (
-                            <>
-                              <TableHead className="text-right">Skor</TableHead>
-                              <TableHead className="text-right">
-                                Waktu
-                              </TableHead>
-                            </>
-                          )}
-                          {laporanMode && <TableHead>Waktu Submit</TableHead>}
-                          <TableHead className="text-center">Aksi</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredAttempts.map((attempt) => {
-                          const isGraded = attemptHasReviewResult(attempt);
-                          const isPassed = isAttemptPassed(attempt, quiz);
-                          const quizMaxPoin = getQuizMaxPoin(quiz);
-                          const scorePercentage = getAttemptPercentage(
-                            attempt,
-                            quiz,
-                          );
-
-                          return (
-                            <TableRow key={attempt.id}>
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  <Avatar>
-                                    <AvatarFallback>
-                                      {attempt.mahasiswa?.user?.full_name
-                                        .split(" ")
-                                        .map((n) => n[0])
-                                        .join("")
-                                        .toUpperCase() || "M"}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <p className="font-medium">
-                                      {attempt.mahasiswa?.user?.full_name ||
-                                        "Unknown"}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {attempt.mahasiswa?.nim || "-"}
-                                    </p>
-                                  </div>
-                                </div>
-                              </TableCell>
-
-                              <TableCell>
-                                {laporanMode ? (
-                                  getLaporanReviewBadge(attempt)
-                                ) : (
-                                  // CBT MODE: Show pass/fail status
-                                  <>
-                                    {isGraded ? (
-                                      <StatusBadge
-                                        status={isPassed ? "success" : "error"}
-                                        pulse={false}
-                                      >
-                                        {isPassed ? (
-                                          <>
-                                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                                            Lulus
-                                          </>
-                                        ) : (
-                                          <>
-                                            <XCircle className="h-3 w-3 mr-1" />
-                                            Tidak Lulus
-                                          </>
-                                        )}
-                                      </StatusBadge>
-                                    ) : attempt.status === "submitted" ? (
-                                      <StatusBadge
-                                        status="warning"
-                                        pulse={false}
-                                      >
-                                        <Clock className="h-3 w-3 mr-1" />
-                                        Menunggu Penilaian
-                                      </StatusBadge>
-                                    ) : (
-                                      <StatusBadge status="info" pulse={false}>
-                                        <Clock className="h-3 w-3 mr-1" />
-                                        Sedang Dikerjakan
-                                      </StatusBadge>
-                                    )}
-                                  </>
-                                )}
-                              </TableCell>
-
-                              {!laporanMode && (
-                                <>
-                                  <TableCell className="text-right">
-                                    <span
-                                      className={cn(
-                                        "font-semibold",
-                                        isPassed
-                                          ? "text-success"
-                                          : "text-danger",
-                                      )}
-                                    >
-                                      {/* FIXED: Changed nilai to total_poin */}
-                                      {getAttemptEffectivePoints(attempt, quiz)}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      {" / "}
-                                      {quizMaxPoin}
-                                    </span>
-                                    <div className="text-xs text-muted-foreground">
-                                      {scorePercentage.toFixed(1)}%
-                                    </div>
-                                  </TableCell>
-
-                                  <TableCell className="text-right text-sm text-muted-foreground">
-                                    {/* FIXED: Changed property names */}
-                                    {attempt.submitted_at && attempt.started_at
-                                      ? calculateDuration(
-                                          attempt.started_at,
-                                          attempt.submitted_at,
-                                        )
-                                      : "-"}
-                                  </TableCell>
-                                </>
-                              )}
-
-                              {laporanMode && (
-                                <TableCell className="text-sm text-muted-foreground">
-                                  {attempt.submitted_at
-                                    ? new Date(
-                                        attempt.submitted_at,
-                                      ).toLocaleString("id-ID", {
-                                        day: "2-digit",
-                                        month: "short",
-                                        year: "numeric",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })
-                                    : "-"}
-                                </TableCell>
-                              )}
-
-                              <TableCell className="text-center">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleViewAttempt(attempt.id)}
-                                  title={
-                                    laporanMode
-                                      ? "Lihat & Nilai Laporan"
-                                      : "Tampilkan di Panel CBT"
-                                  }
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Analysis Tab */}
-            <TabsContent value="analysis">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Analisis Per Soal</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-center py-12">
-                    Fitur analisis per soal akan segera tersedia
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
+          {/* Analysis Tab */}
+          <TabsContent value="analysis">
+            <Card>
+              <CardHeader>
+                <CardTitle>Analisis Per Soal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-center py-12">
+                  Fitur analisis per soal akan segera tersedia
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }

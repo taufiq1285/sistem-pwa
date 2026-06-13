@@ -7,6 +7,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 import { clearAllCacheSync } from "@/lib/offline/api-cache";
+import logger from "@/lib/utils/logger";
 
 /**
  * Hapus SEMUA kuis (essay dan pilihan_ganda)
@@ -23,7 +24,7 @@ export async function cleanupAllKuisData(): Promise<{
   error?: string;
 }> {
   try {
-    console.log("🧹 Starting cleanup of ALL kuis data...");
+    logger.debug("🧹 Starting cleanup of ALL kuis data...");
 
     let deletedJawaban = 0;
     let deletedAttempts = 0;
@@ -40,7 +41,7 @@ export async function cleanupAllKuisData(): Promise<{
       throw new Error(`Gagal menghapus jawaban: ${jawabanError.message}`);
     }
     deletedJawaban = jawabanCount || 0;
-    console.log(`✅ Deleted ${deletedJawaban} jawaban`);
+    logger.debug(`✅ Deleted ${deletedJawaban} jawaban`);
 
     // 2. Hapus semua attempt_kuis
     const { count: attemptCount, error: attemptError } = await supabase
@@ -52,7 +53,7 @@ export async function cleanupAllKuisData(): Promise<{
       throw new Error(`Gagal menghapus attempt_kuis: ${attemptError.message}`);
     }
     deletedAttempts = attemptCount || 0;
-    console.log(`✅ Deleted ${deletedAttempts} attempt_kuis`);
+    logger.debug(`✅ Deleted ${deletedAttempts} attempt_kuis`);
 
     // 3. Hapus semua soal
     const { count: soalCount, error: soalError } = await supabase
@@ -64,7 +65,7 @@ export async function cleanupAllKuisData(): Promise<{
       throw new Error(`Gagal menghapus soal: ${soalError.message}`);
     }
     deletedSoal = soalCount || 0;
-    console.log(`✅ Deleted ${deletedSoal} soal`);
+    logger.debug(`✅ Deleted ${deletedSoal} soal`);
 
     // 4. Hapus semua kuis
     const { count: kuisCount, error: kuisError } = await supabase
@@ -76,13 +77,13 @@ export async function cleanupAllKuisData(): Promise<{
       throw new Error(`Gagal menghapus kuis: ${kuisError.message}`);
     }
     deletedKuis = kuisCount || 0;
-    console.log(`✅ Deleted ${deletedKuis} kuis`);
+    logger.debug(`✅ Deleted ${deletedKuis} kuis`);
 
     // 5. Clear semua cache
     const cacheCleared = await clearAllCacheSync();
-    console.log(`✅ Cleared ${cacheCleared} cache entries`);
+    logger.debug(`✅ Cleared ${cacheCleared} cache entries`);
 
-    console.log("🎉 Cleanup completed!");
+    logger.debug("🎉 Cleanup completed!");
 
     return {
       success: true,
@@ -123,7 +124,7 @@ export async function cleanupTugasPraktikumOnly(): Promise<{
   error?: string;
 }> {
   try {
-    console.log("🧹 Starting cleanup of TUGAS PRAKTIKUM (essay) only...");
+    logger.debug("🧹 Starting cleanup of TUGAS PRAKTIKUM (essay) only...");
 
     // 1. Ambil semua ID kuis essay
     const { data: kuisEssay, error: fetchError } = await supabase
@@ -138,7 +139,7 @@ export async function cleanupTugasPraktikumOnly(): Promise<{
     const kuisIds = kuisEssay?.map((k) => k.id) || [];
 
     if (kuisIds.length === 0) {
-      console.log("ℹ️ No essay kuis found, nothing to cleanup");
+      logger.debug("ℹ️ No essay kuis found, nothing to cleanup");
       return {
         success: true,
         deleted: {
@@ -150,7 +151,7 @@ export async function cleanupTugasPraktikumOnly(): Promise<{
       };
     }
 
-    console.log(`Found ${kuisIds.length} essay kuis to cleanup`);
+    logger.debug(`Found ${kuisIds.length} essay kuis to cleanup`);
 
     let deletedJawaban = 0;
     let deletedAttempts = 0;
@@ -175,7 +176,7 @@ export async function cleanupTugasPraktikumOnly(): Promise<{
         throw new Error(`Gagal menghapus jawaban: ${jawabanError.message}`);
       }
       deletedJawaban = jawabanCount || 0;
-      console.log(`✅ Deleted ${deletedJawaban} jawaban`);
+      logger.debug(`✅ Deleted ${deletedJawaban} jawaban`);
     }
 
     // 3. Hapus attempt_kuis untuk kuis essay
@@ -188,7 +189,7 @@ export async function cleanupTugasPraktikumOnly(): Promise<{
       throw new Error(`Gagal menghapus attempt_kuis: ${attemptError.message}`);
     }
     deletedAttempts = attemptCount || 0;
-    console.log(`✅ Deleted ${deletedAttempts} attempt_kuis`);
+    logger.debug(`✅ Deleted ${deletedAttempts} attempt_kuis`);
 
     // 4. Hapus soal untuk kuis essay
     const { count: soalCount, error: soalError } = await supabase
@@ -200,7 +201,7 @@ export async function cleanupTugasPraktikumOnly(): Promise<{
       throw new Error(`Gagal menghapus soal: ${soalError.message}`);
     }
     deletedSoal = soalCount || 0;
-    console.log(`✅ Deleted ${deletedSoal} soal`);
+    logger.debug(`✅ Deleted ${deletedSoal} soal`);
 
     // 5. Hapus kuis essay
     const { count: kuisCount, error: kuisError } = await supabase
@@ -212,13 +213,13 @@ export async function cleanupTugasPraktikumOnly(): Promise<{
       throw new Error(`Gagal menghapus kuis essay: ${kuisError.message}`);
     }
     deletedKuis = kuisCount || 0;
-    console.log(`✅ Deleted ${deletedKuis} kuis essay`);
+    logger.debug(`✅ Deleted ${deletedKuis} kuis essay`);
 
     // 6. Clear cache
     const cacheCleared = await clearAllCacheSync();
-    console.log(`✅ Cleared ${cacheCleared} cache entries`);
+    logger.debug(`✅ Cleared ${cacheCleared} cache entries`);
 
-    console.log("🎉 Tugas praktikum cleanup completed!");
+    logger.debug("🎉 Tugas praktikum cleanup completed!");
 
     return {
       success: true,

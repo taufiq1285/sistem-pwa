@@ -3,6 +3,7 @@ import { useSync } from "@/lib/hooks/useSync";
 import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 import type { UseSyncReturn } from "@/lib/hooks/useSync";
 import { syncPendingOfflineQuizSubmissions } from "@/lib/api/kuis.api";
+import logger from "@/lib/utils/logger";
 
 const SyncContext = createContext<UseSyncReturn | null>(null);
 
@@ -26,7 +27,7 @@ export function SyncProvider({ children, autoSync = true }: SyncProviderProps) {
     globalSyncRef.current = (async () => {
       try {
         if (sync.stats && sync.stats.pending > 0) {
-          console.log(`Auto-syncing ${sync.stats.pending} pending items...`);
+          logger.debug(`Auto-syncing ${sync.stats.pending} pending items...`);
           await sync.processQueue();
         }
 

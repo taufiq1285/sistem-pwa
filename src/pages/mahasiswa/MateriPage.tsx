@@ -20,10 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import logger from "@/lib/utils/logger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DashboardCard } from "@/components/ui/dashboard-card";
-import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import {
+  CardListSkeleton,
+  ErrorFallback,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 import { GlassCard } from "@/components/ui/glass-card";
 import { MateriList } from "@/components/features/materi/MateriCard";
 import { MateriViewer } from "@/components/features/materi/MateriViewer";
@@ -40,12 +47,14 @@ import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 
 export default function MahasiswaMateriPage() {
   const { user } = useAuth();
+  const { isOffline } = useOfflineContext();
 
   // ============================================================================
   // STATE
   // ============================================================================
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [materiList, setMateriList] = useState<Materi[]>([]);
   const [filteredMateri, setFilteredMateri] = useState<Materi[]>([]);
   const [enrolledKelasIds, setEnrolledKelasIds] = useState<string[]>([]);
@@ -124,6 +133,7 @@ export default function MahasiswaMateriPage() {
 
     try {
       setLoading(true);
+      setError(null);
 
       const cacheKey = `mahasiswa_materi_${user.mahasiswa.id}`;
       const cachedEntry = await getCachedData<Materi[]>(cacheKey);
@@ -194,13 +204,15 @@ export default function MahasiswaMateriPage() {
       );
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
-      console.log("[Materi] Data loaded:", enrolledMateri.length, "materi");
-    } catch (error: any) {
-      console.error("Error loading materi:", error);
+      logger.debug("[Materi] Data loaded:", enrolledMateri.length, "materi");
+    } catch (err: any) {
+      console.error("Error loading materi:", err);
       if (materiList.length > 0 || !navigator.onLine) {
         setIsOfflineData(true);
+      } else {
+        setError(err.message || "Gagal memuat materi");
       }
-      toast.error(error?.message || "Gagal memuat materi");
+      toast.error(err?.message || "Gagal memuat materi");
     } finally {
       setLoading(false);
     }
@@ -231,7 +243,7 @@ export default function MahasiswaMateriPage() {
   function filterMateri() {
     let filtered = [...materiList];
 
-    console.log("Filtering materi:", {
+    logger.debug("Filtering materi:", {
       total: filtered.length,
       mataKuliah: selectedMataKuliah,
       kelas: selectedKelas,
@@ -244,20 +256,20 @@ export default function MahasiswaMateriPage() {
       filtered = filtered.filter(
         (m) => getMateriMataKuliahInfo(m).id === selectedMataKuliah,
       );
-      console.log("After mata kuliah filter:", filtered.length);
+      logger.debug("After mata kuliah filter:", filtered.length);
     }
 
     // Filter by kelas
     if (selectedKelas !== "all") {
       filtered = filtered.filter((m) => m.kelas_id === selectedKelas);
-      console.log("After kelas filter:", filtered.length);
+      logger.debug("After kelas filter:", filtered.length);
     }
 
     // Filter by minggu
     if (selectedMinggu !== "all") {
       const minggu = parseInt(selectedMinggu);
       filtered = filtered.filter((m) => m.minggu_ke === minggu);
-      console.log("After minggu filter:", filtered.length);
+      logger.debug("After minggu filter:", filtered.length);
     }
 
     // Filter by search query
@@ -268,10 +280,10 @@ export default function MahasiswaMateriPage() {
           m.judul.toLowerCase().includes(query) ||
           m.deskripsi?.toLowerCase().includes(query),
       );
-      console.log("After search filter:", filtered.length);
+      logger.debug("After search filter:", filtered.length);
     }
 
-    console.log("Final filtered:", filtered.length);
+    logger.debug("Final filtered:", filtered.length);
     setFilteredMateri(filtered);
   }
 
@@ -331,48 +343,63 @@ export default function MahasiswaMateriPage() {
   // RENDER
   // ============================================================================
 
+  // Loading state
   if (loading) {
     return (
-      <div className="app-container py-4 sm:py-6 lg:py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <DashboardSkeleton />
-          <DashboardSkeleton />
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-96 animate-pulse rounded bg-muted" />
         </div>
+        <CardListSkeleton />
       </div>
     );
   }
 
+  // Error state
+  if (error) {
+    return <ErrorFallback message={error} onRetry={() => loadData(true)} />;
+  }
+
+  // Offline state forced
+  if (isOffline && !materiList?.length) {
+    return <EmptyState variant="offline" context="materi" />;
+  }
+
+  // Empty state
+  if (!materiList?.length) {
+    return <EmptyState variant="no-data" context="materi" />;
+  }
+
   return (
-    <div className="app-container py-4 sm:py-6 lg:py-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <OfflineAwareContent
+      hasData={materiList.length > 0}
+      context="materi"
+      onSync={() => loadData(true)}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
         {/* Header */}
-        <GlassCard
-          intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
-        >
-          <CardContent className="p-6 sm:p-8">
-            <div className="mb-2 flex items-center gap-3">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
-                Materi Pembelajaran
-              </h1>
-            </div>
-            <p className="text-muted-foreground">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Materi Pembelajaran
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Akses materi pembelajaran dari dosen Anda
             </p>
             {isOfflineData && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Mode offline • data tersimpan lokal
+              <p className="mt-2 text-xs text-muted-foreground">
+                Mode offline · data tersimpan lokal
                 {lastUpdatedAt
-                  ? ` • update ${new Intl.DateTimeFormat("id-ID", {
+                  ? ` · update ${new Intl.DateTimeFormat("id-ID", {
                       dateStyle: "medium",
                       timeStyle: "short",
                     }).format(new Date(lastUpdatedAt))}`
                   : ""}
               </p>
             )}
-          </CardContent>
-        </GlassCard>
+          </div>
+        </div>
 
         {isOfflineData && (
           <Alert className="rounded-2xl border-warning/30 bg-warning/10 text-warning">
@@ -514,19 +541,32 @@ export default function MahasiswaMateriPage() {
         )}
 
         {/* Materi List */}
-        <MateriList
-          materiList={filteredMateri}
-          variant="mahasiswa"
-          showActions={true}
-          showDosenActions={false}
-          onView={handleView}
-          onDownload={handleDownload}
-          emptyMessage={
-            enrolledKelasIds.length === 0
-              ? "Anda belum terdaftar di kelas manapun"
-              : "Belum ada materi tersedia"
-          }
-        />
+        {filteredMateri.length === 0 ? (
+          <EmptyState
+            variant={materiList.length === 0 ? "no-data" : "no-results"}
+            context="materi"
+            actionLabel={materiList.length === 0 ? undefined : "Reset Filter"}
+            onAction={
+              materiList.length === 0
+                ? undefined
+                : () => {
+                    setSelectedMataKuliah("all");
+                    setSelectedKelas("all");
+                    setSelectedMinggu("all");
+                    setSearchQuery("");
+                  }
+            }
+          />
+        ) : (
+          <MateriList
+            materiList={filteredMateri}
+            variant="mahasiswa"
+            showActions={true}
+            showDosenActions={false}
+            onView={handleView}
+            onDownload={handleDownload}
+          />
+        )}
 
         {/* Viewer */}
         <MateriViewer
@@ -539,6 +579,6 @@ export default function MahasiswaMateriPage() {
           onDownload={() => viewingMateri && handleDownload(viewingMateri)}
         />
       </div>
-    </div>
+    </OfflineAwareContent>
   );
 }

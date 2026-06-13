@@ -284,6 +284,7 @@ describe("Laboran API", () => {
         peminjam_nama: "John Doe",
         peminjam_nim: "12345",
         inventaris_nama: "Mikroskop",
+        inventaris_detail: "2x Mikroskop",
         inventaris_kode: "INV001",
         laboratorium_nama: "Lab Biologi",
         jumlah_pinjam: 2,
@@ -337,6 +338,7 @@ describe("Laboran API", () => {
 
       expect(result[0].peminjam_nama).toBe("Unknown");
       expect(result[0].inventaris_nama).toBe("Unknown");
+      expect(result[0].inventaris_detail).toBe("2x Unknown");
     });
 
     it("should respect limit parameter", async () => {

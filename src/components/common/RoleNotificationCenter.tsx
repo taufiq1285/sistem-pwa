@@ -446,8 +446,13 @@ export function RoleNotificationCenter({
 
   if (loading) {
     return (
-      <div className="app-container space-y-6 py-4 sm:py-6 lg:py-8">
-        <PageHeader title="Notifikasi" description={description} />
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer rounded-md" />
+            <div className="h-4 w-72 skeleton-shimmer rounded-md" />
+          </div>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           {[1, 2, 3, 4].map((index) => (
             <Card
@@ -471,34 +476,36 @@ export function RoleNotificationCenter({
   }
 
   return (
-    <div className="app-container space-y-6 py-4 sm:py-6 lg:py-8">
-      <PageHeader
-        title="Notifikasi"
-        description={description}
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => loadData(true)}
-              disabled={refreshing}
-              className="w-full sm:w-auto"
-            >
-              <RefreshCcw
-                className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-              />
-              {refreshing ? "Memuat..." : "Refresh"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleMarkAllAsRead}
-              disabled={unreadNotifications === 0}
-              className="w-full sm:w-auto"
-            >
-              Tandai Semua Dibaca
-            </Button>
-          </div>
-        }
-      />
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Notifikasi center
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            onClick={() => loadData(true)}
+            disabled={refreshing}
+            className="w-full sm:w-auto"
+          >
+            <RefreshCcw
+              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            {refreshing ? "Memuat..." : "Refresh"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleMarkAllAsRead}
+            disabled={unreadNotifications === 0}
+            className="w-full sm:w-auto"
+          >
+            Tandai Semua Dibaca
+          </Button>
+        </div>
+      </div>
 
       {error ? (
         <Alert variant="destructive" className="rounded-2xl">

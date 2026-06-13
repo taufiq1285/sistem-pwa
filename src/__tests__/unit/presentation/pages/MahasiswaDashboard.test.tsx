@@ -2,8 +2,10 @@
  * Mahasiswa DashboardPage Unit Tests
  */
 
+import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { DashboardPage } from "@/pages/mahasiswa/DashboardPage";
 
 const { mockUseAuth, mockCacheAPI, mockGetCachedData, mockNetworkDetector } =
@@ -29,9 +31,14 @@ vi.mock("@/lib/offline/network-detector", () => ({
 
 vi.mock("@/lib/api/mahasiswa.api", () => ({
   getMahasiswaStats: vi.fn(),
-  getMyKelas: vi.fn(),
+  getDashboardKelas: vi.fn(),
   getMyJadwal: vi.fn(),
 }));
+
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return { ...actual, useNavigate: () => vi.fn() };
+});
 
 const mockStats = {
   totalKelasPraktikum: 3,
@@ -61,6 +68,10 @@ const mockJadwal = [
   },
 ];
 
+function renderWithRouter(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
+
 describe("Mahasiswa DashboardPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -77,7 +88,6 @@ describe("Mahasiswa DashboardPage", () => {
     });
 
     // cacheAPI dipanggil 3x: stats, kelas, jadwal
-    // Gunakan implementasi dinamis agar tidak habis antar test
     mockCacheAPI.mockImplementation((key: string) => {
       if (key.includes("stats")) return Promise.resolve(mockStats);
       if (key.includes("kelas")) return Promise.resolve(mockKelas);
@@ -91,7 +101,7 @@ describe("Mahasiswa DashboardPage", () => {
   describe("loading state", () => {
     it("merender loading skeleton dengan animate-pulse", () => {
       mockCacheAPI.mockReturnValue(new Promise(() => {}));
-      const { container } = render(<DashboardPage />);
+      const { container } = renderWithRouter(<DashboardPage />);
       const skeletonCards = container.querySelectorAll('[data-slot="card"]');
       expect(skeletonCards.length).toBeGreaterThan(0);
     });
@@ -99,37 +109,36 @@ describe("Mahasiswa DashboardPage", () => {
 
   describe("loaded state dengan data", () => {
     it("menampilkan judul Dashboard Mahasiswa", async () => {
-      render(<DashboardPage />);
+      renderWithRouter(<DashboardPage />);
       await waitFor(() => {
         expect(screen.getByText("Dashboard Mahasiswa")).toBeInTheDocument();
       });
     });
 
     it("menampilkan nama user yang login", async () => {
-      render(<DashboardPage />);
+      renderWithRouter(<DashboardPage />);
       await waitFor(() => {
         expect(screen.getByText("Siti Rahayu")).toBeInTheDocument();
       });
     });
 
-    it("menampilkan total kelas dari stats", async () => {
-      render(<DashboardPage />);
+    it("menampilkan nilai rata-rata dari stats", async () => {
+      renderWithRouter(<DashboardPage />);
       await waitFor(() => {
-        // stats.totalKelasPraktikum = 3 pada kartu "Total Kelas"
-        expect(screen.getByText("Total Kelas")).toBeInTheDocument();
-        expect(screen.getAllByText("3").length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText("Nilai Rata-rata")).toBeInTheDocument();
+        expect(screen.getAllByText("85.0").length).toBeGreaterThanOrEqual(1);
       });
     });
 
     it("memanggil cacheAPI setidaknya 3 kali (stats, kelas, jadwal)", async () => {
-      render(<DashboardPage />);
+      renderWithRouter(<DashboardPage />);
       await waitFor(() => {
         expect(mockCacheAPI.mock.calls.length).toBeGreaterThanOrEqual(3);
       });
     });
 
     it("memanggil cacheAPI dengan key yang mengandung user id", async () => {
-      render(<DashboardPage />);
+      renderWithRouter(<DashboardPage />);
       await waitFor(() => {
         const firstCall = mockCacheAPI.mock.calls[0][0] as string;
         expect(firstCall).toContain("mhs-1");
@@ -145,7 +154,7 @@ describe("Mahasiswa DashboardPage", () => {
         if (key.includes("jadwal")) return Promise.resolve([]);
         return Promise.resolve({});
       });
-      render(<DashboardPage />);
+      renderWithRouter(<DashboardPage />);
       await waitFor(() => {
         expect(
           screen.getByText(/Saat ini tidak ada kelas aktif/i),
@@ -154,7 +163,7 @@ describe("Mahasiswa DashboardPage", () => {
     });
 
     it("tidak menampilkan alert jika sudah terdaftar kelas", async () => {
-      render(<DashboardPage />);
+      renderWithRouter(<DashboardPage />);
       await waitFor(() => screen.getByText("Dashboard Mahasiswa"));
       expect(
         screen.queryByText(/belum terdaftar di kelas praktikum/i),
@@ -165,7 +174,7 @@ describe("Mahasiswa DashboardPage", () => {
   describe("tanpa user", () => {
     it("tidak memanggil cacheAPI jika user null", async () => {
       mockUseAuth.mockReturnValue({ user: null });
-      render(<DashboardPage />);
+      renderWithRouter(<DashboardPage />);
       await new Promise((r) => setTimeout(r, 50));
       expect(mockCacheAPI).not.toHaveBeenCalled();
     });
@@ -174,7 +183,7 @@ describe("Mahasiswa DashboardPage", () => {
   describe("error handling", () => {
     it("tidak crash saat cacheAPI reject", async () => {
       mockCacheAPI.mockReset().mockRejectedValue(new Error("Network Error"));
-      expect(() => render(<DashboardPage />)).not.toThrow();
+      expect(() => renderWithRouter(<DashboardPage />)).not.toThrow();
       await new Promise((r) => setTimeout(r, 100));
     });
   });
@@ -189,7 +198,7 @@ describe("Mahasiswa DashboardPage", () => {
         .mockResolvedValueOnce({ data: mockJadwal, timestamp: Date.now() });
       mockCacheAPI.mockReset().mockRejectedValue(new Error("offline"));
 
-      render(<DashboardPage />);
+      renderWithRouter(<DashboardPage />);
 
       await waitFor(() => {
         expect(screen.getAllByText(/Mode Offline/i).length).toBeGreaterThan(0);

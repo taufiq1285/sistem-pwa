@@ -14,6 +14,7 @@ import {
   remove,
   withApiResponse,
 } from "./base.api";
+import logger from "@/lib/utils/logger";
 import {
   notifyMahasiswaTugasBaru,
   notifyMahasiswaKuisPublished,
@@ -258,7 +259,7 @@ export async function getKuis(
   options: GetKuisOptions = {},
 ): Promise<Kuis[]> {
   try {
-    console.log(
+    logger.debug(
       "🔍 [getKuis] Called with filters:",
       filters,
       "options:",
@@ -306,7 +307,7 @@ export async function getKuis(
       });
     }
 
-    console.log("🔍 [getKuis] Filter conditions:", filterConditions);
+    logger.debug("🔍 [getKuis] Filter conditions:", filterConditions);
 
     const queryOptions = {
       select: `
@@ -342,7 +343,7 @@ export async function getKuis(
       staleWhileRevalidate: !options.forceRefresh, // Disable SWR on force refresh
     };
 
-    console.log("🔍 [getKuis] Query options:", {
+    logger.debug("🔍 [getKuis] Query options:", {
       ...queryOptions,
       select: "(select query)",
     });
@@ -352,7 +353,7 @@ export async function getKuis(
         ? await queryWithFilters<Kuis>("kuis", filterConditions, queryOptions)
         : await query<Kuis>("kuis", queryOptions);
 
-    console.log("✅ [getKuis] Data returned:", data.length, "quizzes");
+    logger.debug("✅ [getKuis] Data returned:", data.length, "quizzes");
 
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
@@ -361,7 +362,7 @@ export async function getKuis(
           k.judul.toLowerCase().includes(searchLower) ||
           k.deskripsi?.toLowerCase().includes(searchLower),
       );
-      console.log(
+      logger.debug(
         "🔍 [getKuis] After search filter:",
         filtered.length,
         "quizzes",
@@ -438,7 +439,7 @@ export async function getKuisByKelas(
 // Internal implementation (unwrapped)
 async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
   try {
-    console.log("🔵 API createKuis called with data:", data);
+    logger.debug("🔵 API createKuis called with data:", data);
 
     // ✅ AUTO-SET DATES: If not provided, set sensible defaults
     const dataWithDefaults = {
@@ -449,33 +450,33 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
     };
 
     const result = await insert<Kuis>("kuis", dataWithDefaults);
-    console.log("✅ API createKuis success:", result);
+    logger.debug("✅ API createKuis success:", result);
 
     // ✅ CACHE INVALIDATION STRATEGY:
     // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
     // This prevents race condition where UI loads data from stale cache
-    console.log("🧹 [createKuis] Starting SYNC clear all cache...");
+    logger.debug("🧹 [createKuis] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(
+    logger.debug(
       `✅ [createKuis] Cache cleared: ${deletedCount} entries deleted`,
     );
 
     // ✅ IMMEDIATE REFRESH: Trigger custom event to notify KuisListPage immediately
     // This happens AFTER all cache is cleared, ensuring fresh data is loaded
-    console.log("📡 [createKuis] Dispatching kuis:changed event...");
+    logger.debug("📡 [createKuis] Dispatching kuis:changed event...");
     window.dispatchEvent(
       new CustomEvent("kuis:changed", {
         detail: { action: "created", kuis: result, dosenId: data.dosen_id },
       }),
     );
-    console.log("📢 [createKuis] Event dispatched: kuis:changed (created)");
+    logger.debug("📢 [createKuis] Event dispatched: kuis:changed (created)");
 
     // Notify mahasiswa only when the task is immediately created as published.
     if (dataWithDefaults.status === "published") {
       Promise.resolve()
         .then(async () => {
           try {
-            console.log("[NOTIFICATION] Starting notification process...");
+            logger.debug("[NOTIFICATION] Starting notification process...");
             const { data: enrollment, error: enrollError } = await supabase
               .from("kelas_mahasiswa")
               .select(
@@ -517,7 +518,7 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
                     result.id,
                     data.kelas_id,
                   );
-                  console.log(
+                  logger.debug(
                     `[NOTIFICATION] ${mahasiswaUserIds.length} mahasiswa notified: New tugas "${data.judul}"`,
                   );
                 }
@@ -558,9 +559,9 @@ async function updateKuisImpl(
     // ✅ CACHE INVALIDATION STRATEGY:
     // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
     // This prevents race condition where UI loads data from stale cache
-    console.log("🧹 [updateKuis] Starting SYNC clear all cache...");
+    logger.debug("🧹 [updateKuis] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(
+    logger.debug(
       `✅ [updateKuis] Cache cleared: ${deletedCount} entries deleted`,
     );
 
@@ -576,9 +577,9 @@ async function updateKuisImpl(
           },
         }),
       );
-      console.log("📢 Event dispatched: kuis:changed (updated)");
+      logger.debug("📢 Event dispatched: kuis:changed (updated)");
     } catch (eventError) {
-      console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+      logger.debug("⚠️ Failed to dispatch kuis:changed event:", eventError);
     }
 
     if (data.status === "published") {
@@ -656,9 +657,9 @@ async function deleteKuisImpl(id: string): Promise<boolean> {
 
     // ✅ CACHE INVALIDATION STRATEGY:
     // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
-    console.log("🧹 [deleteKuis] Starting SYNC clear all cache...");
+    logger.debug("🧹 [deleteKuis] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(
+    logger.debug(
       `✅ [deleteKuis] Cache cleared: ${deletedCount} entries deleted`,
     );
 
@@ -669,9 +670,9 @@ async function deleteKuisImpl(id: string): Promise<boolean> {
           detail: { action: "deleted", kuisId: id },
         }),
       );
-      console.log("📢 Event dispatched: kuis:changed (deleted)");
+      logger.debug("📢 Event dispatched: kuis:changed (deleted)");
     } catch (eventError) {
-      console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+      logger.debug("⚠️ Failed to dispatch kuis:changed event:", eventError);
     }
 
     return result;
@@ -753,7 +754,7 @@ export async function publishKuis(id: string): Promise<Kuis> {
           ) || [];
 
       if (mahasiswaIds.length === 0) {
-        console.warn(
+        logger.debug(
           "[NOTIFICATION] No mahasiswa targets found for published kuis",
           {
             kuisId: kuis.id,
@@ -771,7 +772,7 @@ export async function publishKuis(id: string): Promise<Kuis> {
           (kuis as any).tipe_kuis ?? null,
         );
 
-        console.log("[NOTIFICATION] Published kuis notifications created:", {
+        logger.debug("[NOTIFICATION] Published kuis notifications created:", {
           kuisId: kuis.id,
           targetCount: mahasiswaIds.length,
           insertedCount: notifications.length,
@@ -987,13 +988,13 @@ async function createSoalImpl(data: CreateSoalData): Promise<Soal> {
 
       dosenId = kuis?.dosen_id || null;
     } catch (fetchError) {
-      console.warn("⚠️ Failed to fetch kuis for event dispatch:", fetchError);
+      logger.debug("⚠️ Failed to fetch kuis for event dispatch:", fetchError);
     }
 
     // ✅ CRITICAL FIX: Use SYNC clearAllCache to ensure cache is cleared BEFORE dispatching event
-    console.log("🧹 [createSoal] Starting SYNC clear all cache...");
+    logger.debug("🧹 [createSoal] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(
+    logger.debug(
       `✅ [createSoal] Cache cleared: ${deletedCount} entries deleted`,
     );
 
@@ -1005,9 +1006,9 @@ async function createSoalImpl(data: CreateSoalData): Promise<Soal> {
             detail: { action: "soal_created", kuisId: data.kuis_id, dosenId },
           }),
         );
-        console.log("📢 Event dispatched: kuis:changed (soal_created)");
+        logger.debug("📢 Event dispatched: kuis:changed (soal_created)");
       } catch (eventError) {
-        console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+        logger.debug("⚠️ Failed to dispatch kuis:changed event:", eventError);
       }
     }
 
@@ -1091,16 +1092,16 @@ async function updateSoalImpl(
         dosenId = kuis?.dosen_id || null;
       }
     } catch (fetchError) {
-      console.warn(
+      logger.debug(
         "⚠️ Failed to fetch soal/kuis for event dispatch:",
         fetchError,
       );
     }
 
     // ✅ CRITICAL FIX: Use SYNC clearAllCache to ensure cache is cleared BEFORE dispatching event
-    console.log("🧹 [updateSoal] Starting SYNC clear all cache...");
+    logger.debug("🧹 [updateSoal] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(
+    logger.debug(
       `✅ [updateSoal] Cache cleared: ${deletedCount} entries deleted`,
     );
 
@@ -1116,9 +1117,9 @@ async function updateSoalImpl(
             },
           }),
         );
-        console.log("📢 Event dispatched: kuis:changed (soal_updated)");
+        logger.debug("📢 Event dispatched: kuis:changed (soal_updated)");
       } catch (eventError) {
-        console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+        logger.debug("⚠️ Failed to dispatch kuis:changed event:", eventError);
       }
     }
 
@@ -1161,7 +1162,7 @@ async function deleteSoalImpl(id: string): Promise<boolean> {
         }
       }
     } catch (fetchError) {
-      console.warn(
+      logger.debug(
         "⚠️ Failed to fetch soal/kuis for event dispatch:",
         fetchError,
       );
@@ -1171,9 +1172,9 @@ async function deleteSoalImpl(id: string): Promise<boolean> {
 
     // ✅ CACHE INVALIDATION STRATEGY:
     // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
-    console.log("🧹 [deleteSoal] Starting SYNC clear all cache...");
+    logger.debug("🧹 [deleteSoal] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(
+    logger.debug(
       `✅ [deleteSoal] Cache cleared: ${deletedCount} entries deleted`,
     );
 
@@ -1185,9 +1186,9 @@ async function deleteSoalImpl(id: string): Promise<boolean> {
             detail: { action: "soal_deleted", kuisId, dosenId },
           }),
         );
-        console.log("📢 Event dispatched: kuis:changed (soal_deleted)");
+        logger.debug("📢 Event dispatched: kuis:changed (soal_deleted)");
       } catch (eventError) {
-        console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+        logger.debug("⚠️ Failed to dispatch kuis:changed event:", eventError);
       }
     }
 
@@ -1349,7 +1350,7 @@ export async function getAttemptsByKuis(
       throw new Error(error.message);
     }
 
-    console.log(
+    logger.debug(
       "[KuisAPI] getAttemptsByKuis success:",
       attempts?.length || 0,
       "attempts",
@@ -1357,7 +1358,7 @@ export async function getAttemptsByKuis(
 
     // Log mahasiswa data untuk debugging
     (attempts || []).forEach((attempt: any, index: number) => {
-      console.log(`[KuisAPI] Attempt ${index + 1} mahasiswa:`, {
+      logger.debug(`[KuisAPI] Attempt ${index + 1} mahasiswa:`, {
         id: attempt.mahasiswa_id,
         nim: attempt.mahasiswa?.nim,
         full_name: attempt.mahasiswa?.user?.full_name,
@@ -1498,7 +1499,7 @@ async function startAttemptImpl(data: StartAttemptData): Promise<AttemptKuis> {
     );
 
     if (ongoingAttempt) {
-      console.log("✅ Resuming existing attempt:", ongoingAttempt.id);
+      logger.debug("✅ Resuming existing attempt:", ongoingAttempt.id);
       return ongoingAttempt; // Resume existing attempt
     }
 
@@ -1523,14 +1524,14 @@ async function startAttemptImpl(data: StartAttemptData): Promise<AttemptKuis> {
       started_at: new Date().toISOString(),
     };
 
-    console.log("✅ Creating new attempt #", attemptNumber);
+    logger.debug("✅ Creating new attempt #", attemptNumber);
 
     try {
       return await insert<AttemptKuis>("attempt_kuis", attemptData);
     } catch (insertError: any) {
       // Handle duplicate attempt (race condition)
       if (insertError?.code === "CONFLICT" || insertError?.code === "23505") {
-        console.log("⚠️ Attempt already exists, fetching existing attempt...");
+        logger.debug("⚠️ Attempt already exists, fetching existing attempt...");
 
         // Retry getting attempts (might be cache issue)
         const retryAttempts = await getAttempts({
@@ -1543,7 +1544,7 @@ async function startAttemptImpl(data: StartAttemptData): Promise<AttemptKuis> {
         );
 
         if (existingAttempt) {
-          console.log("✅ Found existing attempt:", existingAttempt.id);
+          logger.debug("✅ Found existing attempt:", existingAttempt.id);
           return existingAttempt;
         }
       }
@@ -1796,11 +1797,11 @@ export async function getUpcomingQuizzes(
     // ✅ STEP 1: Get enrolled kelas IDs (client-side filtering approach)
     const enrolledKelasIds = await getEnrolledKelasIds(mahasiswaId);
 
-    console.log("🔍 [getUpcomingQuizzes] enrolledKelasIds:", enrolledKelasIds);
+    logger.debug("🔍 [getUpcomingQuizzes] enrolledKelasIds:", enrolledKelasIds);
 
     if (enrolledKelasIds.length === 0) {
       // No enrolled classes = no quizzes
-      console.warn("⚠️ [getUpcomingQuizzes] No enrolled classes found");
+      logger.debug("⚠️ [getUpcomingQuizzes] No enrolled classes found");
       return [];
     }
 
@@ -1841,7 +1842,7 @@ export async function getUpcomingQuizzes(
       throw error;
     }
 
-    console.log(
+    logger.debug(
       "🔍 [getUpcomingQuizzes] Raw quizzes from DB:",
       quizzes?.length || 0,
     );
@@ -1853,7 +1854,7 @@ export async function getUpcomingQuizzes(
       enrolledKelasIds.includes(quiz.kelas_id),
     );
 
-    console.log(
+    logger.debug(
       "🔍 [getUpcomingQuizzes] Enrolled quizzes:",
       enrolledQuizzes.length,
     );
@@ -2706,7 +2707,7 @@ export async function getKuisByIdOffline(id: string): Promise<Kuis> {
     // If API fails, try cache
     const cachedQuiz = await getCachedQuiz(id);
     if (cachedQuiz) {
-      console.log("Using cached quiz (offline)");
+      logger.debug("Using cached quiz (offline)");
       return cachedQuiz;
     }
 
@@ -2731,7 +2732,7 @@ export async function getSoalByKuisOffline(kuisId: string): Promise<Soal[]> {
     // If API fails, try cache
     const cachedQuestions = await getCachedQuestions(kuisId);
     if (cachedQuestions) {
-      console.log("Using cached questions (offline)");
+      logger.debug("Using cached questions (offline)");
       return cachedQuestions;
     }
 
@@ -2753,7 +2754,7 @@ export async function submitAnswerOffline(
   } catch (error) {
     // Save offline instead
     await saveAnswerOffline(data.attempt_id, data.soal_id, data.jawaban);
-    console.log(
+    logger.debug(
       "Answer saved offline, will sync when online with version check",
     );
 
@@ -2780,11 +2781,11 @@ export async function syncOfflineAnswers(attemptId: string): Promise<number> {
     const answerIds = Object.keys(offlineAnswers);
 
     if (answerIds.length === 0) {
-      console.log("No offline answers to sync");
+      logger.debug("No offline answers to sync");
       return 0;
     }
 
-    console.log(
+    logger.debug(
       `Syncing ${answerIds.length} offline answers with optimistic locking...`,
     );
 
@@ -2799,7 +2800,7 @@ export async function syncOfflineAnswers(attemptId: string): Promise<number> {
         );
 
         if (!localAnswerData) {
-          console.warn(`Local answer ${answerId} not found`);
+          logger.debug(`Local answer ${answerId} not found`);
           continue;
         }
 
@@ -2811,12 +2812,12 @@ export async function syncOfflineAnswers(attemptId: string): Promise<number> {
         });
 
         if (result.success) {
-          console.log(`[Synced] ${soalId}: Success`);
+          logger.debug(`[Synced] ${soalId}: Success`);
           syncCount++;
           // Delete from offline storage after successful sync
           await indexedDBManager.delete(OFFLINE_STORES.ANSWERS, answerId);
         } else {
-          console.warn(`[Failed] ${soalId}: ${result.error}`);
+          logger.debug(`[Failed] ${soalId}: ${result.error}`);
         }
       } catch (error) {
         console.error(`Failed to sync answer ${soalId}:`, error);
@@ -2824,7 +2825,7 @@ export async function syncOfflineAnswers(attemptId: string): Promise<number> {
       }
     }
 
-    console.log(`Offline answers synced successfully: ${syncCount}`);
+    logger.debug(`Offline answers synced successfully: ${syncCount}`);
     return syncCount;
   } catch (error) {
     console.error("Failed to sync offline answers:", error);

@@ -21,6 +21,7 @@ import type {
   ConflictStrategy,
   ConflictLog,
 } from "./conflict-resolver";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -173,7 +174,7 @@ export class SmartConflictResolver {
    */
   registerRule(rule: ConflictRule): void {
     this.rules.set(rule.entity, rule);
-    console.log(`📋 Registered conflict rule for: ${rule.entity}`);
+    logger.debug(`📋 Registered conflict rule for: ${rule.entity}`);
   }
 
   /**
@@ -249,7 +250,7 @@ export class SmartConflictResolver {
 
         // CRITICAL: Never overwrite teacher's grade with local changes
         if (remote.nilai !== undefined && local.nilai !== remote.nilai) {
-          console.warn(
+          logger.debug(
             "⚠️  Grade conflict detected - using server value (teacher authoritative)",
           );
           return {
@@ -330,7 +331,7 @@ export class SmartConflictResolver {
 
     const { dataType, local, remote, id } = conflict;
 
-    console.log(`🔍 Smart conflict resolution for ${dataType}:${id}`);
+    logger.debug(`🔍 Smart conflict resolution for ${dataType}:${id}`);
 
     // Check version if enabled
     if (this.config.enableVersionCheck) {
@@ -344,7 +345,7 @@ export class SmartConflictResolver {
     const rule = this.rules.get(dataType);
 
     if (!rule) {
-      console.log(`⚪ No rule for ${dataType}, using fallback`);
+      logger.debug(`⚪ No rule for ${dataType}, using fallback`);
       if (this.config.fallbackToLWW) {
         return this.simpleResolver.resolve(
           conflict,
@@ -356,7 +357,7 @@ export class SmartConflictResolver {
     if (rule?.customResolver) {
       const customResult = rule.customResolver(conflict);
       if (customResult) {
-        console.log(`✅ Custom resolver applied for ${dataType}`);
+        logger.debug(`✅ Custom resolver applied for ${dataType}`);
         return customResult as SmartConflictResolution<T>;
       }
     }
@@ -385,7 +386,7 @@ export class SmartConflictResolver {
     }
 
     // Fallback to simple LWW
-    console.log(`⚪ Using fallback LWW for ${dataType}`);
+    logger.debug(`⚪ Using fallback LWW for ${dataType}`);
     return this.simpleResolver.resolve(conflict) as SmartConflictResolution<T>;
   }
 
@@ -492,7 +493,7 @@ export class SmartConflictResolver {
       }
     }
 
-    console.log(
+    logger.debug(
       `🔀 Field-level resolution for ${dataType}:${id} - ${fieldConflicts.length} conflicts, ${appliedRules.length} rules applied`,
     );
 
@@ -526,7 +527,7 @@ export class SmartConflictResolver {
 
     // If local version is behind remote, reject local changes
     if (localVersion < remoteVersion) {
-      console.warn(
+      logger.debug(
         `⚠️  Version conflict: local (v${localVersion}) < remote (v${remoteVersion})`,
       );
       return {

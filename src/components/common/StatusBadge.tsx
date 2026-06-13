@@ -44,7 +44,7 @@ export function StatusBadge({
     cancelled: {
       label: "Dibatalkan",
       bgColor: "bg-gray-100 dark:bg-gray-900/30",
-      textColor: "text-gray-700 dark:text-gray-400",
+      textColor: "text-gray-700 dark:text-gray-500",
       borderColor: "border-gray-300 dark:border-gray-700",
       icon: AlertCircle,
     },

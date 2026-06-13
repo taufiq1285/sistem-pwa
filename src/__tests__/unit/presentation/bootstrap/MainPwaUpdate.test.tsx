@@ -1,17 +1,10 @@
-import { cleanup, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { cleanup, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const registerServiceWorkerMock = vi.fn();
 const checkForServiceWorkerUpdateMock = vi.fn().mockResolvedValue(false);
-const skipWaitingMock = vi.fn().mockResolvedValue(undefined);
 const startSupabaseWarmupMock = vi.fn(() => vi.fn());
 const initializeSyncManagerMock = vi.fn().mockResolvedValue(undefined);
-
-let updateAvailableHandler:
-  | ((registration: ServiceWorkerRegistration) => void)
-  | null = null;
-let updateInstalledHandler: (() => void) | null = null;
 
 vi.mock("@/App", () => ({
   default: () => <div>App Mock</div>,
@@ -30,21 +23,9 @@ vi.mock("@/lib/pwa/register-sw", () => ({
     registerServiceWorkerMock(...args),
   checkForServiceWorkerUpdate: (...args: unknown[]) =>
     checkForServiceWorkerUpdateMock(...args),
-  skipWaiting: (...args: unknown[]) => skipWaitingMock(...args),
-  onUpdateAvailable: (
-    callback: (registration: ServiceWorkerRegistration) => void,
-  ) => {
-    updateAvailableHandler = callback;
-    return () => {
-      updateAvailableHandler = null;
-    };
-  },
-  onUpdateInstalled: (callback: () => void) => {
-    updateInstalledHandler = callback;
-    return () => {
-      updateInstalledHandler = null;
-    };
-  },
+  skipWaiting: vi.fn(),
+  onUpdateAvailable: vi.fn(),
+  onUpdateInstalled: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/warmup", () => ({
@@ -60,14 +41,11 @@ describe("main.tsx PWA update bootstrap", () => {
   beforeEach(() => {
     vi.resetModules();
     cleanup();
+    vi.useFakeTimers();
     document.body.innerHTML = '<div id="root"></div>';
-    updateAvailableHandler = null;
-    updateInstalledHandler = null;
     registerServiceWorkerMock.mockReset();
     checkForServiceWorkerUpdateMock.mockReset();
     checkForServiceWorkerUpdateMock.mockResolvedValue(false);
-    skipWaitingMock.mockReset();
-    skipWaitingMock.mockResolvedValue(undefined);
     startSupabaseWarmupMock.mockClear();
     initializeSyncManagerMock.mockClear();
 
@@ -90,10 +68,18 @@ describe("main.tsx PWA update bootstrap", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     cleanup();
   });
 
   it("mendaftarkan service worker saat bootstrap", async () => {
+    const postMessage = vi.fn();
+
+    vi.mocked(navigator.serviceWorker.getRegistration).mockResolvedValue({
+      waiting: { postMessage, state: "installed" },
+      active: { state: "activated" },
+    } as unknown as ServiceWorkerRegistration);
+
     await import("@/main");
 
     expect(registerServiceWorkerMock).toHaveBeenCalledWith(
@@ -103,47 +89,25 @@ describe("main.tsx PWA update bootstrap", () => {
         enableAutoUpdate: true,
       }),
     );
-  });
 
-  it("menampilkan prompt update dan mengaktifkan waiting worker", async () => {
-    const user = userEvent.setup();
-    const postMessage = vi.fn();
+    window.dispatchEvent(
+      new CustomEvent("sw-update-available", {
+        detail: {
+          registration: {
+            waiting: { postMessage, state: "installed" },
+            active: { state: "activated" },
+          },
+        },
+      }),
+    );
 
-    await import("@/main");
+    expect(screen.queryByText("Update Tersedia")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Versi baru aplikasi sudah tersedia."),
+    ).not.toBeInTheDocument();
 
-    expect(updateAvailableHandler).toBeTypeOf("function");
-
-    updateAvailableHandler?.({
-      waiting: { postMessage, state: "installed" },
-      active: { state: "activated" },
-    } as unknown as ServiceWorkerRegistration);
-
-    await waitFor(() => {
-      expect(screen.getByText("Update Tersedia")).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByRole("button", { name: "Perbarui Sekarang" }));
+    await vi.advanceTimersByTimeAsync(2 * 60 * 1000);
 
     expect(postMessage).toHaveBeenCalledWith({ type: "SKIP_WAITING" });
-    expect(skipWaitingMock).not.toHaveBeenCalled();
-  });
-
-  it("menutup prompt saat update installed event diterima", async () => {
-    await import("@/main");
-
-    updateAvailableHandler?.({
-      waiting: { postMessage: vi.fn(), state: "installed" },
-      active: { state: "activated" },
-    } as unknown as ServiceWorkerRegistration);
-
-    await waitFor(() => {
-      expect(screen.getByText("Update Tersedia")).toBeInTheDocument();
-    });
-
-    updateInstalledHandler?.();
-
-    await waitFor(() => {
-      expect(screen.queryByText("Update Tersedia")).not.toBeInTheDocument();
-    });
   });
 });

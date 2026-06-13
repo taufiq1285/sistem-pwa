@@ -90,7 +90,7 @@ export interface CacheConfig {
 // CACHE NAMES
 // ============================================================================
 
-export const CACHE_VERSION = "v1.0.0";
+export const CACHE_VERSION = `v${__APP_VERSION__}`;
 export const CACHE_PREFIX = "praktikum-pwa";
 
 /**

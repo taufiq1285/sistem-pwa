@@ -17,6 +17,7 @@
  */
 
 import { indexedDBManager } from "./indexeddb";
+import { logger } from "@/lib/utils/logger";
 import type { AuthUser, AuthSession } from "@/types/auth.types";
 
 interface OnlineLoginRecord {
@@ -109,9 +110,9 @@ export async function storeOfflineCredentials(
     const key = `offline_credentials_${email.toLowerCase()}`;
     await indexedDBManager.setMetadata(key, credentials);
 
-    console.log("✅ Offline credentials stored successfully");
+    logger.info("✅ Offline credentials stored successfully");
   } catch (error) {
-    console.error("❌ Failed to store offline credentials:", error);
+    logger.error("❌ Failed to store offline credentials:", error);
     throw error;
   }
 }
@@ -133,20 +134,20 @@ export async function verifyOfflineCredentials(
       | undefined;
 
     if (!stored) {
-      console.log("❌ No offline credentials found");
+      logger.info("❌ No offline credentials found");
       return false;
     }
 
     // Check if credentials expired
     if (Date.now() >= stored.expiresAt) {
-      console.log("❌ Offline credentials expired");
+      logger.info("❌ Offline credentials expired");
       await clearOfflineCredentials(email);
       return false;
     }
 
     // Check if email matches
     if (stored.email.toLowerCase() !== email.toLowerCase()) {
-      console.log("❌ Email mismatch");
+      logger.info("❌ Email mismatch");
       return false;
     }
 
@@ -157,14 +158,14 @@ export async function verifyOfflineCredentials(
     const isValid = inputHash === stored.passwordHash;
 
     if (isValid) {
-      console.log("✅ Offline credentials verified");
+      logger.info("✅ Offline credentials verified");
     } else {
-      console.log("❌ Invalid password");
+      logger.info("❌ Invalid password");
     }
 
     return isValid;
   } catch (error) {
-    console.error("❌ Failed to verify offline credentials:", error);
+    logger.error("❌ Failed to verify offline credentials:", error);
     return false;
   }
 }
@@ -183,9 +184,9 @@ export async function clearOfflineCredentials(email?: string): Promise<void> {
       // fallback: hapus key lama (single-user) jika ada
       await indexedDBManager.setMetadata("offline_credentials", null);
     }
-    console.log("✅ Offline credentials cleared");
+    logger.info("✅ Offline credentials cleared");
   } catch (error) {
-    console.error("❌ Failed to clear offline credentials:", error);
+    logger.error("❌ Failed to clear offline credentials:", error);
   }
 }
 
@@ -218,9 +219,9 @@ export async function storeOfflineSession(
     );
     // ✅ Simpan pointer user terakhir login untuk restore saat startup offline
     await indexedDBManager.setMetadata("last_logged_in_user_id", user.id);
-    console.log("✅ Offline session stored");
+    logger.info("✅ Offline session stored");
   } catch (error) {
-    console.error("❌ Failed to store offline session:", error);
+    logger.error("❌ Failed to store offline session:", error);
     throw error;
   }
 }
@@ -240,7 +241,7 @@ export async function restoreOfflineSession(): Promise<{
       "last_logged_in_user_id",
     )) as string | null;
     if (!lastUserId) {
-      console.log("ℹ️ No offline session found");
+      logger.info("ℹ️ No offline session found");
       return null;
     }
 
@@ -249,24 +250,24 @@ export async function restoreOfflineSession(): Promise<{
     )) as StoredSession | undefined;
 
     if (!stored) {
-      console.log("ℹ️ No offline session found");
+      logger.info("ℹ️ No offline session found");
       return null;
     }
 
     // Check if session expired
     if (Date.now() >= stored.expiresAt) {
-      console.log("❌ Offline session expired");
+      logger.info("❌ Offline session expired");
       await clearOfflineSession();
       return null;
     }
 
-    console.log("✅ Offline session restored");
+    logger.info("✅ Offline session restored");
     return {
       user: stored.user,
       session: stored.session,
     };
   } catch (error) {
-    console.error("❌ Failed to restore offline session:", error);
+    logger.error("❌ Failed to restore offline session:", error);
     return null;
   }
 }
@@ -288,9 +289,9 @@ export async function clearOfflineSession(userId?: string): Promise<void> {
     }
     // Hapus juga key lama (single-user) jika ada
     await indexedDBManager.setMetadata("offline_session", null);
-    console.log("✅ Offline session cleared");
+    logger.info("✅ Offline session cleared");
   } catch (error) {
-    console.error("❌ Failed to clear offline session:", error);
+    logger.error("❌ Failed to clear offline session:", error);
   }
 }
 
@@ -329,7 +330,7 @@ export async function getStoredUserData(
 
     return user || null;
   } catch (error) {
-    console.error("❌ Failed to get stored user data:", error);
+    logger.error("❌ Failed to get stored user data:", error);
     return null;
   }
 }
@@ -353,9 +354,9 @@ export async function storeUserData(user: AuthUser): Promise<void> {
       await indexedDBManager.create("users", user);
     }
 
-    console.log("✅ User data stored for offline access");
+    logger.info("✅ User data stored for offline access");
   } catch (error) {
-    console.error("❌ Failed to store user data:", error);
+    logger.error("❌ Failed to store user data:", error);
     throw error;
   }
 }
@@ -387,9 +388,9 @@ export async function recordOnlineLogin(
       `${ONLINE_LOGIN_RECORD_KEY}_${user.id}`,
       newRecord,
     );
-    console.log("✅ Online login recorded for user:", user.id);
+    logger.info("✅ Online login recorded for user:", user.id);
   } catch (error) {
-    console.error("❌ Failed to record online login:", error);
+    logger.error("❌ Failed to record online login:", error);
     throw error;
   }
 }
@@ -411,7 +412,7 @@ export async function getOnlineLoginRecord(
     }
     return null;
   } catch (error) {
-    console.error("❌ Failed to get online login record:", error);
+    logger.error("❌ Failed to get online login record:", error);
     return null;
   }
 }
@@ -426,7 +427,7 @@ export async function hasLoggedInOnlineBefore(
     const record = await getOnlineLoginRecord(userId);
     return record !== null;
   } catch (error) {
-    console.error("❌ Failed to check online login history:", error);
+    logger.error("❌ Failed to check online login history:", error);
     return false;
   }
 }
@@ -442,26 +443,26 @@ export async function canLoginOffline(email: string): Promise<boolean> {
     )) as any;
 
     if (!credentials) {
-      console.log("❌ No matching offline credentials found for email:", email);
+      logger.info("❌ No matching offline credentials found for email:", email);
       return false;
     }
 
     const hasLoggedIn = await hasLoggedInOnlineBefore(credentials.id);
     if (!hasLoggedIn) {
-      console.log(
+      logger.info(
         "❌ User has never logged in online before, offline login not allowed:",
         email,
       );
       return false;
     }
 
-    console.log(
+    logger.info(
       "✅ User has logged in online before, offline login allowed:",
       email,
     );
     return true;
   } catch (error) {
-    console.error("❌ Failed to verify offline login eligibility:", error);
+    logger.error("❌ Failed to verify offline login eligibility:", error);
     return false;
   }
 }
@@ -469,12 +470,12 @@ export async function canLoginOffline(email: string): Promise<boolean> {
 export async function clearOnlineLoginRecord(userId: string): Promise<void> {
   try {
     await indexedDBManager.initialize();
-    console.log(
+    logger.info(
       "ℹ️ Online login record preserved for user (to maintain online-first requirement):",
       userId,
     );
   } catch (error) {
-    console.error("❌ Failed to clear online login record:", error);
+    logger.error("❌ Failed to clear online login record:", error);
   }
 }
 
@@ -496,7 +497,7 @@ export async function secureOfflineLogin(
 
   const canLogin = await canLoginOffline(email);
   if (!canLogin) {
-    console.log(
+    logger.info(
       "🔒 Blocking offline login - user must login online first:",
       email,
     );
@@ -521,7 +522,7 @@ export async function secureOfflineLogin(
     if (perUserSession && Date.now() < perUserSession.expiresAt) {
       // Update last_logged_in_user_id agar startup offline berikutnya restore user ini
       await indexedDBManager.setMetadata("last_logged_in_user_id", credData.id);
-      console.log("✅ Restored per-user offline session");
+      logger.info("✅ Restored per-user offline session");
       return { user: perUserSession.user, session: perUserSession.session };
     }
   }
@@ -541,7 +542,7 @@ export async function secureOfflineLogin(
   };
 
   await storeOfflineSession(userData, offlineSession);
-  console.log("✅ Secure offline login successful");
+  logger.info("✅ Secure offline login successful");
 
   return {
     user: userData,
@@ -563,18 +564,18 @@ export async function offlineLogin(
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes("Data pengguna tidak ditemukan")) {
-        console.error("❌ User data not found");
+        logger.error("❌ User data not found");
       }
 
       if (
         error.message.includes("Anda belum pernah login") ||
         error.message.includes("Password salah")
       ) {
-        console.error("❌ Failed to verify offline credentials:", error);
+        logger.error("❌ Failed to verify offline credentials:", error);
       }
     }
 
-    console.error("❌ Offline login failed:", error);
+    logger.error("❌ Offline login failed:", error);
     return null;
   }
 }
@@ -619,7 +620,7 @@ export async function isOfflineLoginAvailable(
     }
     return false;
   } catch (error) {
-    console.error("❌ Failed to check offline login availability:", error);
+    logger.error("❌ Failed to check offline login availability:", error);
     return false;
   }
 }
@@ -630,8 +631,8 @@ export async function isOfflineLoginAvailable(
 export async function clearAllOfflineAuthData(): Promise<void> {
   try {
     await Promise.all([clearOfflineCredentials(), clearOfflineSession()]);
-    console.log("✅ All offline auth data cleared");
+    logger.info("✅ All offline auth data cleared");
   } catch (error) {
-    console.error("❌ Failed to clear offline auth data:", error);
+    logger.error("❌ Failed to clear offline auth data:", error);
   }
 }

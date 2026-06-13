@@ -12,6 +12,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNetworkStatus } from "./useNetworkStatus";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -171,18 +172,18 @@ export function useAutoSave<T>(
     async (dataToSave: T) => {
       // Check if online (if required)
       if (onlineOnly && !isOnline) {
-        console.log("[AutoSave] Skipping save - offline and onlineOnly=true");
+        logger.debug("[AutoSave] Skipping save - offline and onlineOnly=true");
         return;
       }
 
       // Prevent concurrent saves
       if (savingRef.current) {
-        console.log("[AutoSave] Save already in progress");
+        logger.debug("[AutoSave] Save already in progress");
         return;
       }
 
       if (!onSave) {
-        console.warn("[AutoSave] No onSave function provided");
+        logger.debug("[AutoSave] No onSave function provided");
         return;
       }
 
@@ -208,7 +209,7 @@ export function useAutoSave<T>(
         // Call success callback
         onSuccess?.(dataToSave);
 
-        console.log("[AutoSave] Save successful");
+        logger.debug("[AutoSave] Save successful");
       } catch (err) {
         if (!mountedRef.current) return;
 
@@ -313,7 +314,7 @@ export function useAutoSave<T>(
   useEffect(() => {
     // If we come back online and have unsaved changes, save them
     if (onlineOnly && isOnline && hasUnsavedChanges && enabled) {
-      console.log("[AutoSave] Back online, triggering save");
+      logger.debug("[AutoSave] Back online, triggering save");
       performSave(data);
     }
   }, [isOnline, onlineOnly, hasUnsavedChanges, enabled, data, performSave]);

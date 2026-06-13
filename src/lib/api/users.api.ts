@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { invalidateCache } from "@/lib/offline/api-cache";
 
 import { requirePermission } from "@/lib/middleware";
+import logger from "@/lib/utils/logger";
 export interface SystemUser {
   id: string;
   email: string;
@@ -35,20 +36,20 @@ export interface UserStats {
  */
 async function getAllUsersImpl(): Promise<SystemUser[]> {
   try {
-    console.log("[getAllUsersImpl] Fetching all users from database...");
+    logger.debug("[getAllUsersImpl] Fetching all users from database...");
     // Step 1: Get all users
     const { data: users, error: usersError } = await supabase
       .from("users")
       .select("id, email, full_name, role, is_active, created_at")
       .order("created_at", { ascending: false });
 
-    console.log("[getAllUsersImpl] Query result:", {
+    logger.debug("[getAllUsersImpl] Query result:", {
       count: users?.length,
       error: usersError,
     });
     if (usersError) throw usersError;
     if (!users || users.length === 0) {
-      console.log("[getAllUsersImpl] No users found");
+      logger.debug("[getAllUsersImpl] No users found");
       return [];
     }
 
@@ -341,7 +342,7 @@ async function deleteUserImpl(userId: string): Promise<void> {
         .delete()
         .eq("user_id", userId);
       if (error) {
-        console.warn(`[deleteUserImpl] Failed to cleanup ${table}:`, error);
+        logger.debug(`[deleteUserImpl] Failed to cleanup ${table}:`, error);
       }
     };
 
@@ -462,13 +463,13 @@ async function deleteUserImpl(userId: string): Promise<void> {
     const {
       data: { user: currentUser },
     } = await supabase.auth.getUser();
-    console.log("[deleteUserImpl] Current authenticated user:", {
+    logger.debug("[deleteUserImpl] Current authenticated user:", {
       id: currentUser?.id,
       email: currentUser?.email,
       role: currentUser?.user_metadata?.role,
     });
 
-    console.log("[deleteUserImpl] Step 1: Getting user info for", userId);
+    logger.debug("[deleteUserImpl] Step 1: Getting user info for", userId);
     // Step 1: Get user info to know which role-specific table to clean
     const { data: user, error: getUserError } = await supabase
       .from("users")
@@ -476,7 +477,7 @@ async function deleteUserImpl(userId: string): Promise<void> {
       .eq("id", userId)
       .single();
 
-    console.log("[deleteUserImpl] Step 1 result:", {
+    logger.debug("[deleteUserImpl] Step 1 result:", {
       user,
       error: getUserError,
     });
@@ -499,7 +500,7 @@ async function deleteUserImpl(userId: string): Promise<void> {
     ]);
 
     // Step 2: Delete from role-specific tables
-    console.log(
+    logger.debug(
       "[deleteUserImpl] Step 2: Deleting from role table:",
       user.role,
     );
@@ -512,7 +513,7 @@ async function deleteUserImpl(userId: string): Promise<void> {
         console.error("Failed to delete from mahasiswa table:", error);
         throw new Error(`Failed to delete mahasiswa record: ${error.message}`);
       }
-      console.log("[deleteUserImpl] Deleted from mahasiswa table");
+      logger.debug("[deleteUserImpl] Deleted from mahasiswa table");
     } else if (user.role === "dosen") {
       const { error } = await supabase
         .from("dosen")
@@ -522,7 +523,7 @@ async function deleteUserImpl(userId: string): Promise<void> {
         console.error("Failed to delete from dosen table:", error);
         throw new Error(`Failed to delete dosen record: ${error.message}`);
       }
-      console.log("[deleteUserImpl] Deleted from dosen table");
+      logger.debug("[deleteUserImpl] Deleted from dosen table");
     } else if (user.role === "laboran") {
       const { error } = await supabase
         .from("laboran")
@@ -532,18 +533,18 @@ async function deleteUserImpl(userId: string): Promise<void> {
         console.error("Failed to delete from laboran table:", error);
         throw new Error(`Failed to delete laboran record: ${error.message}`);
       }
-      console.log("[deleteUserImpl] Deleted from laboran table");
+      logger.debug("[deleteUserImpl] Deleted from laboran table");
     }
 
     // Step 3: Delete from users table
-    console.log("[deleteUserImpl] Step 3: Deleting from users table");
+    logger.debug("[deleteUserImpl] Step 3: Deleting from users table");
     const {
       data: deleteData,
       error: deleteUserError,
       count,
     } = await supabase.from("users").delete().eq("id", userId).select();
 
-    console.log("[deleteUserImpl] Step 3 result:", {
+    logger.debug("[deleteUserImpl] Step 3 result:", {
       error: deleteUserError,
       deletedData: deleteData,
       count: count,
@@ -567,23 +568,23 @@ async function deleteUserImpl(userId: string): Promise<void> {
       );
     }
 
-    console.log(
+    logger.debug(
       "[deleteUserImpl] Successfully deleted from users table, rows affected:",
       deleteData.length,
     );
 
     // Small delay to ensure database commit completes
     await new Promise((resolve) => setTimeout(resolve, 100));
-    console.log("[deleteUserImpl] Database commit delay completed");
+    logger.debug("[deleteUserImpl] Database commit delay completed");
 
     // Step 4: Invalidate cache for this user and all users list
     try {
       await invalidateCache(`user_${userId}`);
       await invalidateCache("all_users");
       await invalidateCache("user_stats");
-      console.log(`[Delete User] Cache invalidated for user ${userId}`);
+      logger.debug(`[Delete User] Cache invalidated for user ${userId}`);
     } catch (cacheError) {
-      console.warn(
+      logger.debug(
         "Failed to invalidate cache after user deletion:",
         cacheError,
       );
@@ -591,7 +592,7 @@ async function deleteUserImpl(userId: string): Promise<void> {
 
     // Step 5: Delete from Supabase Auth using Edge Function
     try {
-      console.log(
+      logger.debug(
         "[deleteUserImpl] Step 5: Calling edge function to delete from auth.users",
       );
 
@@ -599,7 +600,7 @@ async function deleteUserImpl(userId: string): Promise<void> {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        console.warn(
+        logger.debug(
           "[deleteUserImpl] No access token, skipping auth deletion",
         );
         return;
@@ -621,19 +622,19 @@ async function deleteUserImpl(userId: string): Promise<void> {
       const result = await response.json();
 
       if (!response.ok) {
-        console.warn(
+        logger.debug(
           "[deleteUserImpl] Failed to delete from auth.users:",
           result.error,
         );
         // Not critical - user is already deleted from users table
       } else {
-        console.log(
+        logger.debug(
           "[deleteUserImpl] Successfully deleted user from auth.users:",
           userId,
         );
       }
     } catch (authError: any) {
-      console.warn("[deleteUserImpl] Auth deletion error:", authError.message);
+      logger.debug("[deleteUserImpl] Auth deletion error:", authError.message);
       // Not critical - user is already deleted from users table and cannot login
     }
   } catch (error: any) {

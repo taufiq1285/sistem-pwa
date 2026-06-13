@@ -24,6 +24,7 @@ import {
   Plus,
   Pencil,
   Trash2,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -336,197 +337,186 @@ export default function LaboratoriumPage() {
   }, [lastUpdatedAt]);
 
   return (
-    <div className="app-container py-4 sm:py-6 lg:py-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
-        <GlassCard
-          intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
-        >
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="mb-2 flex items-center gap-3">
-                <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
-                  <Building2 className="h-7 w-7" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    Data Laboratorium
-                  </h1>
-                  <p className="text-muted-foreground">
-                    Kelola data laboratorium, kapasitas, dan fasilitas pendukung
-                    untuk kebutuhan operasional praktikum.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button variant="outline" onClick={handleRefresh}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Muat Ulang
-              </Button>
-              <Button onClick={handleCreate}>
-                <Plus className="mr-2 h-4 w-4" />
-                Tambah Laboratorium
-              </Button>
-            </div>
-          </div>
-        </GlassCard>
-
-        {(isOfflineData || !navigator.onLine) && (
-          <Alert className="border-warning/40 bg-warning/10">
-            <AlertDescription>
-              Data laboratorium sedang memakai snapshot lokal dari perangkat.
-              {lastUpdatedLabel
-                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
-                : ""}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <DashboardCard
-            title="Total Laboratorium"
-            value={laboratories.length}
-            icon={Building2}
-            color="blue"
-          />
-          <DashboardCard
-            title="Total Kapasitas"
-            value={laboratories.reduce(
-              (sum, lab) => sum + (lab.kapasitas || 0),
-              0,
-            )}
-            icon={Users}
-            color="green"
-          />
-          <DashboardCard
-            title="Rata-rata Kapasitas"
-            value={
-              laboratories.length > 0
-                ? Math.round(
-                    laboratories.reduce(
-                      (sum, lab) => sum + (lab.kapasitas || 0),
-                      0,
-                    ) / laboratories.length,
-                  )
-                : 0
-            }
-            icon={Users}
-            color="amber"
-          />
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      {/* Header */}
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Data Laboratorium
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Kelola data laboratorium, kapasitas, dan fasilitas pendukung untuk
+            kebutuhan operasional praktikum.
+          </p>
         </div>
-
-        {/* Search */}
-        <GlassCard
-          intensity="low"
-          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
-        >
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Cari laboratorium..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
-        </GlassCard>
-
-        {/* Laboratories Table */}
-        <GlassCard
-          intensity="low"
-          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
-        >
-          <CardHeader className="px-0 pt-0">
-            <CardTitle>Daftar Data Laboratorium</CardTitle>
-            <CardDescription>
-              Ringkasan laboratorium praktikum yang aktif dan siap dikelola.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            {loading ? (
-              <DashboardSkeleton />
-            ) : filteredLabs.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground">
-                Tidak ada laboratorium ditemukan
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Kode Lab</TableHead>
-                      <TableHead>Nama Laboratorium</TableHead>
-                      <TableHead>Lokasi</TableHead>
-                      <TableHead className="text-right">Kapasitas</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredLabs.map((lab) => (
-                      <TableRow key={lab.id}>
-                        <TableCell className="font-mono text-sm">
-                          {lab.kode_lab}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {lab.nama_lab}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            {lab.lokasi || "-"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {lab.kapasitas}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge
-                            status={lab.is_active ? "success" : "offline"}
-                            pulse={lab.is_active}
-                          >
-                            {lab.is_active ? "Aktif" : "Tidak Aktif"}
-                          </StatusBadge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleViewDetail(lab)}
-                            >
-                              Detail
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(lab)}
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteClick(lab)}
-                            >
-                              <Trash2 className="h-3 w-3 text-danger" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </GlassCard>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="outline" onClick={handleRefresh}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Muat Ulang
+          </Button>
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Tambah Laboratorium
+          </Button>
+        </div>
       </div>
+
+      {(isOfflineData || !navigator.onLine) && (
+        <Alert className="border-warning/40 bg-warning/10">
+          <AlertDescription>
+            Data laboratorium sedang memakai snapshot lokal dari perangkat.
+            {lastUpdatedLabel
+              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+              : ""}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <DashboardCard
+          title="Total Laboratorium"
+          value={laboratories.length}
+          icon={Building2}
+          color="blue"
+        />
+        <DashboardCard
+          title="Total Kapasitas"
+          value={laboratories.reduce(
+            (sum, lab) => sum + (lab.kapasitas || 0),
+            0,
+          )}
+          icon={Users}
+          color="green"
+        />
+        <DashboardCard
+          title="Rata-rata Kapasitas"
+          value={
+            laboratories.length > 0
+              ? Math.round(
+                  laboratories.reduce(
+                    (sum, lab) => sum + (lab.kapasitas || 0),
+                    0,
+                  ) / laboratories.length,
+                )
+              : 0
+          }
+          icon={Users}
+          color="amber"
+        />
+      </div>
+
+      {/* Search */}
+      <GlassCard
+        intensity="low"
+        className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
+      >
+        <div className="flex gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Cari laboratorium..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* Laboratories Table */}
+      <GlassCard
+        intensity="low"
+        className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
+      >
+        <CardHeader className="px-0 pt-0">
+          <CardTitle>Daftar Data Laboratorium</CardTitle>
+          <CardDescription>
+            Ringkasan laboratorium praktikum yang aktif dan siap dikelola.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-0 pb-0">
+          {loading ? (
+            <DashboardSkeleton />
+          ) : filteredLabs.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Tidak ada laboratorium ditemukan
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kode Lab</TableHead>
+                    <TableHead>Nama Laboratorium</TableHead>
+                    <TableHead>Lokasi</TableHead>
+                    <TableHead className="text-right">Kapasitas</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLabs.map((lab) => (
+                    <TableRow key={lab.id}>
+                      <TableCell className="font-mono text-sm">
+                        {lab.kode_lab}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {lab.nama_lab}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          {lab.lokasi || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {lab.kapasitas}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge
+                          status={lab.is_active ? "success" : "offline"}
+                          pulse={lab.is_active}
+                        >
+                          {lab.is_active ? "Aktif" : "Tidak Aktif"}
+                        </StatusBadge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleViewDetail(lab)}
+                            className="table-action-btn table-action-btn-view"
+                            title="Detail"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(lab)}
+                            className="table-action-btn table-action-btn-edit"
+                            title="Edit"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteClick(lab)}
+                            className="table-action-btn table-action-btn-delete"
+                            title="Hapus"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </GlassCard>
 
       {/* ======================================================================== */}
       {/* DETAIL DIALOG */}

@@ -5,7 +5,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DashboardPage } from "@/pages/admin/DashboardPage";
+import {
+  ChartCard,
+  DashboardSkeleton,
+  EmptyState,
+  ErrorFallback,
+} from "@/components/common";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import * as recharts from "recharts";
+import * as tabler from "@tabler/icons-react";
 
 const { mockUseAuth, mockCacheAPI, mockGetCachedData, mockNetworkDetector } =
   vi.hoisted(() => ({
@@ -88,15 +102,65 @@ const mockDistribution = [
   { role: "dosen", count: 15 },
 ];
 
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
 function renderWithRouter(ui: React.ReactElement) {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
 }
 
 describe("Admin DashboardPage", () => {
+  it("DEBUG IMPORTS", () => {
+    console.warn("DEBUG: DashboardPage", typeof DashboardPage);
+    console.warn("DEBUG: ChartCard", typeof ChartCard);
+    console.warn("DEBUG: DashboardSkeleton", typeof DashboardSkeleton);
+    console.warn("DEBUG: EmptyState", typeof EmptyState);
+    console.warn("DEBUG: ErrorFallback", typeof ErrorFallback);
+    console.warn("DEBUG: Avatar", typeof Avatar);
+    console.warn("DEBUG: AvatarFallback", typeof AvatarFallback);
+    console.warn("DEBUG: Badge", typeof Badge);
+    console.warn("DEBUG: Button", typeof Button);
+    console.warn("DEBUG: Card", typeof Card);
+    console.warn("DEBUG: CardContent", typeof CardContent);
+    console.warn("DEBUG: CardHeader", typeof CardHeader);
+    console.warn("DEBUG: CardTitle", typeof CardTitle);
+    console.warn("DEBUG: Alert", typeof Alert);
+    console.warn("DEBUG: AlertDescription", typeof AlertDescription);
+    console.warn("DEBUG: recharts Area", typeof recharts.Area);
+    console.warn("DEBUG: recharts AreaChart", typeof recharts.AreaChart);
+    console.warn(
+      "DEBUG: recharts CartesianGrid",
+      typeof recharts.CartesianGrid,
+    );
+    console.warn(
+      "DEBUG: recharts ResponsiveContainer",
+      typeof recharts.ResponsiveContainer,
+    );
+    console.warn("DEBUG: recharts Tooltip", typeof recharts.Tooltip);
+    console.warn("DEBUG: recharts XAxis", typeof recharts.XAxis);
+    console.warn("DEBUG: recharts YAxis", typeof recharts.YAxis);
+    console.warn(
+      "DEBUG: tabler IconAlertTriangle",
+      typeof tabler.IconAlertTriangle,
+    );
+    console.warn("DEBUG: tabler IconWifiOff", typeof tabler.IconWifiOff);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "log").mockImplementation(() => undefined);
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    // vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     mockUseAuth.mockReturnValue({
       user: {

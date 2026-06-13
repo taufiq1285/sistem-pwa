@@ -5,6 +5,7 @@
  */
 
 import type { ErrorInfo } from "react";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -62,9 +63,8 @@ class ErrorLogger {
     // Setup global error handlers
     this.setupGlobalHandlers();
 
-    // Only log in development or if explicitly enabled
-    if (import.meta.env.DEV || this.config.enabled) {
-      console.log(
+    if (import.meta.env.DEV) {
+      logger.debug(
         `✅ Error Logger initialized (${this.config.environment}) - ${this.config.enabled ? "Enabled" : "Disabled"}`,
       );
     }
@@ -198,7 +198,7 @@ class ErrorLogger {
         if (!processedLog) return; // beforeSend returned null, skip logging
         log = processedLog;
       } catch (error) {
-        console.warn("Error in beforeSend hook:", error);
+        logger.debug("Error in beforeSend hook:", error);
         // Continue with original log if beforeSend fails
       }
     }
@@ -295,7 +295,7 @@ class ErrorLogger {
     });
     */
 
-    console.log("📡 External error service configured (not yet implemented)");
+    logger.debug("📡 External error service configured (not yet implemented)");
   }
 
   /**
@@ -338,7 +338,7 @@ class ErrorLogger {
       });
     } catch (error) {
       // Silently fail - don't want error logger to cause errors
-      console.warn("Failed to send error log to custom endpoint", error);
+      logger.debug("Failed to send error log to custom endpoint", error);
     }
   }
 
@@ -399,7 +399,7 @@ class ErrorLogger {
   ) {
     // TODO: If using Sentry, call Sentry.addBreadcrumb()
     if (import.meta.env.DEV) {
-      console.log("🍞 Breadcrumb:", { message, category, data });
+      logger.debug("🍞 Breadcrumb:", { message, category, data });
     }
   }
 }

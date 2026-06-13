@@ -22,6 +22,7 @@ import {
   BookOpen,
   WifiOff,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,7 +110,7 @@ export function QuizBuilder({
   const effectiveLaporanMode =
     laporanMode || (!cbtMode && quiz?.tipe_kuis === "essay");
 
-  console.log("🔍 [QuizBuilder] Mode detection:", {
+  logger.debug("🔍 [QuizBuilder] Mode detection:", {
     isEditing,
     quizTipe: quiz?.tipe_kuis,
     propsCbtMode: cbtMode,
@@ -206,7 +207,7 @@ export function QuizBuilder({
         return jadwalData[0].mata_kuliah_id;
       }
     } catch (error) {
-      console.warn("⚠️ [QuizBuilder] Failed to resolve mata kuliah:", error);
+      logger.debug("⚠️ [QuizBuilder] Failed to resolve mata kuliah:", error);
     }
 
     return null; */
@@ -313,7 +314,7 @@ export function QuizBuilder({
   /* const loadKelas = async (mataKuliahId?: string) => {
     setIsLoadingKelas(true);
     try {
-      console.log(
+      logger.debug(
         "🔍 Loading ALL active kelas (global, not tied to mata_kuliah)",
       );
 
@@ -324,8 +325,8 @@ export function QuizBuilder({
         // REMOVED: mata_kuliah_id filter - kelas bersifat GLOBAL
       });
 
-      console.log("✅ Kelas loaded:", data.length, "kelas found");
-      console.log(
+      logger.debug("✅ Kelas loaded:", data.length, "kelas found");
+      logger.debug(
         "📋 Kelas list:",
         data.map((k) => ({
           id: k.id,
@@ -342,7 +343,7 @@ export function QuizBuilder({
 
       // Show warning if no kelas found
       if (data.length === 0) {
-        console.warn("⚠️ No kelas found in database");
+        logger.debug("⚠️ No kelas found in database");
         toast.warning("Belum ada kelas", {
           description: "Kelas bersifat UMUM dan dibuat oleh Admin",
         });
@@ -479,13 +480,13 @@ export function QuizBuilder({
 
   // ✅ NEW: Publish quiz handler
   const handlePublishQuiz = async () => {
-    console.log("🔵 handlePublishQuiz called");
-    console.log("🔵 currentQuiz:", currentQuiz);
-    console.log("🔵 questions.length:", questions.length);
-    console.log("🔵 effectiveLaporanMode:", effectiveLaporanMode);
+    logger.debug("🔵 handlePublishQuiz called");
+    logger.debug("🔵 currentQuiz:", currentQuiz);
+    logger.debug("🔵 questions.length:", questions.length);
+    logger.debug("🔵 effectiveLaporanMode:", effectiveLaporanMode);
 
     if (!currentQuiz) {
-      console.log("❌ No currentQuiz");
+      logger.debug("❌ No currentQuiz");
       toast.error("Tugas belum disimpan");
       return;
     }
@@ -493,7 +494,7 @@ export function QuizBuilder({
     // Semua tugas praktikum tetap membutuhkan minimal 1 komponen soal/isian
     // agar mahasiswa punya media untuk mengerjakan atau mengirim laporan.
     if (questions.length === 0) {
-      console.log("❌ No questions available for publish");
+      logger.debug("❌ No questions available for publish");
       toast.error(
         effectiveLaporanMode
           ? "Tambahkan minimal 1 komponen laporan sebelum publish"
@@ -517,18 +518,18 @@ export function QuizBuilder({
       : "Yakin ingin publish tes ini? Mahasiswa akan bisa mengerjakan soal tes.";
 
     const confirmed = confirm(confirmMsg);
-    console.log("🔵 User confirmed:", confirmed);
+    logger.debug("🔵 User confirmed:", confirmed);
 
     if (!confirmed) {
-      console.log("❌ User cancelled");
+      logger.debug("❌ User cancelled");
       return;
     }
 
     setIsPublishing(true);
     try {
-      console.log("🔵 Calling publishKuis");
+      logger.debug("🔵 Calling publishKuis");
       const updated = await publishKuis(currentQuiz.id);
-      console.log("✅ Updated quiz:", updated);
+      logger.debug("✅ Updated quiz:", updated);
       setCurrentQuiz(updated);
       toast.success(
         "Tugas berhasil dipublish! Mahasiswa sekarang bisa mengerjakan tugas ini.",

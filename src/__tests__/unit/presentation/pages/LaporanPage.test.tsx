@@ -119,22 +119,14 @@ describe("Laboran LaporanPage", () => {
   it("menampilkan judul dan tab laporan", async () => {
     render(<LaporanPage />);
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: /Laporan Laboratorium/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("tab", { name: /Ringkasan/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          /Pusat rekap, ekspor, dan print pertanggungjawaban kegiatan laboratorium/i,
-        ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /Print Laporan/i }),
-      ).toBeInTheDocument();
-    });
+    expect(screen.getByText("Laporan Laboratorium")).toBeInTheDocument();
+    expect(screen.getByText("Ringkasan")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Pusat rekap, ekspor, dan print pertanggungjawaban kegiatan laboratorium/i,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Print Laporan")).toBeInTheDocument();
   });
 
   it("menampilkan statistik overview dari API", async () => {

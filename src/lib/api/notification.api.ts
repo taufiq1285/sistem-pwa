@@ -20,6 +20,7 @@ import type {
   NotificationFilters,
   NotificationSummary,
 } from "@/types/notification.types";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // QUERY OPERATIONS
@@ -155,7 +156,7 @@ export async function createNotification(
       return null;
     }
 
-    console.log("[NOTIFICATION] Single notification created:", {
+    logger.debug("[NOTIFICATION] Single notification created:", {
       user_id: data.user_id,
       type: data.type,
       title: data.title,
@@ -207,7 +208,7 @@ export async function createBulkNotifications(
       return [];
     }
 
-    console.log(
+    logger.debug(
       "[NOTIFICATION] Bulk notifications created:",
       notifications.length,
     );
@@ -1017,9 +1018,9 @@ export async function notifyUsersAnnouncement(
   prioritas: string,
 ): Promise<void> {
   try {
-    console.log("🔔 [ANNOUNCEMENT] Starting notification process...");
-    console.log("🔔 [ANNOUNCEMENT] Target roles:", targetRoles);
-    console.log("🔔 [ANNOUNCEMENT] Judul:", judul);
+    logger.debug("🔔 [ANNOUNCEMENT] Starting notification process...");
+    logger.debug("🔔 [ANNOUNCEMENT] Target roles:", targetRoles);
+    logger.debug("🔔 [ANNOUNCEMENT] Judul:", judul);
 
     // Fetch all user IDs for target roles
     const { data: users, error: fetchError } = await supabase
@@ -1033,14 +1034,14 @@ export async function notifyUsersAnnouncement(
     }
 
     if (!users || users.length === 0) {
-      console.log(
+      logger.debug(
         "⚠️ [ANNOUNCEMENT] No users found for target roles:",
         targetRoles,
       );
       return;
     }
 
-    console.log(
+    logger.debug(
       `✅ [ANNOUNCEMENT] Found ${users.length} users:`,
       users.map((u) => `${u.role} (${u.email})`),
     );
@@ -1064,7 +1065,7 @@ export async function notifyUsersAnnouncement(
       },
     }));
 
-    console.log(
+    logger.debug(
       `📝 [ANNOUNCEMENT] Prepared ${notifications.length} notifications`,
     );
 
@@ -1086,10 +1087,10 @@ export async function notifyUsersAnnouncement(
       throw insertError;
     }
 
-    console.log(
+    logger.debug(
       `✅ [ANNOUNCEMENT] Successfully sent ${notifications.length} notifications!`,
     );
-    console.log("✅ [ANNOUNCEMENT] Inserted data:", insertedData);
+    logger.debug("✅ [ANNOUNCEMENT] Inserted data:", insertedData);
   } catch (error) {
     console.error("💥 [ANNOUNCEMENT] CRITICAL ERROR:", error);
     throw error;

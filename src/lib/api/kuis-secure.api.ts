@@ -10,6 +10,7 @@
 import { supabase } from "@/lib/supabase/client";
 import type { Soal, Kuis, TipeSoal } from "@/types/kuis.types";
 import { handleError, logError } from "@/lib/utils/errors";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // SECURE SOAL FETCHING
@@ -22,7 +23,7 @@ import { handleError, logError } from "@/lib/utils/errors";
  */
 export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
   try {
-    console.log("🔒 [Secure API] Fetching soal WITHOUT jawaban_benar");
+    logger.debug("🔒 [Secure API] Fetching soal WITHOUT jawaban_benar");
 
     const { data, error } = await supabase
       .from("soal_mahasiswa" as any) // ✅ Use secure view
@@ -32,7 +33,7 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
 
     if (error) throw error;
 
-    console.log(`✅ [Secure API] Fetched ${data.length} soal (answers hidden)`);
+    logger.debug(`✅ [Secure API] Fetched ${data.length} soal (answers hidden)`);
 
     // Map tipe to tipe_soal for compatibility
     const mapped = (data || []).map((soal: any) => ({
@@ -121,7 +122,7 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
           });
         }
       } catch (err) {
-        console.warn(
+        logger.debug(
           "⚠️ [Secure API] Failed to load FILE_UPLOAD settings from soal table:",
           err,
         );
@@ -159,7 +160,7 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
  */
 export async function getSoalForResult(kuisId: string): Promise<Soal[]> {
   try {
-    console.log(
+    logger.debug(
       "📊 [Secure API] Fetching soal WITH jawaban_benar (for results)",
     );
 
@@ -171,7 +172,7 @@ export async function getSoalForResult(kuisId: string): Promise<Soal[]> {
 
     if (error) throw error;
 
-    console.log(
+    logger.debug(
       `✅ [Secure API] Fetched ${data.length} soal (with answers for results)`,
     );
 
@@ -204,7 +205,7 @@ export async function getSoalForResult(kuisId: string): Promise<Soal[]> {
  */
 export async function getKuisForAttempt(kuisId: string): Promise<Kuis> {
   try {
-    console.log("🔒 [Secure API] Fetching kuis for attempt");
+    logger.debug("🔒 [Secure API] Fetching kuis for attempt");
 
     // ✅ SIMPLIFIED: Get kuis data WITHOUT complex joins (RLS issue)
     const { data: kuisData, error: kuisError } = await supabase
@@ -223,7 +224,7 @@ export async function getKuisForAttempt(kuisId: string): Promise<Kuis> {
       throw new Error("Kuis tidak ditemukan");
     }
 
-    console.log("✅ [Secure API] Kuis data loaded:", kuisData.id);
+    logger.debug("✅ [Secure API] Kuis data loaded:", kuisData.id);
 
     // Get soal WITHOUT jawaban_benar
     const soal = await getSoalForAttempt(kuisId);
@@ -245,7 +246,7 @@ export async function getKuisForAttempt(kuisId: string): Promise<Kuis> {
         : null,
     } as Kuis;
 
-    console.log("✅ [Secure API] Kuis loaded securely for attempt");
+    logger.debug("✅ [Secure API] Kuis loaded securely for attempt");
 
     return result;
   } catch (error) {
@@ -261,7 +262,7 @@ export async function getKuisForAttempt(kuisId: string): Promise<Kuis> {
  */
 export async function getKuisForResult(kuisId: string): Promise<Kuis> {
   try {
-    console.log("📊 [Secure API] Fetching kuis for results");
+    logger.debug("📊 [Secure API] Fetching kuis for results");
 
     // Get kuis data
     const { data: kuisData, error: kuisError } = await supabase
@@ -296,7 +297,7 @@ export async function getKuisForResult(kuisId: string): Promise<Kuis> {
       soal,
     } as Kuis;
 
-    console.log("✅ [Secure API] Kuis loaded with answers for results");
+    logger.debug("✅ [Secure API] Kuis loaded with answers for results");
 
     return result;
   } catch (error) {

@@ -6,6 +6,12 @@ import {
   RefreshCw,
   Trash2,
   AlertCircle,
+  Info,
+  AlertTriangle,
+  Zap,
+  Wrench,
+  Clock,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import {
   Dialog,
@@ -67,20 +74,18 @@ export default function AnnouncementsPage() {
   const [isOfflineData, setIsOfflineData] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
-  // Add dialog
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addFormData, setAddFormData] = useState<CreatePengumumanData>({
     judul: "",
     konten: "",
     tipe: "info",
     prioritas: "normal",
-    target_role: [], // Default: all roles if empty
-    tanggal_mulai: "", // Default: now
-    tanggal_selesai: "", // Default: no expiry
+    target_role: [],
+    tanggal_mulai: "",
+    tanggal_selesai: "",
     penulis_id: user?.id || "",
   });
 
-  // Delete confirmation state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingAnnouncement, setDeletingAnnouncement] =
     useState<Pengumuman | null>(null);
@@ -115,11 +120,9 @@ export default function AnnouncementsPage() {
       if (hasCachedAnnouncements && !forceRefresh) {
         setAnnouncements(cachedAnnouncementsEntry.data);
       }
-
       if (hasCachedStats && !forceRefresh) {
         setStats(cachedStatsEntry.data);
       }
-
       if ((hasCachedAnnouncements || hasCachedStats) && !forceRefresh) {
         setIsOfflineData(!navigator.onLine);
         setLastUpdatedAt(
@@ -133,8 +136,8 @@ export default function AnnouncementsPage() {
       if (forceRefresh && !navigator.onLine) {
         throw new Error(
           hasCachedAnnouncements || hasCachedStats
-            ? "Perangkat sedang offline. Menampilkan snapshot pengumuman admin yang tersimpan."
-            : "Perangkat sedang offline dan belum ada snapshot pengumuman admin yang tersimpan.",
+            ? "Perangkat sedang offline. Menampilkan snapshot pengumuman yang tersimpan."
+            : "Perangkat sedang offline dan belum ada snapshot yang tersimpan.",
         );
       }
 
@@ -159,7 +162,7 @@ export default function AnnouncementsPage() {
       if (announcements.length > 0 || stats.total > 0 || !navigator.onLine) {
         setIsOfflineData(true);
       }
-      toast.error(error?.message || "Failed to load announcements");
+      toast.error(error?.message || "Gagal memuat pengumuman");
       console.error(error);
     } finally {
       setLoading(false);
@@ -173,13 +176,11 @@ export default function AnnouncementsPage() {
 
   const confirmDelete = async () => {
     if (!deletingAnnouncement) return;
-
     try {
       await deleteAnnouncement(deletingAnnouncement.id);
       toast.success("Pengumuman berhasil dihapus");
       setIsDeleteDialogOpen(false);
       setDeletingAnnouncement(null);
-      // Invalidate cache and reload
       await invalidateCache("admin_announcements");
       await invalidateCache("admin_announcement_stats");
       await loadAnnouncements(true);
@@ -195,7 +196,7 @@ export default function AnnouncementsPage() {
       konten: "",
       tipe: "info",
       prioritas: "normal",
-      target_role: [], // Kosong = semua role
+      target_role: [],
       tanggal_mulai: "",
       tanggal_selesai: "",
       penulis_id: user?.id || "",
@@ -205,23 +206,19 @@ export default function AnnouncementsPage() {
 
   const handleCreate = async () => {
     try {
-      // Validasi sederhana
       if (!addFormData.judul?.trim()) {
         toast.error("Judul pengumuman wajib diisi");
         return;
       }
-
       if (!addFormData.konten?.trim()) {
         toast.error("Konten pengumuman wajib diisi");
         return;
       }
-
       if (!user?.id) {
-        toast.error("User not authenticated");
+        toast.error("Sesi pengguna tidak ditemukan");
         return;
       }
 
-      // Set default values if not provided
       const announcementData: CreatePengumumanData = {
         judul: addFormData.judul.trim(),
         konten: addFormData.konten.trim(),
@@ -230,18 +227,15 @@ export default function AnnouncementsPage() {
         target_role:
           addFormData.target_role && addFormData.target_role.length > 0
             ? addFormData.target_role
-            : undefined, // Empty means all roles
+            : undefined,
         tanggal_mulai: addFormData.tanggal_mulai || undefined,
         tanggal_selesai: addFormData.tanggal_selesai || undefined,
         penulis_id: user.id,
       };
 
-      console.log("📝 [ADMIN] Creating announcement:", announcementData);
-
       await createAnnouncement(announcementData);
-      toast.success("✅ Pengumuman berhasil dibuat!");
+      toast.success("Pengumuman berhasil dibuat!");
 
-      // Notify target roles (best-effort, non-blocking)
       const targetRoles: ("mahasiswa" | "dosen" | "admin" | "laboran")[] =
         (announcementData.target_role || [
           "admin",
@@ -250,8 +244,6 @@ export default function AnnouncementsPage() {
           "laboran",
         ]) as ("mahasiswa" | "dosen" | "admin" | "laboran")[];
 
-      console.log("🔔 [ADMIN] Sending notifications to:", targetRoles);
-
       try {
         await notifyUsersAnnouncement(
           targetRoles,
@@ -259,21 +251,16 @@ export default function AnnouncementsPage() {
           announcementData.tipe,
           announcementData.prioritas,
         );
-        toast.success(
-          `🔔 Notifikasi dikirim ke ${targetRoles.length} role(s)!`,
-        );
+        toast.success(`Notifikasi dikirim ke ${targetRoles.length} role!`);
       } catch (notifErr: any) {
-        console.error("❌ [ADMIN] Failed to send notifications:", notifErr);
+        console.error("Gagal kirim notifikasi:", notifErr);
         toast.error(
-          `⚠️ Pengumuman dibuat, tapi notifikasi gagal: ${notifErr.message || "Unknown error"}`,
+          `Pengumuman dibuat, tapi notifikasi gagal: ${notifErr.message || "Unknown error"}`,
           { duration: 5000 },
         );
-        // Jangan throw error - announcement sudah sukses dibuat
       }
 
       setIsAddDialogOpen(false);
-
-      // Invalidate cache and reload
       await invalidateCache("admin_announcements");
       await invalidateCache("admin_announcement_stats");
       await loadAnnouncements(true);
@@ -285,6 +272,52 @@ export default function AnnouncementsPage() {
     }
   };
 
+  const getTypeConfig = (
+    tipe?: string | null,
+  ): {
+    icon: React.ElementType;
+    color: string;
+    bg: string;
+    label: string;
+  } => {
+    const configs: Record<
+      string,
+      { icon: React.ElementType; color: string; bg: string; label: string }
+    > = {
+      info: {
+        icon: Info,
+        color: "text-blue-500",
+        bg: "bg-blue-500/10",
+        label: "Info",
+      },
+      warning: {
+        icon: AlertTriangle,
+        color: "text-amber-500",
+        bg: "bg-amber-500/10",
+        label: "Peringatan",
+      },
+      urgent: {
+        icon: Zap,
+        color: "text-red-500",
+        bg: "bg-red-500/10",
+        label: "Urgent",
+      },
+      maintenance: {
+        icon: Wrench,
+        color: "text-slate-500",
+        bg: "bg-slate-500/10",
+        label: "Maintenance",
+      },
+      event: {
+        icon: Bell,
+        color: "text-violet-500",
+        bg: "bg-violet-500/10",
+        label: "Event",
+      },
+    };
+    return configs[tipe || "info"] || configs.info;
+  };
+
   const getPriorityBadge = (priority?: string | null) => {
     const statusMap: Record<string, "error" | "warning" | "info"> = {
       high: "error",
@@ -293,6 +326,7 @@ export default function AnnouncementsPage() {
     const labels: Record<string, string> = {
       high: "Penting",
       normal: "Normal",
+      low: "Rendah",
     };
     const status = statusMap[priority || "normal"] || "info";
     const label = labels[priority || "normal"] || priority || "normal";
@@ -303,23 +337,8 @@ export default function AnnouncementsPage() {
     );
   };
 
-  const getTypeBadge = (tipe?: string | null) => {
-    const statusMap: Record<string, "info" | "warning" | "online"> = {
-      info: "info",
-      warning: "warning",
-      event: "online",
-    };
-    const status = statusMap[tipe || "info"] || "info";
-    return (
-      <StatusBadge status={status} pulse={false}>
-        {tipe || "info"}
-      </StatusBadge>
-    );
-  };
-
   const lastUpdatedLabel = useMemo(() => {
     if (!lastUpdatedAt) return null;
-
     return new Intl.DateTimeFormat("id-ID", {
       dateStyle: "medium",
       timeStyle: "short",
@@ -327,36 +346,41 @@ export default function AnnouncementsPage() {
   }, [lastUpdatedAt]);
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-4xl font-extrabold">Announcements</h1>
-          <p className="text-lg font-semibold text-muted-foreground mt-2">
-            Manage system-wide announcements
+          <h1 className="text-2xl font-bold text-foreground">
+            Manajemen Pengumuman
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Buat dan kelola pengumuman sistem untuk semua pengguna
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <Button
             variant="outline"
             onClick={() => loadAnnouncements(true)}
-            className="font-semibold border-2"
+            className="font-semibold"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={handleAdd} className="font-semibold">
+          <Button
+            onClick={handleAdd}
+            className="font-semibold bg-linear-to-r from-primary to-accent text-primary-foreground"
+          >
             <Plus className="h-4 w-4 mr-2" />
-            Create
+            Buat Pengumuman
           </Button>
         </div>
       </div>
 
       {(isOfflineData || !navigator.onLine) && (
-        <Alert className="border-warning/40 bg-warning/10 text-foreground shadow-sm">
+        <Alert className="border-warning/40 bg-warning/10 shadow-sm">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Pengumuman admin sedang memakai snapshot lokal dari perangkat.
+            Pengumuman sedang memakai snapshot lokal dari perangkat.
             {lastUpdatedLabel
               ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
               : ""}
@@ -369,83 +393,142 @@ export default function AnnouncementsPage() {
         <DashboardCard
           title="Total"
           value={stats.total}
-          description="Total pengumuman yang ada"
+          description="Semua pengumuman"
           icon={Megaphone}
           color="primary"
         />
         <DashboardCard
-          title="Active"
+          title="Aktif"
           value={stats.active}
-          description="Pengumuman yang sedang aktif"
+          description="Sedang ditampilkan"
           icon={Bell}
           color="success"
         />
         <DashboardCard
-          title="High Priority"
+          title="Prioritas Tinggi"
           value={stats.highPriority}
-          description="Pengumuman prioritas tinggi"
-          icon={Bell}
+          description="Perlu perhatian"
+          icon={AlertCircle}
           color="danger"
         />
         <DashboardCard
-          title="Scheduled"
+          title="Terjadwal"
           value={stats.scheduled}
-          description="Pengumuman terjadwal"
-          icon={Bell}
+          description="Belum dimulai"
+          icon={Clock}
           color="accent"
         />
       </div>
 
       {/* Announcements List */}
-      <Card className="border-0 shadow-xl">
-        <CardHeader className="p-6">
-          <CardTitle className="text-xl font-bold">All Announcements</CardTitle>
-          <CardDescription className="text-base font-semibold mt-1">
-            System-wide notifications
+      <Card className="border border-border/60 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-primary" />
+            Daftar Pengumuman
+          </CardTitle>
+          <CardDescription>
+            Semua pengumuman yang ada dalam sistem
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">
-              <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-            </div>
-          ) : announcements.length === 0 ? (
-            <div className="text-center py-8">
-              <Megaphone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p>No announcements found</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {announcements.map((announcement) => (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
                 <div
-                  key={announcement.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  key={i}
+                  className="flex items-center gap-4 p-4 rounded-xl border border-border/40"
                 >
-                  <div className="flex items-center gap-4">
-                    <Megaphone className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                      <h3 className="font-semibold">{announcement.judul}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {announcement.created_at
-                          ? formatDate(announcement.created_at)
-                          : "Unknown date"}{" "}
-                        • {announcement.penulis?.full_name || "Unknown author"}
-                      </p>
-                    </div>
+                  <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-72" />
                   </div>
-                  <div className="flex gap-2">
-                    {getPriorityBadge(announcement.prioritas)}
-                    {getTypeBadge(announcement.tipe)}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(announcement)}
-                    >
-                      <Trash2 className="h-4 w-4 text-danger" />
-                    </Button>
-                  </div>
+                  <Skeleton className="h-6 w-16 rounded-full" />
                 </div>
               ))}
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-primary/15 via-accent/10 to-primary/5 ring-1 ring-primary/10 shadow-sm">
+                <Megaphone className="h-9 w-9 text-primary/70" />
+              </div>
+              <h3 className="mb-1.5 text-base font-semibold text-foreground">
+                Belum ada pengumuman
+              </h3>
+              <p className="mb-6 max-w-sm text-sm text-muted-foreground leading-relaxed">
+                Buat pengumuman pertama untuk menginformasikan semua pengguna
+                sistem.
+              </p>
+              <Button onClick={handleAdd} className="font-semibold">
+                <Plus className="h-4 w-4 mr-2" />
+                Buat Pengumuman
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {announcements.map((announcement) => {
+                const typeConfig = getTypeConfig(announcement.tipe);
+                const TypeIcon = typeConfig.icon;
+                return (
+                  <div
+                    key={announcement.id}
+                    className="interactive-card flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between p-4 rounded-xl border border-border/50 bg-card/60 hover:bg-card/80 transition-colors"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div
+                        className={`shrink-0 flex h-10 w-10 items-center justify-center rounded-xl ${typeConfig.bg}`}
+                      >
+                        <TypeIcon className={`h-5 w-5 ${typeConfig.color}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-sm text-foreground leading-tight">
+                          {announcement.judul}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                          {announcement.konten}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3 shrink-0" />
+                          <span>
+                            {announcement.created_at
+                              ? formatDate(announcement.created_at)
+                              : "Tidak diketahui"}
+                          </span>
+                          <span>•</span>
+                          <User className="h-3 w-3 shrink-0" />
+                          <span className="truncate">
+                            {announcement.penulis?.full_name || "Admin"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 sm:self-start">
+                      {getPriorityBadge(announcement.prioritas)}
+                      <StatusBadge
+                        status={
+                          announcement.tipe === "urgent"
+                            ? "error"
+                            : announcement.tipe === "warning"
+                              ? "warning"
+                              : "info"
+                        }
+                        pulse={false}
+                      >
+                        {typeConfig.label}
+                      </StatusBadge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(announcement)}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -453,21 +536,21 @@ export default function AnnouncementsPage() {
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-lg p-6">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
+            <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-primary" />
               Buat Pengumuman Baru
             </DialogTitle>
-            <DialogDescription className="text-sm">
-              Buat pengumuman sistem untuk semua user atau role tertentu
+            <DialogDescription>
+              Buat pengumuman sistem untuk semua pengguna atau role tertentu
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            {/* Judul */}
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="new_judul">
-                Judul <span className="text-danger">*</span>
+                Judul <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="new_judul"
@@ -476,14 +559,12 @@ export default function AnnouncementsPage() {
                   setAddFormData({ ...addFormData, judul: e.target.value })
                 }
                 placeholder="Contoh: Maintenance sistem terjadwal"
-                className="font-medium"
               />
             </div>
 
-            {/* Konten */}
             <div className="space-y-2">
               <Label htmlFor="new_konten">
-                Isi Pengumuman <span className="text-danger">*</span>
+                Isi Pengumuman <span className="text-destructive">*</span>
               </Label>
               <Textarea
                 id="new_konten"
@@ -493,11 +574,9 @@ export default function AnnouncementsPage() {
                 }
                 placeholder="Jelaskan detail pengumuman..."
                 rows={4}
-                className="resize-none"
               />
             </div>
 
-            {/* Type & Priority - satu baris */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="new_tipe">Tipe</Label>
@@ -507,12 +586,12 @@ export default function AnnouncementsPage() {
                     setAddFormData({ ...addFormData, tipe: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="info">ℹ️ Info</SelectItem>
-                    <SelectItem value="warning">⚠️ Warning</SelectItem>
+                    <SelectItem value="warning">⚠️ Peringatan</SelectItem>
                     <SelectItem value="urgent">🔴 Urgent</SelectItem>
                     <SelectItem value="maintenance">🔧 Maintenance</SelectItem>
                   </SelectContent>
@@ -527,27 +606,26 @@ export default function AnnouncementsPage() {
                     setAddFormData({ ...addFormData, prioritas: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">🟢 Low</SelectItem>
+                    <SelectItem value="low">🟢 Rendah</SelectItem>
                     <SelectItem value="normal">🟡 Normal</SelectItem>
-                    <SelectItem value="high">🔴 High</SelectItem>
+                    <SelectItem value="high">🔴 Tinggi</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Target Roles - lebih simple */}
             <div className="space-y-2">
               <Label>
                 Kirim ke Role{" "}
-                <span className="text-muted-foreground">
+                <span className="text-muted-foreground text-xs font-normal">
                   (kosongkan untuk semua)
                 </span>
               </Label>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {[
                   { value: "admin", label: "Admin", emoji: "👨‍💼" },
                   { value: "dosen", label: "Dosen", emoji: "👨‍🏫" },
@@ -574,11 +652,11 @@ export default function AnnouncementsPage() {
                       }
                     }}
                     className={`
-                      px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all
+                      px-3 py-1.5 rounded-lg border text-sm font-medium transition-all cursor-pointer
                       ${
                         addFormData.target_role?.includes(role.value)
-                          ? "border-primary/50 bg-primary/5 text-primary"
-                          : "border-border/50 hover:border-border"
+                          ? "border-primary/50 bg-primary/10 text-primary"
+                          : "border-border/60 hover:border-border bg-transparent text-muted-foreground hover:text-foreground"
                       }
                     `}
                   >
@@ -588,13 +666,12 @@ export default function AnnouncementsPage() {
               </div>
             </div>
 
-            {/* Tanggal opsional */}
             <details className="group">
-              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground select-none">
                 ⏱️ Opsi Tanggal (opsional)
               </summary>
               <div className="grid grid-cols-2 gap-3 mt-3">
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <Label className="text-xs">Tanggal Mulai</Label>
                   <Input
                     type="datetime-local"
@@ -605,10 +682,9 @@ export default function AnnouncementsPage() {
                         tanggal_mulai: e.target.value,
                       })
                     }
-                    className="h-9"
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <Label className="text-xs">Tanggal Selesai</Label>
                   <Input
                     type="datetime-local"
@@ -619,15 +695,13 @@ export default function AnnouncementsPage() {
                         tanggal_selesai: e.target.value,
                       })
                     }
-                    className="h-9"
                   />
                 </div>
               </div>
             </details>
           </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
             <Button
               variant="outline"
               onClick={() => setIsAddDialogOpen(false)}
@@ -637,7 +711,7 @@ export default function AnnouncementsPage() {
             </Button>
             <Button
               onClick={handleCreate}
-              className="bg-primary hover:bg-primary/90"
+              className="font-semibold bg-linear-to-r from-primary to-accent text-primary-foreground"
               type="button"
             >
               <Megaphone className="h-4 w-4 mr-2" />
@@ -653,13 +727,13 @@ export default function AnnouncementsPage() {
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
           onConfirm={confirmDelete}
-          title="Hapus Pengumuman - Konfirmasi"
+          title="Hapus Pengumuman"
           itemName={deletingAnnouncement.judul}
           itemType="Pengumuman"
           description={`Tipe: ${deletingAnnouncement.tipe} | Prioritas: ${deletingAnnouncement.prioritas}`}
           consequences={[
             "Pengumuman akan dihapus permanen dari sistem",
-            "User tidak akan melihat pengumuman ini lagi",
+            "Pengguna tidak akan melihat pengumuman ini lagi",
             "Tindakan ini tidak dapat dibatalkan",
           ]}
         />

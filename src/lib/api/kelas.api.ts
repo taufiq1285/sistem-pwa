@@ -16,6 +16,7 @@ import type {
   CreateKelasData,
   UpdateKelasData,
 } from "@/types/kelas.types";
+import logger from "@/lib/utils/logger";
 
 /**
  * Get all kelas with optional filters
@@ -221,7 +222,7 @@ export const updateKelas = requirePermission("manage:kelas", updateKelasImpl);
  */
 async function deleteKelasImpl(id: string): Promise<void> {
   try {
-    console.log(`🗑️ Attempting to delete kelas with id: ${id}`);
+    logger.debug(`🗑️ Attempting to delete kelas with id: ${id}`);
 
     // Use soft delete directly.
     // This matches admin kelas behavior better and avoids a separate pre-check
@@ -230,7 +231,7 @@ async function deleteKelasImpl(id: string): Promise<void> {
       is_active: false,
     });
 
-    console.log(`✅ Successfully archived kelas: ${id}`);
+    logger.debug(`✅ Successfully archived kelas: ${id}`);
   } catch (error: unknown) {
     console.error("❌ Error deleting kelas:", error);
 
@@ -373,7 +374,7 @@ async function enrollStudentImpl(
       semesterData = mhsData?.semester;
     } catch (err) {
       // Semester column might not exist, continue without it
-      console.warn("Could not fetch semester data:", err);
+      logger.debug("Could not fetch semester data:", err);
     }
 
     // Prepare the base insert payload

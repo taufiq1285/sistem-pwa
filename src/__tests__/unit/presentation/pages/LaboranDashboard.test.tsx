@@ -124,12 +124,16 @@ describe("Laboran DashboardPage", () => {
       },
     });
 
-    // cacheAPI dipanggil untuk: stats, approvals, inventory, schedule
-    mockCacheAPI
-      .mockResolvedValueOnce(mockStats)
-      .mockResolvedValueOnce(mockApprovals)
-      .mockResolvedValueOnce(mockInventoryAlerts)
-      .mockResolvedValueOnce(mockSchedule);
+    // cacheAPI key-based mock implementation
+    mockCacheAPI.mockImplementation((key: string) => {
+      if (key.includes("stats")) return Promise.resolve(mockStats);
+      if (key.includes("approvals")) return Promise.resolve(mockApprovals);
+      if (key.includes("alerts")) return Promise.resolve(mockInventoryAlerts);
+      if (key.includes("schedule")) return Promise.resolve(mockSchedule);
+      if (key.includes("labs")) return Promise.resolve([]);
+      if (key.includes("usage")) return Promise.resolve([]);
+      return Promise.resolve({});
+    });
     mockGetCachedData.mockResolvedValue(null);
     navigator.onLine = true;
   });

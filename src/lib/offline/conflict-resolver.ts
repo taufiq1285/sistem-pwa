@@ -1,3 +1,4 @@
+import logger from "@/lib/utils/logger";
 /**
  * Simple Conflict Resolver
  * Purpose: Resolve conflicts between local and remote data
@@ -203,7 +204,7 @@ export class ConflictResolver {
 
     const parsed = Date.parse(timestamp);
     if (isNaN(parsed)) {
-      console.warn(`Invalid timestamp: ${timestamp}`);
+      logger.debug(`Invalid timestamp: ${timestamp}`);
       return Date.now();
     }
     return parsed;
@@ -232,7 +233,7 @@ export class ConflictResolver {
 
     this.saveLogs();
 
-    console.log("[ConflictResolver]", {
+    logger.debug("[ConflictResolver]", {
       dataType: log.dataType,
       dataId: log.dataId,
       winner: log.winner,
@@ -244,7 +245,7 @@ export class ConflictResolver {
     try {
       localStorage.setItem("conflict_logs", JSON.stringify(this.conflictLogs));
     } catch (error) {
-      console.warn("Failed to save conflict logs:", error);
+      logger.debug("Failed to save conflict logs:", error);
     }
   }
 
@@ -255,7 +256,7 @@ export class ConflictResolver {
         this.conflictLogs = JSON.parse(stored);
       }
     } catch (error) {
-      console.warn("Failed to load conflict logs:", error);
+      logger.debug("Failed to load conflict logs:", error);
       this.conflictLogs = [];
     }
   }

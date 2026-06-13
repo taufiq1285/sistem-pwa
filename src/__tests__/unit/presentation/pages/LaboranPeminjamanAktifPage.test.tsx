@@ -111,7 +111,7 @@ describe("Laboran PeminjamanAktifPage", () => {
   });
 
   it("menampilkan heading dan data peminjaman aktif", async () => {
-    render(<PeminjamanAktifPage />);
+    const { unmount } = render(<PeminjamanAktifPage />);
 
     await waitFor(() => {
       expect(
@@ -129,8 +129,43 @@ describe("Laboran PeminjamanAktifPage", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: /Sedang Dipinjam/i }));
 
-    expect(screen.getByText("Andi")).toBeInTheDocument();
-    expect(screen.getByText("Mikroskop")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Andi")).toBeInTheDocument();
+      expect(screen.getByText("Mikroskop")).toBeInTheDocument();
+    });
+
+    unmount();
+
+    mockGetPendingApprovals.mockResolvedValue([
+      {
+        id: "p-1",
+        peminjam_nama: "Andi",
+        peminjam_nim: "001",
+        inventaris_nama: "Tensimeter +2 alat lain",
+        inventaris_detail: "1x Tensimeter, 1x Stetoskop, 2x Termometer",
+        inventaris_kode: "TEN-01 +2",
+        laboratorium_nama: "Lab Anatomi",
+        jumlah_pinjam: 4,
+        tanggal_pinjam: "2025-01-10",
+        tanggal_kembali_rencana: "2025-01-12",
+        keperluan: "Praktikum",
+      },
+    ]);
+
+    render(<PeminjamanAktifPage />);
+
+    await userEvent.click(
+      screen.getByRole("tab", {
+        name: /Menunggu Persetujuan/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Tensimeter +2 alat lain")).toBeInTheDocument();
+      expect(
+        screen.getByText("1x Tensimeter, 1x Stetoskop, 2x Termometer"),
+      ).toBeInTheDocument();
+    });
   });
 
   it("buka dialog pengembalian dan submit return", async () => {

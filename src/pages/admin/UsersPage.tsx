@@ -13,6 +13,7 @@ import {
   BookOpen,
   Microscope,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +28,13 @@ import {
 } from "@/components/ui/card";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { TableBody } from "@/components/ui/table";
-import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
+import {
+  TableSkeleton,
+  ErrorFallback,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 import {
   EnhancedTable,
   EnhancedTableHeader,
@@ -88,6 +95,7 @@ import {
 type UserRole = "admin" | "dosen" | "mahasiswa" | "laboran";
 
 export default function UsersPage() {
+  const { isOffline } = useOfflineContext();
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [stats, setStats] = useState<UserStats>({
     total: 0,
@@ -99,6 +107,7 @@ export default function UsersPage() {
     inactive: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<UserRole | "all">("all");
   const [isOfflineData, setIsOfflineData] = useState(false);
@@ -156,12 +165,13 @@ export default function UsersPage() {
 
   const loadUsers = async (forceRefresh = false) => {
     try {
-      console.log(
+      logger.debug(
         "[loadUsers] START - fetching data... (forceRefresh:",
         forceRefresh,
         ")",
       );
       setLoading(true);
+      setError(null);
 
       const [cachedUsersEntry, cachedStatsEntry] = await Promise.all([
         getCachedData<SystemUser[]>("all_users"),
@@ -218,7 +228,7 @@ export default function UsersPage() {
         }),
       ]);
 
-      console.log("[loadUsers] Data fetched:", {
+      logger.debug("[loadUsers] Data fetched:", {
         userCount: usersData.length,
         stats: statsData,
       });
@@ -226,17 +236,18 @@ export default function UsersPage() {
       setStats(statsData);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
-      console.log("[loadUsers] State updated with", usersData.length, "users");
-    } catch (error) {
-      console.error("[loadUsers] Error:", error);
+      logger.debug("[loadUsers] State updated with", usersData.length, "users");
+    } catch (err: any) {
+      console.error("[loadUsers] Error:", err);
       if (!navigator.onLine) {
         setIsOfflineData(true);
       } else {
-        toast.error("Gagal memuat data users");
+        setError(err.message || "Gagal memuat data users");
       }
+      toast.error("Gagal memuat data users");
     } finally {
       setLoading(false);
-      console.log("[loadUsers] DONE");
+      logger.debug("[loadUsers] DONE");
     }
   };
 
@@ -350,13 +361,13 @@ export default function UsersPage() {
     if (!deletingUser) return;
 
     try {
-      console.log(
+      logger.debug(
         "[confirmDelete] Deleting user:",
         deletingUser.id,
         deletingUser.email,
       );
       await deleteUser(deletingUser.id);
-      console.log("[confirmDelete] Delete successful!");
+      logger.debug("[confirmDelete] Delete successful!");
 
       toast.success(`User "${deletingUser.full_name}" deleted successfully`);
       setIsDeleteDialogOpen(false);
@@ -365,9 +376,9 @@ export default function UsersPage() {
       // Invalidate cache and reload
       await invalidateCache("all_users");
       await invalidateCache("user_stats");
-      console.log("[confirmDelete] Reloading user list...");
+      logger.debug("[confirmDelete] Reloading user list...");
       await loadUsers(true);
-      console.log("[confirmDelete] Reload complete!");
+      logger.debug("[confirmDelete] Reload complete!");
     } catch (error: any) {
       console.error("[confirmDelete] Delete failed:", error);
       console.error("[confirmDelete] Error details:", {
@@ -489,13 +500,7 @@ export default function UsersPage() {
     rowSelection: ReturnType<typeof useRowSelection<SystemUser>>,
   ) => {
     if (loading) {
-      return (
-        <TableSkeleton
-          rows={5}
-          columns={5}
-          columnWidths={["200px", "250px", "150px", "120px", "180px"]}
-        />
-      );
+      return <TableSkeleton rows={5} columns={5} />;
     }
 
     if (roleUsers.length === 0) {
@@ -657,21 +662,22 @@ export default function UsersPage() {
                 {columnVisibility.actions && (
                   <EnhancedTableCell>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
+                      <button
+                        type="button"
                         onClick={() => handleEdit(u)}
+                        className="table-action-btn table-action-btn-edit"
+                        title="Edit"
                       >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleDelete(u)}
+                        className="table-action-btn table-action-btn-delete"
+                        title="Hapus"
                       >
-                        <Trash2 className="h-4 w-4 text-danger" />
-                      </Button>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </EnhancedTableCell>
                 )}
@@ -683,548 +689,607 @@ export default function UsersPage() {
     );
   };
 
+  // Loading state
+  if (loading) return <TableSkeleton />;
+
+  // Error state
+  if (error) {
+    return <ErrorFallback message={error} onRetry={() => loadUsers(true)} />;
+  }
+
+  // Offline empty state
+  if (isOffline && !users?.length) {
+    return <EmptyState variant="offline" context="pengguna" />;
+  }
+
+  // Empty state
+  if (!users?.length) {
+    return (
+      <EmptyState
+        variant="no-data"
+        context="pengguna"
+        actionLabel="Tambah User"
+        onAction={handleAdd}
+      />
+    );
+  }
+
   return (
-    <div className="app-container space-y-6">
-      {/* Header */}
-      <div className="section-shell flex items-center justify-between rounded-2xl p-5">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Manajemen Pengguna
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Kelola semua pengguna sistem
-          </p>
+    <OfflineAwareContent
+      hasData={users.length > 0}
+      context="pengguna"
+      onSync={() => loadUsers(true)}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        {/* Header */}
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Manajemen Pengguna
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Kelola semua pengguna sistem
+            </p>
+          </div>
+          <div className="flex gap-3 shrink-0">
+            <Button
+              variant="outline"
+              onClick={() => loadUsers(true)}
+              className="font-semibold"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button
+              onClick={handleAdd}
+              className="font-semibold bg-linear-to-r from-primary to-accent text-primary-foreground"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Tambah User
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={() => loadUsers(true)}
-            className="font-semibold"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button
-            onClick={handleAdd}
-            className="font-semibold bg-linear-to-r from-primary to-accent text-primary-foreground"
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Tambah User
-          </Button>
-        </div>
-      </div>
 
-      {(isOfflineData || !navigator.onLine) && (
-        <Alert className="border-warning/40 bg-warning/10">
-          <AlertDescription>
-            Data pengguna sedang memakai snapshot lokal dari perangkat.
-            {lastUpdatedLabel
-              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
-              : ""}
-          </AlertDescription>
-        </Alert>
-      )}
+        {(isOfflineData || !navigator.onLine) && (
+          <Alert className="border-warning/40 bg-warning/10">
+            <AlertDescription>
+              Data pengguna sedang memakai snapshot lokal dari perangkat.
+              {lastUpdatedLabel
+                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                : ""}
+            </AlertDescription>
+          </Alert>
+        )}
 
-      {/* Statistics Cards */}
-      <div className="grid gap-5 md:grid-cols-5">
-        <DashboardCard
-          title="Total"
-          value={stats.total}
-          description={`${stats.active} active`}
-          icon={Users}
-          color="primary"
-        />
-        <DashboardCard
-          title="Admin"
-          value={stats.admin}
-          icon={Shield}
-          color="danger"
-        />
-        <DashboardCard
-          title="Dosen"
-          value={stats.dosen}
-          icon={GraduationCap}
-          color="info"
-        />
-        <DashboardCard
-          title="Mahasiswa"
-          value={stats.mahasiswa}
-          icon={BookOpen}
-          color="success"
-        />
-        <DashboardCard
-          title="Laboran"
-          value={stats.laboran}
-          icon={Microscope}
-          color="warning"
-        />
-      </div>
-
-      {/* Search */}
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Cari berdasarkan nama, email, NIM, atau NIP..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+        {/* Statistics Cards */}
+        <div className="grid gap-5 md:grid-cols-5">
+          <DashboardCard
+            title="Total"
+            value={stats.total}
+            description={`${stats.active} active`}
+            icon={Users}
+            color="primary"
+          />
+          <DashboardCard
+            title="Admin"
+            value={stats.admin}
+            icon={Shield}
+            color="danger"
+          />
+          <DashboardCard
+            title="Dosen"
+            value={stats.dosen}
+            icon={GraduationCap}
+            color="info"
+          />
+          <DashboardCard
+            title="Mahasiswa"
+            value={stats.mahasiswa}
+            icon={BookOpen}
+            color="success"
+          />
+          <DashboardCard
+            title="Laboran"
+            value={stats.laboran}
+            icon={Microscope}
+            color="warning"
           />
         </div>
-      </div>
 
-      {/* Users Table with Tabs */}
-      <Tabs
-        value={activeTab}
-        onValueChange={(v) => setActiveTab(v as UserRole | "all")}
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-5 mb-4">
-          <TabsTrigger value="all" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Semua ({searchFilteredUsers.length})
-          </TabsTrigger>
-          <TabsTrigger value="admin" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Admin ({adminUsers.length})
-          </TabsTrigger>
-          <TabsTrigger value="dosen" className="flex items-center gap-2">
-            <GraduationCap className="h-4 w-4" />
-            Dosen ({dosenUsers.length})
-          </TabsTrigger>
-          <TabsTrigger value="mahasiswa" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            Mahasiswa ({mahasiswaUsers.length})
-          </TabsTrigger>
-          <TabsTrigger value="laboran" className="flex items-center gap-2">
-            <Microscope className="h-4 w-4" />
-            Laboran ({laboranUsers.length})
-          </TabsTrigger>
-        </TabsList>
+        {/* Search */}
+        <div className="flex gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cari berdasarkan nama, email, NIM, atau NIP..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
 
-        {/* All Users Tab */}
-        <TabsContent value="all">
-          <Card>
-            <CardHeader>
-              <CardTitle>Semua User</CardTitle>
-              <CardDescription>
-                Kelola semua akun pengguna dalam sistem
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderUserTable(
-                searchFilteredUsers,
-                "Tidak ada user yang ditemukan",
-                "all",
-                // Use first available rowSelection for "all" tab
-                adminRowSelection,
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Users Table with Tabs */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as UserRole | "all")}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-5 mb-4">
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Semua ({searchFilteredUsers.length})
+            </TabsTrigger>
+            <TabsTrigger value="admin" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Admin ({adminUsers.length})
+            </TabsTrigger>
+            <TabsTrigger value="dosen" className="flex items-center gap-2">
+              <GraduationCap className="h-4 w-4" />
+              Dosen ({dosenUsers.length})
+            </TabsTrigger>
+            <TabsTrigger value="mahasiswa" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Mahasiswa ({mahasiswaUsers.length})
+            </TabsTrigger>
+            <TabsTrigger value="laboran" className="flex items-center gap-2">
+              <Microscope className="h-4 w-4" />
+              Laboran ({laboranUsers.length})
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Admin Tab */}
-        <TabsContent value="admin">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Administrator
-              </CardTitle>
-              <CardDescription>
-                Kelola akun administrator sistem
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderUserTable(
-                adminUsers,
-                "Tidak ada admin yang ditemukan",
-                "admin",
-                adminRowSelection,
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+          {/* All Users Tab */}
+          <TabsContent value="all">
+            <Card>
+              <CardHeader>
+                <CardTitle>Semua User</CardTitle>
+                <CardDescription>
+                  Kelola semua akun pengguna dalam sistem
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderUserTable(
+                  searchFilteredUsers,
+                  "Tidak ada user yang ditemukan",
+                  "all",
+                  // Use first available rowSelection for "all" tab
+                  adminRowSelection,
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Dosen Tab */}
-        <TabsContent value="dosen">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5" />
-                Dosen
-              </CardTitle>
-              <CardDescription>Kelola akun dosen</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderUserTable(
-                dosenUsers,
-                "Tidak ada dosen yang ditemukan",
-                "dosen",
-                dosenRowSelection,
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+          {/* Admin Tab */}
+          <TabsContent value="admin">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Administrator
+                </CardTitle>
+                <CardDescription>
+                  Kelola akun administrator sistem
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderUserTable(
+                  adminUsers,
+                  "Tidak ada admin yang ditemukan",
+                  "admin",
+                  adminRowSelection,
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Mahasiswa Tab */}
-        <TabsContent value="mahasiswa">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Mahasiswa
-              </CardTitle>
-              <CardDescription>Kelola akun mahasiswa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderUserTable(
-                mahasiswaUsers,
-                "Tidak ada mahasiswa yang ditemukan",
-                "mahasiswa",
-                mahasiswaRowSelection,
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+          {/* Dosen Tab */}
+          <TabsContent value="dosen">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5" />
+                  Dosen
+                </CardTitle>
+                <CardDescription>Kelola akun dosen</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderUserTable(
+                  dosenUsers,
+                  "Tidak ada dosen yang ditemukan",
+                  "dosen",
+                  dosenRowSelection,
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Laboran Tab */}
-        <TabsContent value="laboran">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Microscope className="h-5 w-5" />
-                Laboran
-              </CardTitle>
-              <CardDescription>Kelola akun laboran</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderUserTable(
-                laboranUsers,
-                "Tidak ada laboran yang ditemukan",
-                "laboran",
-                laboranRowSelection,
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          {/* Mahasiswa Tab */}
+          <TabsContent value="mahasiswa">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Mahasiswa
+                </CardTitle>
+                <CardDescription>Kelola akun mahasiswa</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderUserTable(
+                  mahasiswaUsers,
+                  "Tidak ada mahasiswa yang ditemukan",
+                  "mahasiswa",
+                  mahasiswaRowSelection,
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>Update user information</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="full_name">Full Name</Label>
-              <Input
-                id="full_name"
-                value={editFormData.full_name || ""}
-                onChange={(e) =>
-                  setEditFormData({
-                    ...editFormData,
-                    full_name: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={editFormData.email || ""}
-                onChange={(e) =>
-                  setEditFormData({ ...editFormData, email: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label>Role</Label>
-              <Input
-                value={editingUser?.role || "-"}
-                disabled
-                className="capitalize"
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Role akun tidak diubah dari fitur ini.
-              </p>
-            </div>
-            {editingUser?.role === "mahasiswa" && (
-              <div>
-                <Label htmlFor="edit_nim">NIM</Label>
+          {/* Laboran Tab */}
+          <TabsContent value="laboran">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Microscope className="h-5 w-5" />
+                  Laboran
+                </CardTitle>
+                <CardDescription>Kelola akun laboran</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {renderUserTable(
+                  laboranUsers,
+                  "Tidak ada laboran yang ditemukan",
+                  "laboran",
+                  laboranRowSelection,
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">
+                Edit Pengguna
+              </DialogTitle>
+              <DialogDescription>Perbarui informasi pengguna</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="full_name">Nama Lengkap</Label>
                 <Input
-                  id="edit_nim"
-                  value={editFormData.nim || ""}
+                  id="full_name"
+                  value={editFormData.full_name || ""}
                   onChange={(e) =>
                     setEditFormData({
                       ...editFormData,
-                      nim: e.target.value,
+                      full_name: e.target.value,
                     })
                   }
-                  placeholder="Masukkan NIM mahasiswa"
                 />
               </div>
-            )}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="is_active_edit"
-                checked={editFormData.is_active ?? true}
-                onChange={(e) =>
-                  setEditFormData({
-                    ...editFormData,
-                    is_active: e.target.checked,
-                  })
-                }
-              />
-              <Label htmlFor="is_active_edit">Active</Label>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsEditDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleUpdate}>Save Changes</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New User</DialogTitle>
-            <DialogDescription>Create a new user account</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="new_full_name">Full Name *</Label>
-              <Input
-                id="new_full_name"
-                value={addFormData.full_name}
-                onChange={(e) =>
-                  setAddFormData({ ...addFormData, full_name: e.target.value })
-                }
-                placeholder="John Doe"
-              />
-            </div>
-            <div>
-              <Label htmlFor="new_email">Email *</Label>
-              <Input
-                id="new_email"
-                type="email"
-                value={addFormData.email}
-                onChange={(e) =>
-                  setAddFormData({ ...addFormData, email: e.target.value })
-                }
-                placeholder="user@example.com"
-              />
-            </div>
-            <div>
-              <Label htmlFor="new_password">Password *</Label>
-              <Input
-                id="new_password"
-                type="password"
-                value={addFormData.password}
-                onChange={(e) =>
-                  setAddFormData({ ...addFormData, password: e.target.value })
-                }
-                placeholder="Minimum 6 characters"
-              />
-            </div>
-            <div>
-              <Label htmlFor="new_role">Role *</Label>
-              <Select
-                value={addFormData.role}
-                onValueChange={(value: any) =>
-                  setAddFormData({ ...addFormData, role: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="dosen">Dosen</SelectItem>
-                  <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
-                  <SelectItem value="laboran">Laboran</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Role-specific fields */}
-            {addFormData.role === "mahasiswa" && (
-              <div>
-                <Label htmlFor="new_nim">NIM</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="new_nim"
-                  value={addFormData.nim}
+                  id="email"
+                  type="email"
+                  value={editFormData.email || ""}
                   onChange={(e) =>
-                    setAddFormData({ ...addFormData, nim: e.target.value })
+                    setEditFormData({ ...editFormData, email: e.target.value })
                   }
-                  placeholder="1234567890"
                 />
               </div>
-            )}
-
-            {addFormData.role === "dosen" && (
-              <>
-                <div>
-                  <Label htmlFor="new_nip">NIP</Label>
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Input
+                  value={editingUser?.role || "-"}
+                  disabled
+                  className="capitalize"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Role akun tidak diubah dari fitur ini.
+                </p>
+              </div>
+              {editingUser?.role === "mahasiswa" && (
+                <div className="space-y-2">
+                  <Label htmlFor="edit_nim">NIM</Label>
                   <Input
-                    id="new_nip"
-                    value={addFormData.nip}
+                    id="edit_nim"
+                    value={editFormData.nim || ""}
                     onChange={(e) =>
-                      setAddFormData({ ...addFormData, nip: e.target.value })
+                      setEditFormData({
+                        ...editFormData,
+                        nim: e.target.value,
+                      })
                     }
-                    placeholder="198001012020121001"
+                    placeholder="Masukkan NIM mahasiswa"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="new_nidn">NIDN</Label>
-                  <Input
-                    id="new_nidn"
-                    value={addFormData.nidn}
-                    onChange={(e) =>
-                      setAddFormData({ ...addFormData, nidn: e.target.value })
-                    }
-                    placeholder="0101018001"
-                  />
-                </div>
-              </>
-            )}
-
-            {addFormData.role === "laboran" && (
-              <div>
-                <Label htmlFor="new_nip_laboran">NIP</Label>
-                <Input
-                  id="new_nip_laboran"
-                  value={addFormData.nip}
-                  onChange={(e) =>
-                    setAddFormData({ ...addFormData, nip: e.target.value })
+              )}
+              <div className="flex items-center justify-between rounded-lg border border-border/50 px-3.5 py-2.5">
+                <Label
+                  htmlFor="is_active_edit"
+                  className="cursor-pointer font-medium"
+                >
+                  Status Aktif
+                </Label>
+                <button
+                  id="is_active_edit"
+                  type="button"
+                  role="switch"
+                  aria-checked={editFormData.is_active ?? true}
+                  onClick={() =>
+                    setEditFormData({
+                      ...editFormData,
+                      is_active: !(editFormData.is_active ?? true),
+                    })
                   }
-                  placeholder="NIP laboran"
-                />
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
+                    (editFormData.is_active ?? true)
+                      ? "bg-primary"
+                      : "bg-muted-foreground/30"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${
+                      (editFormData.is_active ?? true)
+                        ? "translate-x-4"
+                        : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
               </div>
-            )}
-
-            <div>
-              <Label htmlFor="new_phone">Phone</Label>
-              <Input
-                id="new_phone"
-                value={addFormData.phone}
-                onChange={(e) =>
-                  setAddFormData({ ...addFormData, phone: e.target.value })
-                }
-                placeholder="08123456789"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsAddDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleCreate}>Create User</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-danger flex items-center gap-2">
-              <XCircle className="h-5 w-5" />
-              Hapus User - Konfirmasi
-            </DialogTitle>
-            <DialogDescription className="text-base">
-              <strong>Perhatian!</strong> Tindakan ini tidak dapat dibatalkan.
-            </DialogDescription>
-          </DialogHeader>
-          {deletingUser && (
-            <div className="space-y-4">
-              {/* User Info to Delete */}
-              <div className="p-4 border-2 border-danger/50 rounded-lg bg-danger/5">
-                <p className="text-sm font-semibold text-danger mb-2">
-                  User yang akan dihapus:
-                </p>
-                <p className="text-lg font-bold text-foreground">
-                  {deletingUser.full_name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {deletingUser.email}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Role:{" "}
-                  <StatusBadge
-                    status={
-                      deletingUser.role === "admin"
-                        ? "info"
-                        : deletingUser.role === "dosen"
-                          ? "success"
-                          : deletingUser.role === "laboran"
-                            ? "warning"
-                            : "online"
-                    }
-                    pulse={false}
-                    className="capitalize"
-                  >
-                    {deletingUser.role}
-                  </StatusBadge>
-                </p>
-              </div>
-
-              {/* Warning Box */}
-              <div className="p-3 bg-warning/5 border border-warning/40 rounded-md">
-                <p className="text-sm text-warning font-medium">
-                  ⚠️ Data yang akan dihapus:
-                </p>
-                <ul className="text-sm text-warning/80 mt-2 ml-4 list-disc space-y-1">
-                  <li>Akun user dari sistem</li>
-                  <li>Data profil dan role</li>
-                  <li>Akses login user</li>
-                  <li>User tidak dapat login lagi</li>
-                </ul>
-              </div>
-
-              {/* Confirmation Question */}
-              <p className="text-center font-semibold text-foreground">
-                Apakah Anda yakin ingin menghapus user ini?
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
                 <Button
                   variant="outline"
-                  onClick={() => setIsDeleteDialogOpen(false)}
-                  className="min-w-25"
+                  onClick={() => setIsEditDialogOpen(false)}
                 >
                   Batal
                 </Button>
                 <Button
-                  variant="destructive"
-                  onClick={confirmDelete}
-                  className="min-w-25 bg-danger hover:bg-danger/90"
+                  onClick={handleUpdate}
+                  className="font-semibold bg-linear-to-r from-primary to-accent"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Ya, Hapus
+                  Simpan
                 </Button>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Dialog */}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold">
+                Tambah Pengguna Baru
+              </DialogTitle>
+              <DialogDescription>Buat akun pengguna baru</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="new_full_name">Nama Lengkap *</Label>
+                <Input
+                  id="new_full_name"
+                  value={addFormData.full_name}
+                  onChange={(e) =>
+                    setAddFormData({
+                      ...addFormData,
+                      full_name: e.target.value,
+                    })
+                  }
+                  placeholder="Nama lengkap"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_email">Email *</Label>
+                <Input
+                  id="new_email"
+                  type="email"
+                  value={addFormData.email}
+                  onChange={(e) =>
+                    setAddFormData({ ...addFormData, email: e.target.value })
+                  }
+                  placeholder="user@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_password">Password *</Label>
+                <Input
+                  id="new_password"
+                  type="password"
+                  value={addFormData.password}
+                  onChange={(e) =>
+                    setAddFormData({ ...addFormData, password: e.target.value })
+                  }
+                  placeholder="Minimal 6 karakter"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_role">Role *</Label>
+                <Select
+                  value={addFormData.role}
+                  onValueChange={(value: any) =>
+                    setAddFormData({ ...addFormData, role: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="dosen">Dosen</SelectItem>
+                    <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
+                    <SelectItem value="laboran">Laboran</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Role-specific fields */}
+              {addFormData.role === "mahasiswa" && (
+                <div>
+                  <Label htmlFor="new_nim">NIM</Label>
+                  <Input
+                    id="new_nim"
+                    value={addFormData.nim}
+                    onChange={(e) =>
+                      setAddFormData({ ...addFormData, nim: e.target.value })
+                    }
+                    placeholder="1234567890"
+                  />
+                </div>
+              )}
+
+              {addFormData.role === "dosen" && (
+                <>
+                  <div>
+                    <Label htmlFor="new_nip">NIP</Label>
+                    <Input
+                      id="new_nip"
+                      value={addFormData.nip}
+                      onChange={(e) =>
+                        setAddFormData({ ...addFormData, nip: e.target.value })
+                      }
+                      placeholder="198001012020121001"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new_nidn">NIDN</Label>
+                    <Input
+                      id="new_nidn"
+                      value={addFormData.nidn}
+                      onChange={(e) =>
+                        setAddFormData({ ...addFormData, nidn: e.target.value })
+                      }
+                      placeholder="0101018001"
+                    />
+                  </div>
+                </>
+              )}
+
+              {addFormData.role === "laboran" && (
+                <div>
+                  <Label htmlFor="new_nip_laboran">NIP</Label>
+                  <Input
+                    id="new_nip_laboran"
+                    value={addFormData.nip}
+                    onChange={(e) =>
+                      setAddFormData({ ...addFormData, nip: e.target.value })
+                    }
+                    placeholder="NIP laboran"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="new_phone">No. Telepon</Label>
+                <Input
+                  id="new_phone"
+                  value={addFormData.phone}
+                  onChange={(e) =>
+                    setAddFormData({ ...addFormData, phone: e.target.value })
+                  }
+                  placeholder="08123456789"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
+                  Batal
+                </Button>
+                <Button
+                  onClick={handleCreate}
+                  className="font-semibold bg-linear-to-r from-primary to-accent"
+                >
+                  Tambah User
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-danger flex items-center gap-2">
+                <XCircle className="h-5 w-5" />
+                Hapus User - Konfirmasi
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                <strong>Perhatian!</strong> Tindakan ini tidak dapat dibatalkan.
+              </DialogDescription>
+            </DialogHeader>
+            {deletingUser && (
+              <div className="space-y-4">
+                {/* User Info to Delete */}
+                <div className="p-4 border-2 border-danger/50 rounded-lg bg-danger/5">
+                  <p className="text-sm font-semibold text-danger mb-2">
+                    User yang akan dihapus:
+                  </p>
+                  <p className="text-lg font-bold text-foreground">
+                    {deletingUser.full_name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {deletingUser.email}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Role:{" "}
+                    <StatusBadge
+                      status={deletingUser.role as any}
+                      pulse={false}
+                      className="capitalize"
+                    >
+                      {deletingUser.role}
+                    </StatusBadge>
+                  </p>
+                </div>
+
+                {/* Warning Box */}
+                <div className="p-3 bg-warning/5 border border-warning/40 rounded-md">
+                  <p className="text-sm text-warning font-medium">
+                    ⚠️ Data yang akan dihapus:
+                  </p>
+                  <ul className="text-sm text-warning/80 mt-2 ml-4 list-disc space-y-1">
+                    <li>Akun user dari sistem</li>
+                    <li>Data profil dan role</li>
+                    <li>Akses login user</li>
+                    <li>User tidak dapat login lagi</li>
+                  </ul>
+                </div>
+
+                {/* Confirmation Question */}
+                <p className="text-center font-semibold text-foreground">
+                  Apakah Anda yakin ingin menghapus user ini?
+                </p>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDeleteDialogOpen(false)}
+                    className="min-w-25"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={confirmDelete}
+                    className="min-w-25 bg-danger hover:bg-danger/90"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Ya, Hapus
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </OfflineAwareContent>
   );
 }

@@ -1,18 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot as createReactRoot } from "react-dom/client";
+import "@fontsource-variable/plus-jakarta-sans";
+import "./styles/tokens.css";
 import "./index.css";
 import App from "./App.tsx";
 import { logger } from "@/lib/utils/logger";
 import {
   checkForServiceWorkerUpdate,
-  onUpdateAvailable,
-  onUpdateInstalled,
   registerServiceWorker,
-  skipWaiting,
 } from "@/lib/pwa/register-sw";
 import { startSupabaseWarmup } from "@/lib/supabase/warmup";
 import { initializeSyncManager } from "@/lib/offline/sync-manager";
-import { UpdatePrompt } from "@/components/common/UpdatePrompt";
 
 createReactRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -20,18 +18,68 @@ createReactRoot(document.getElementById("root")!).render(
   </StrictMode>,
 );
 
-const shouldRunSupabaseWarmup = navigator.onLine;
-const stopSupabaseWarmup = shouldRunSupabaseWarmup
-  ? startSupabaseWarmup()
-  : () => {};
+type IdleCallbackHandle = number;
+type IdleCallback = (deadline: {
+  didTimeout: boolean;
+  timeRemaining: () => number;
+}) => void;
 
-if (!shouldRunSupabaseWarmup) {
-  logger.info("⏸️ Skipping Supabase warm-up on offline startup");
+type WindowWithIdleCallback = Window & {
+  requestIdleCallback?: (
+    callback: IdleCallback,
+    options?: { timeout?: number },
+  ) => IdleCallbackHandle;
+  cancelIdleCallback?: (handle: IdleCallbackHandle) => void;
+};
+
+function scheduleIdleTask(
+  task: () => void,
+  options: { fallbackDelayMs?: number; timeoutMs?: number } = {},
+): () => void {
+  const { fallbackDelayMs = 1500, timeoutMs = 5000 } = options;
+  const windowWithIdleCallback = window as WindowWithIdleCallback;
+  let cancelled = false;
+
+  const run = () => {
+    if (!cancelled) {
+      task();
+    }
+  };
+
+  if (typeof windowWithIdleCallback.requestIdleCallback === "function") {
+    const idleHandle = windowWithIdleCallback.requestIdleCallback(run, {
+      timeout: timeoutMs,
+    });
+
+    return () => {
+      cancelled = true;
+      windowWithIdleCallback.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = window.setTimeout(run, fallbackDelayMs);
+  return () => {
+    cancelled = true;
+    window.clearTimeout(timeoutHandle);
+  };
 }
+
+const isDevelopment = import.meta.env.DEV && import.meta.env.MODE !== "test";
+
+let stopSupabaseWarmup = () => {};
+const cancelSupabaseWarmupStart = scheduleIdleTask(() => {
+  if (!navigator.onLine) {
+    logger.info("Skipping Supabase warm-up on offline startup");
+    return;
+  }
+
+  stopSupabaseWarmup = startSupabaseWarmup();
+});
 
 window.addEventListener(
   "beforeunload",
   () => {
+    cancelSupabaseWarmupStart();
     stopSupabaseWarmup();
   },
   { once: true },
@@ -43,141 +91,72 @@ window.addEventListener(
 
 const bootstrapSyncManager = () => {
   initializeSyncManager().catch((error) => {
-    logger.warn("⚠️ SyncManager initialization failed (non-fatal):", error);
+    logger.warn("SyncManager initialization failed (non-fatal):", error);
   });
 };
 
 if (navigator.onLine) {
-  bootstrapSyncManager();
+  scheduleIdleTask(bootstrapSyncManager, {
+    fallbackDelayMs: 2500,
+    timeoutMs: 8000,
+  });
 } else {
-  logger.info(
-    "⏸️ Deferring SyncManager initialization until connection returns",
-  );
+  logger.info("Deferring SyncManager initialization until connection returns");
   window.addEventListener(
     "online",
     () => {
-      bootstrapSyncManager();
+      scheduleIdleTask(bootstrapSyncManager, {
+        fallbackDelayMs: 1500,
+        timeoutMs: 5000,
+      });
     },
     { once: true },
   );
 }
 
 // ============================================================================
-// PWA UPDATE PROMPT
+// PWA UPDATE BOOTSTRAP
 // ============================================================================
 
-const isDevelopment = import.meta.env.DEV && import.meta.env.MODE !== "test";
-
 if (isDevelopment) {
-  logger.info("🔧 Development Mode: PWA enabled for testing");
-} else {
-  logger.info("🚀 Production Mode: PWA enabled");
-}
-
-const updatePromptContainer = document.createElement("div");
-updatePromptContainer.id = "pwa-update-root";
-document.body.appendChild(updatePromptContainer);
-
-const updatePromptRoot = createReactRoot(updatePromptContainer);
-let updateRegistration: ServiceWorkerRegistration | null = null;
-let updatePromptOpen = false;
-let updatePromptUpdating = false;
-
-function renderUpdatePrompt() {
-  updatePromptRoot.render(
-    <UpdatePrompt
-      open={updatePromptOpen && !isDevelopment}
-      isUpdating={updatePromptUpdating}
-      onDismiss={() => {
-        updatePromptOpen = false;
-        updatePromptUpdating = false;
-        renderUpdatePrompt();
-      }}
-      onUpdate={async () => {
-        updatePromptUpdating = true;
-        renderUpdatePrompt();
-
-        logger.info("🔄 Activating new service worker...");
-
-        try {
-          if (updateRegistration?.waiting) {
-            updateRegistration.waiting.postMessage({ type: "SKIP_WAITING" });
-            navigator.serviceWorker.addEventListener(
-              "controllerchange",
-              () => {
-                window.location.reload();
-              },
-              { once: true },
-            );
-            window.setTimeout(() => {
-              window.location.reload();
-            }, 5000);
-            return;
-          }
-
-          await skipWaiting();
-        } catch (error) {
-          updatePromptUpdating = false;
-          logger.error("❌ Failed to activate new service worker", error);
-          renderUpdatePrompt();
-        }
-      }}
-    />,
+  logger.info(
+    "Development Mode: PWA service worker disabled for faster startup",
   );
+} else {
+  logger.info("Production Mode: PWA enabled");
 }
 
-renderUpdatePrompt();
+if (!isDevelopment) {
+  scheduleIdleTask(() => {
+    registerServiceWorker({
+      swPath: "/sw.js",
+      scope: "/",
+      checkUpdateInterval: 5 * 60 * 1000,
+      enableAutoUpdate: true,
+      onSuccess: async (registration) => {
+        logger.info("Service Worker registered successfully", {
+          scope: registration.scope,
+          active: registration.active?.state,
+        });
 
-onUpdateAvailable((registration) => {
-  logger.info("🔄 New Service Worker version available", {
-    waiting: registration.waiting?.state,
-    active: registration.active?.state,
+        const updated = await checkForServiceWorkerUpdate(registration, {
+          source: "on-success",
+          logOfflineAsInfo: true,
+        });
+
+        if (updated) {
+          logger.info("Initial update check completed");
+        }
+      },
+      onError: (error) => {
+        logger.error("Service Worker registration failed", error);
+      },
+    });
   });
-
-  updateRegistration = registration;
-  updatePromptOpen = true;
-  updatePromptUpdating = false;
-  renderUpdatePrompt();
-});
-
-onUpdateInstalled(() => {
-  updateRegistration = null;
-  updatePromptOpen = false;
-  updatePromptUpdating = false;
-  renderUpdatePrompt();
-});
-
-// Register Service Worker
-registerServiceWorker({
-  swPath: "/sw.js",
-  scope: "/",
-  checkUpdateInterval: 5 * 60 * 1000,
-  enableAutoUpdate: true,
-  onSuccess: async (registration) => {
-    logger.info("✅ Service Worker registered successfully", {
-      scope: registration.scope,
-      active: registration.active?.state,
-    });
-
-    const updated = await checkForServiceWorkerUpdate(registration, {
-      source: "on-success",
-      logOfflineAsInfo: true,
-    });
-
-    if (updated) {
-      logger.info("🔄 Initial update check completed");
-    }
-  },
-  onError: (error) => {
-    logger.error("❌ Service Worker registration failed", error);
-  },
-});
+}
 
 /**
- * Auto-update when user is idle (no activity for IDLE_TIMEOUT ms)
- * and there is a waiting service worker.
- *
- * Safe: does NOT fire during active input events (click, keydown, scroll, touchstart).
+ * Auto-update when user is idle and there is a waiting service worker.
  */
 const IDLE_TIMEOUT_MS = 2 * 60 * 1000;
 
@@ -192,7 +171,7 @@ function setupIdleAutoUpdate(): void {
       const reg = await navigator.serviceWorker.getRegistration();
       if (!reg?.waiting) return;
 
-      logger.info("[SW] User idle — applying waiting update automatically");
+      logger.info("[SW] User idle - applying waiting update automatically");
       reg.waiting.postMessage({ type: "SKIP_WAITING" });
       navigator.serviceWorker.addEventListener(
         "controllerchange",
@@ -222,13 +201,15 @@ function setupIdleAutoUpdate(): void {
   resetTimer();
 }
 
-setupIdleAutoUpdate();
+if (!isDevelopment) {
+  setupIdleAutoUpdate();
+}
 
 // ============================================================================
 // BLANK SCREEN RECOVERY
 // ============================================================================
 
-if ("serviceWorker" in navigator) {
+if (!isDevelopment && "serviceWorker" in navigator) {
   setTimeout(async () => {
     const root = document.getElementById("root");
     const isBlank =
@@ -258,22 +239,22 @@ if ("serviceWorker" in navigator) {
 }
 
 if ("serviceWorker" in navigator) {
-  logger.info("✅ Service Worker API supported");
+  logger.info("Service Worker API supported");
 } else {
-  logger.warn("⚠️ Service Worker API not supported in this browser");
+  logger.warn("Service Worker API not supported in this browser");
 }
 
 if ("ononline" in window && "onoffline" in window) {
-  logger.info("✅ Online/Offline events supported");
+  logger.info("Online/Offline events supported");
 } else {
-  logger.warn("⚠️ Online/Offline events not supported");
+  logger.warn("Online/Offline events not supported");
 }
 
 // ============================================================================
 // UPDATE CHECK ON FOCUS/RESUME
 // ============================================================================
 
-if ("serviceWorker" in navigator) {
+if (!isDevelopment && "serviceWorker" in navigator) {
   window.addEventListener("focus", () => {
     void checkForServiceWorkerUpdate(undefined, {
       source: "focus",

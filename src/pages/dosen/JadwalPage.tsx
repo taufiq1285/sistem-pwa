@@ -17,7 +17,7 @@ import {
   WifiOff,
   RefreshCw,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -26,7 +26,7 @@ import { id } from "date-fns/locale";
 
 // Components
 import { PageHeader } from "@/components/common/PageHeader";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { CardListSkeleton } from "@/components/common";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StatusBadge } from "@/components/common/StatusBadge";
@@ -386,12 +386,11 @@ export default function JadwalPage() {
         <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20">
           <CardContent className="p-12">
             <EmptyState
+              variant="no-data"
               title={emptyTitle}
               description={emptyDescription}
-              action={{
-                label: "Tambah Jadwal",
-                onClick: () => setIsCreateOpen(true),
-              }}
+              actionLabel="Tambah Jadwal"
+              onAction={() => setIsCreateOpen(true)}
             />
           </CardContent>
         </Card>
@@ -587,7 +586,7 @@ export default function JadwalPage() {
 
       const data = await cacheAPI(
         scheduleCacheKeys.jadwal,
-        () => getJadwal(filters),
+        () => getJadwal(filters, forceRefresh),
         {
           ttl: 5 * 60 * 1000,
           forceRefresh,
@@ -898,6 +897,8 @@ export default function JadwalPage() {
 
   const createForm = useForm<JadwalFormData>({
     resolver: zodResolver(jadwalSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
     defaultValues: {
       mata_kuliah_nama: "",
       kelas_id: "",
@@ -916,6 +917,8 @@ export default function JadwalPage() {
 
   const editForm = useForm<JadwalFormData>({
     resolver: zodResolver(jadwalSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
   });
 
   // ============================================================================
@@ -997,7 +1000,7 @@ export default function JadwalPage() {
       setIsCreateOpen(false);
       createForm.reset();
       await invalidateCache(scheduleCacheKeys.jadwal);
-      fetchJadwal(true);
+      await fetchJadwal(true);
     } catch (error: any) {
       toast.error("Gagal menambahkan jadwal", {
         description: error.message || "Unknown error occurred",
@@ -1137,7 +1140,7 @@ export default function JadwalPage() {
       editForm.reset();
       setSelectedJadwal(null);
       await invalidateCache(scheduleCacheKeys.jadwal);
-      fetchJadwal(true);
+      await fetchJadwal(true);
     } catch (error: any) {
       toast.error("Gagal memperbarui jadwal", {
         description: error.message,
@@ -1198,7 +1201,7 @@ export default function JadwalPage() {
       setIsDeleteOpen(false);
       setSelectedJadwal(null);
       await invalidateCache(scheduleCacheKeys.jadwal);
-      fetchJadwal(true);
+      await fetchJadwal(true);
     } catch (error: any) {
       toast.error("Gagal menghapus jadwal", {
         description: error.message,
@@ -1239,7 +1242,7 @@ export default function JadwalPage() {
   // RENDER FORM FIELDS
   // ============================================================================
 
-  const renderFormFields = (form: any) => (
+  const renderFormFields = (form: UseFormReturn<JadwalFormData>) => (
     <>
       {/* Mata Kuliah Select - SIMPLE VERSION */}
       <FormField
@@ -1251,7 +1254,7 @@ export default function JadwalPage() {
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih mata kuliah" />
+                  <SelectValue placeholder="Pilih mata kuliah..." />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -1281,7 +1284,7 @@ export default function JadwalPage() {
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih kelas" />
+                  <SelectValue placeholder="Pilih kelas..." />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -1312,7 +1315,7 @@ export default function JadwalPage() {
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih laboratorium" />
+                  <SelectValue placeholder="Pilih laboratorium..." />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -1428,598 +1431,591 @@ export default function JadwalPage() {
   // ============================================================================
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer rounded-md" />
+            <div className="h-4 w-72 skeleton-shimmer rounded-md" />
+          </div>
+        </div>
+        <CardListSkeleton />
+      </div>
+    );
   }
 
   return (
-    <div className="role-page-shell">
-      <div className="role-page-content space-y-8">
-        {(isOfflineData || !navigator.onLine) && (
-          <Alert className="border-warning/40 bg-warning/10 text-foreground shadow-sm">
-            <WifiOff className="h-4 w-4" />
-            <AlertDescription>
-              Jadwal dosen sedang memakai snapshot lokal dari perangkat.
-              {lastUpdatedLabel
-                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
-                : ""}
-            </AlertDescription>
-          </Alert>
-        )}
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      {(isOfflineData || !navigator.onLine) && (
+        <Alert className="border-warning/40 bg-warning/10 text-foreground shadow-sm">
+          <WifiOff className="h-4 w-4" />
+          <AlertDescription>
+            Jadwal dosen sedang memakai snapshot lokal dari perangkat.
+            {lastUpdatedLabel
+              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+              : ""}
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {/* Enhanced Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex-1">
-            <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
-              <div className="p-3 bg-linear-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/30">
-                <CalendarIcon className="h-8 w-8 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-primary to-accent dark:from-primary/80 dark:to-accent/80">
-                  Jadwal Praktikum
-                </h1>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground mt-1">
-                  Kelola jadwal praktikum laboratorium
-                </p>
-              </div>
-            </div>
-            <p className="text-sm sm:text-base font-semibold text-muted-foreground ml-1">
-              Atur jadwal yang belum lewat dan pantau riwayat praktikum yang
-              sudah terkunci
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Button
-              variant="outline"
-              onClick={refreshReferenceData}
-              disabled={loading || !navigator.onLine}
-              className="w-full border-2 font-semibold sm:w-auto"
-              size="lg"
-              title="Ambil ulang data master terbaru dari admin"
-            >
-              <RefreshCw
-                className={cn("mr-2 h-5 w-5", loading && "animate-spin")}
-              />
-              Refresh Data
-            </Button>
-            <Button
-              onClick={async () => {
-                await refreshReferenceData();
-                setIsCreateOpen(true);
-              }}
-              className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
-              size="lg"
-              disabled={!navigator.onLine}
-            >
-              <Plus className="mr-2 h-5 w-5" />
-              Tambah Jadwal
-            </Button>
-          </div>
+      {/* Enhanced Header */}
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Jadwal Praktikum
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Kelola jadwal praktikum laboratorium. Atur jadwal yang belum lewat
+            dan pantau riwayat praktikum yang sudah terkunci.
+          </p>
         </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10" />
-            <CardContent className="p-5 relative">
-              <p className="text-sm font-bold text-primary dark:text-primary/80">
-                Menunggu Approval
-              </p>
-              <p className="mt-2 text-3xl font-black text-primary/90 dark:text-primary/70">
-                {pendingJadwal.length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl bg-linear-to-br from-info/5 to-info/10 dark:from-info/10 dark:to-info/20 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-info/10 rounded-full blur-2xl -mr-10 -mt-10" />
-            <CardContent className="p-5 relative">
-              <p className="text-sm font-bold text-info dark:text-info/80">
-                Jadwal Disetujui
-              </p>
-              <p className="mt-2 text-3xl font-black text-info/90 dark:text-info/70">
-                {approvedJadwal.length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-success/10 rounded-full blur-2xl -mr-10 -mt-10" />
-            <CardContent className="p-5 relative">
-              <p className="text-sm font-bold text-success dark:text-success/80">
-                Riwayat
-              </p>
-              <p className="mt-2 text-3xl font-black text-success/90 dark:text-success/70">
-                {historyJadwal.length}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            onClick={refreshReferenceData}
+            disabled={loading || !navigator.onLine}
+            className="font-semibold"
+            title="Ambil ulang data master terbaru dari admin"
+          >
+            <RefreshCw
+              className={cn("mr-2 h-4 w-4", loading && "animate-spin")}
+            />
+            Refresh Data
+          </Button>
+          <Button
+            onClick={async () => {
+              await refreshReferenceData();
+              setIsCreateOpen(true);
+            }}
+            className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
+            disabled={!navigator.onLine}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Tambah Jadwal
+          </Button>
         </div>
+      </div>
 
-        {/* Enhanced Filters */}
-        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <p className="mb-4 text-sm font-medium text-muted-foreground">
-              Praktikum yang tanggalnya sudah lewat otomatis menjadi riwayat
-              tetap dan tidak bisa diubah lagi.
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10" />
+          <CardContent className="p-5 relative">
+            <p className="text-sm font-bold text-primary dark:text-primary/80">
+              Menunggu Approval
             </p>
-            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                <CalendarIcon className="h-4 w-4 text-primary" />
-                Filter:
-              </div>
-              <Select
-                value={filterKelas || "all"}
-                onValueChange={(value) =>
-                  setFilterKelas(value === "all" ? "" : value)
-                }
-              >
-                <SelectTrigger className="w-full sm:w-60 border-2">
-                  <SelectValue placeholder="Filter Kelas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Kelas</SelectItem>
-                  {kelasList.map((kelas) => (
-                    <SelectItem key={kelas.id} value={kelas.id}>
-                      {kelas.kode_kelas} - {kelas.nama_kelas}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={filterLab} onValueChange={setFilterLab}>
-                <SelectTrigger className="w-full sm:w-55 border-2">
-                  <SelectValue placeholder="Filter Laboratorium" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Lab</SelectItem>
-                  {laboratoriumList.map((lab) => (
-                    <SelectItem key={lab.id} value={lab.id}>
-                      {lab.nama_lab}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={filterHari} onValueChange={setFilterHari}>
-                <SelectTrigger className="w-full sm:w-55 border-2">
-                  <SelectValue placeholder="Filter Hari" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Hari</SelectItem>
-                  {HARI_OPTIONS.map((hari) => (
-                    <SelectItem key={hari.value} value={hari.value}>
-                      {hari.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {(filterKelas || filterLab || filterHari) && (
-                <Button
-                  variant="outline"
-                  onClick={handleClearFilters}
-                  className="border-2 hover:bg-muted/40 font-semibold"
-                >
-                  Clear Filter
-                </Button>
-              )}
-            </div>
+            <p className="mt-2 text-3xl font-black text-primary/90 dark:text-primary/70">
+              {pendingJadwal.length}
+            </p>
           </CardContent>
         </Card>
 
-        {/* View Tabs */}
-        <Tabs
-          value={currentView}
-          onValueChange={(v) => setCurrentView(v as any)}
-          className="space-y-6"
-        >
-          <TabsList className="grid w-full max-w-md grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
-            <TabsTrigger
-              value="calendar"
-              className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
-            >
-              <CalendarIcon className="h-4 w-4" />
-              Calendar View
-            </TabsTrigger>
-            <TabsTrigger
-              value="list"
-              className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
-            >
-              <List className="h-4 w-4" />
-              List View
-            </TabsTrigger>
-          </TabsList>
+        <Card className="border-0 shadow-xl bg-linear-to-br from-info/5 to-info/10 dark:from-info/10 dark:to-info/20 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-info/10 rounded-full blur-2xl -mr-10 -mt-10" />
+          <CardContent className="p-5 relative">
+            <p className="text-sm font-bold text-info dark:text-info/80">
+              Jadwal Disetujui
+            </p>
+            <p className="mt-2 text-3xl font-black text-info/90 dark:text-info/70">
+              {approvedJadwal.length}
+            </p>
+          </CardContent>
+        </Card>
 
-          {/* Calendar View */}
-          <TabsContent value="calendar" className="mt-6">
-            {calendarEvents.length === 0 ? (
-              <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20">
-                <CardContent className="p-12">
-                  <EmptyState
-                    title="Tidak ada jadwal"
-                    description="Belum ada jadwal praktikum untuk bulan ini. Tambahkan jadwal baru untuk memulai."
-                    action={{
-                      label: "Tambah Jadwal",
-                      onClick: () => setIsCreateOpen(true),
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
-                <CardContent className="p-6">
-                  <Calendar
-                    events={calendarEvents}
-                    onEventClick={handleEventClick}
-                    initialDate={currentDate}
-                  />
-                </CardContent>
-              </Card>
+        <Card className="border-0 shadow-xl bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-success/10 rounded-full blur-2xl -mr-10 -mt-10" />
+          <CardContent className="p-5 relative">
+            <p className="text-sm font-bold text-success dark:text-success/80">
+              Riwayat
+            </p>
+            <p className="mt-2 text-3xl font-black text-success/90 dark:text-success/70">
+              {historyJadwal.length}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Enhanced Filters */}
+      <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <p className="mb-4 text-sm font-medium text-muted-foreground">
+            Praktikum yang tanggalnya sudah lewat otomatis menjadi riwayat tetap
+            dan tidak bisa diubah lagi.
+          </p>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+              <CalendarIcon className="h-4 w-4 text-primary" />
+              Filter:
+            </div>
+            <Select
+              value={filterKelas || "all"}
+              onValueChange={(value) =>
+                setFilterKelas(value === "all" ? "" : value)
+              }
+            >
+              <SelectTrigger className="w-full sm:w-60 border-2">
+                <SelectValue placeholder="Filter Kelas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Kelas</SelectItem>
+                {kelasList.map((kelas) => (
+                  <SelectItem key={kelas.id} value={kelas.id}>
+                    {kelas.kode_kelas} - {kelas.nama_kelas}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterLab} onValueChange={setFilterLab}>
+              <SelectTrigger className="w-full sm:w-55 border-2">
+                <SelectValue placeholder="Filter Laboratorium" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Lab</SelectItem>
+                {laboratoriumList.map((lab) => (
+                  <SelectItem key={lab.id} value={lab.id}>
+                    {lab.nama_lab}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterHari} onValueChange={setFilterHari}>
+              <SelectTrigger className="w-full sm:w-55 border-2">
+                <SelectValue placeholder="Filter Hari" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Hari</SelectItem>
+                {HARI_OPTIONS.map((hari) => (
+                  <SelectItem key={hari.value} value={hari.value}>
+                    {hari.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {(filterKelas || filterLab || filterHari) && (
+              <Button
+                variant="outline"
+                onClick={handleClearFilters}
+                className="border-2 hover:bg-muted/40 font-semibold"
+              >
+                Clear Filter
+              </Button>
             )}
-          </TabsContent>
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* List View */}
-          <TabsContent value="list" className="mt-6">
-            {jadwalList.length === 0 ? (
-              <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20">
-                <CardContent className="p-12">
-                  <EmptyState
-                    title="Tidak ada jadwal"
-                    description="Belum ada jadwal praktikum. Tambahkan jadwal baru untuk memulai."
-                    action={{
-                      label: "Tambah Jadwal",
-                      onClick: () => setIsCreateOpen(true),
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <Tabs
-                  value={listTab}
-                  onValueChange={(value) =>
-                    setListTab(value as "pending" | "approved" | "history")
-                  }
-                  className="space-y-4"
-                >
-                  <TabsList className="grid w-full grid-cols-3 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
-                    <TabsTrigger
-                      value="pending"
-                      className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
-                    >
-                      Menunggu ({pendingJadwal.length})
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="approved"
-                      className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
-                    >
-                      Disetujui ({approvedJadwal.length})
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="history"
-                      className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
-                    >
-                      Riwayat ({historyJadwal.length})
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+      {/* View Tabs */}
+      <Tabs
+        value={currentView}
+        onValueChange={(v) => setCurrentView(v as any)}
+        className="space-y-6"
+      >
+        <TabsList className="grid w-full max-w-md grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
+          <TabsTrigger
+            value="calendar"
+            className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+          >
+            <CalendarIcon className="h-4 w-4" />
+            Calendar View
+          </TabsTrigger>
+          <TabsTrigger
+            value="list"
+            className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+          >
+            <List className="h-4 w-4" />
+            List View
+          </TabsTrigger>
+        </TabsList>
 
-                {(listTab === "pending"
-                  ? pendingJadwal
-                  : listTab === "approved"
-                    ? approvedJadwal
-                    : historyJadwal
-                ).length === 0 ? (
-                  renderJadwalCards(
-                    listTab === "pending"
-                      ? pendingJadwal
-                      : listTab === "approved"
-                        ? approvedJadwal
-                        : historyJadwal,
-                    listTab === "pending"
-                      ? "Tidak ada jadwal menunggu"
-                      : listTab === "approved"
-                        ? "Tidak ada jadwal disetujui"
-                        : "Tidak ada riwayat jadwal",
-                    listTab === "pending"
-                      ? "Belum ada jadwal praktikum yang menunggu persetujuan laboran."
-                      : listTab === "approved"
-                        ? "Belum ada jadwal praktikum hari ini atau mendatang yang sudah disetujui."
-                        : "Belum ada jadwal yang selesai, ditolak, atau dibatalkan.",
-                  )
-                ) : (
-                  <div className="grid gap-4">
-                    {(listTab === "pending"
-                      ? pendingJadwal
-                      : listTab === "approved"
-                        ? approvedJadwal
-                        : historyJadwal
-                    ).map((jadwal) => {
-                      const kelas = kelasList.find(
-                        (k) => k.id === jadwal.kelas_id,
-                      );
-                      const mataKuliah = getMataKuliahForJadwal(jadwal);
+        {/* Calendar View */}
+        <TabsContent value="calendar" className="mt-6">
+          {calendarEvents.length === 0 ? (
+            <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20">
+              <CardContent className="p-12">
+                <EmptyState
+                  variant="no-data"
+                  title="Tidak ada jadwal"
+                  description="Belum ada jadwal praktikum untuk bulan ini. Tambahkan jadwal baru untuk memulai."
+                  actionLabel="Tambah Jadwal"
+                  onAction={() => setIsCreateOpen(true)}
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <Calendar
+                  events={calendarEvents}
+                  onEventClick={handleEventClick}
+                  initialDate={currentDate}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
-                      // ✅ NEW: Check if this jadwal belongs to current dosen
-                      const isOwner = jadwal.dosen_id === currentDosenId;
-                      const creatorName =
-                        (jadwal as any).dosen?.user?.full_name || "Unknown";
+        {/* List View */}
+        <TabsContent value="list" className="mt-6">
+          {jadwalList.length === 0 ? (
+            <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20">
+              <CardContent className="p-12">
+                <EmptyState
+                  variant="no-data"
+                  title="Tidak ada jadwal"
+                  description="Belum ada jadwal praktikum. Tambahkan jadwal baru untuk memulai."
+                  actionLabel="Tambah Jadwal"
+                  onAction={() => setIsCreateOpen(true)}
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <Tabs
+                value={listTab}
+                onValueChange={(value) =>
+                  setListTab(value as "pending" | "approved" | "history")
+                }
+                className="space-y-4"
+              >
+                <TabsList className="grid w-full grid-cols-3 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
+                  <TabsTrigger
+                    value="pending"
+                    className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+                  >
+                    Menunggu ({pendingJadwal.length})
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="approved"
+                    className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+                  >
+                    Disetujui ({approvedJadwal.length})
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="history"
+                    className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+                  >
+                    Riwayat ({historyJadwal.length})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
 
-                      return (
-                        <Card
-                          key={jadwal.id}
-                          className={`group hover:shadow-2xl transition-all duration-300 border-2 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm overflow-hidden relative ${
+              {(listTab === "pending"
+                ? pendingJadwal
+                : listTab === "approved"
+                  ? approvedJadwal
+                  : historyJadwal
+              ).length === 0 ? (
+                renderJadwalCards(
+                  listTab === "pending"
+                    ? pendingJadwal
+                    : listTab === "approved"
+                      ? approvedJadwal
+                      : historyJadwal,
+                  listTab === "pending"
+                    ? "Tidak ada jadwal menunggu"
+                    : listTab === "approved"
+                      ? "Tidak ada jadwal disetujui"
+                      : "Tidak ada riwayat jadwal",
+                  listTab === "pending"
+                    ? "Belum ada jadwal praktikum yang menunggu persetujuan laboran."
+                    : listTab === "approved"
+                      ? "Belum ada jadwal praktikum hari ini atau mendatang yang sudah disetujui."
+                      : "Belum ada jadwal yang selesai, ditolak, atau dibatalkan.",
+                )
+              ) : (
+                <div className="grid gap-4">
+                  {(listTab === "pending"
+                    ? pendingJadwal
+                    : listTab === "approved"
+                      ? approvedJadwal
+                      : historyJadwal
+                  ).map((jadwal) => {
+                    const kelas = kelasList.find(
+                      (k) => k.id === jadwal.kelas_id,
+                    );
+                    const mataKuliah = getMataKuliahForJadwal(jadwal);
+
+                    // ✅ NEW: Check if this jadwal belongs to current dosen
+                    const isOwner = jadwal.dosen_id === currentDosenId;
+                    const creatorName =
+                      (jadwal as any).dosen?.user?.full_name || "Unknown";
+
+                    return (
+                      <Card
+                        key={jadwal.id}
+                        className={`group hover:shadow-2xl transition-all duration-300 border-2 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm overflow-hidden relative ${
+                          isOwner
+                            ? "border-primary/30 dark:border-primary/30"
+                            : "border-border/50 dark:border-border/30"
+                        }`}
+                      >
+                        <div
+                          className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${
                             isOwner
-                              ? "border-primary/30 dark:border-primary/30"
-                              : "border-border/50 dark:border-border/30"
-                          }`}
-                        >
-                          <div
-                            className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${
-                              isOwner
-                                ? "from-primary/20 to-accent/20"
-                                : "from-gray-300/10 to-gray-400/10"
-                            } rounded-full blur-3xl -mr-16 -mt-16`}
-                          />
-                          <CardContent className="relative p-6">
-                            <div className="flex items-start gap-6">
-                              {/* Date Badge */}
-                              <div className="shrink-0">
-                                <div
-                                  className={`w-20 h-20 rounded-2xl shadow-lg flex flex-col items-center justify-center text-primary-foreground ${
-                                    isOwner
-                                      ? "bg-linear-to-br from-primary to-accent shadow-primary/30"
-                                      : "bg-linear-to-br from-gray-400 to-gray-500 shadow-gray-400/30"
-                                  }`}
-                                >
-                                  <div className="text-2xl font-bold">
-                                    {jadwal.tanggal_praktikum
-                                      ? format(
-                                          new Date(jadwal.tanggal_praktikum),
-                                          "dd",
-                                        )
-                                      : "-"}
-                                  </div>
-                                  <div className="text-xs font-medium uppercase">
-                                    {jadwal.tanggal_praktikum
-                                      ? format(
-                                          new Date(jadwal.tanggal_praktikum),
-                                          "MMM",
-                                          { locale: id },
-                                        )
-                                      : "-"}
+                              ? "from-primary/20 to-accent/20"
+                              : "from-gray-300/10 to-gray-400/10"
+                          } rounded-full blur-3xl -mr-16 -mt-16`}
+                        />
+                        <CardContent className="relative p-6">
+                          <div className="flex items-start gap-6">
+                            {/* Date Badge */}
+                            <div className="shrink-0">
+                              <div
+                                className={`w-20 h-20 rounded-2xl shadow-lg flex flex-col items-center justify-center text-primary-foreground ${
+                                  isOwner
+                                    ? "bg-linear-to-br from-primary to-accent shadow-primary/30"
+                                    : "bg-linear-to-br from-gray-400 to-gray-500 shadow-gray-400/30"
+                                }`}
+                              >
+                                <div className="text-2xl font-bold">
+                                  {jadwal.tanggal_praktikum
+                                    ? format(
+                                        new Date(jadwal.tanggal_praktikum),
+                                        "dd",
+                                      )
+                                    : "-"}
+                                </div>
+                                <div className="text-xs font-medium uppercase">
+                                  {jadwal.tanggal_praktikum
+                                    ? format(
+                                        new Date(jadwal.tanggal_praktikum),
+                                        "MMM",
+                                        { locale: id },
+                                      )
+                                    : "-"}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-3">
+                                <div className="flex-1">
+                                  <h3 className="text-xl font-bold text-foreground mb-2">
+                                    {mataKuliah?.nama_mk || "Mata Kuliah"}
+                                  </h3>
+                                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full font-semibold">
+                                      <BookOpen className="h-3.5 w-3.5" />
+                                      {kelas?.kode_kelas} - {kelas?.nama_kelas}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-full font-semibold">
+                                      <Users className="h-3.5 w-3.5" />
+                                      {kelas?.tahun_ajaran}
+                                    </span>
+                                    {/* ✅ NEW: Creator Badge */}
+                                    <span
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold ${
+                                        isOwner
+                                          ? "bg-success/10 text-success"
+                                          : "bg-muted text-muted-foreground"
+                                      }`}
+                                    >
+                                      {isOwner
+                                        ? "👤 Anda"
+                                        : `👤 ${creatorName}`}
+                                    </span>
+                                    {/* ✅ NEW: Status Badge */}
+                                    <StatusBadge
+                                      status={jadwal.status || "pending"}
+                                      size="sm"
+                                    />
                                   </div>
                                 </div>
                               </div>
 
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-4 mb-3">
-                                  <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-foreground mb-2">
-                                      {mataKuliah?.nama_mk || "Mata Kuliah"}
-                                    </h3>
-                                    <div className="flex flex-wrap items-center gap-3 text-sm">
-                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full font-semibold">
-                                        <BookOpen className="h-3.5 w-3.5" />
-                                        {kelas?.kode_kelas} -{" "}
-                                        {kelas?.nama_kelas}
-                                      </span>
-                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-full font-semibold">
-                                        <Users className="h-3.5 w-3.5" />
-                                        {kelas?.tahun_ajaran}
-                                      </span>
-                                      {/* ✅ NEW: Creator Badge */}
-                                      <span
-                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold ${
-                                          isOwner
-                                            ? "bg-success/10 text-success"
-                                            : "bg-muted text-muted-foreground"
-                                        }`}
-                                      >
-                                        {isOwner
-                                          ? "👤 Anda"
-                                          : `👤 ${creatorName}`}
-                                      </span>
-                                      {/* ✅ NEW: Status Badge */}
-                                      <StatusBadge
-                                        status={jadwal.status || "pending"}
-                                        size="sm"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Details */}
-                                <div className="space-y-2 mb-3">
-                                  {jadwal.topik && (
-                                    <div className="flex items-start gap-2">
-                                      <div className="w-1 h-1 bg-primary rounded-full mt-2"></div>
-                                      <p className="text-sm font-semibold text-muted-foreground">
-                                        <span className="text-primary">
-                                          Topik:
-                                        </span>{" "}
-                                        {jadwal.topik}
-                                      </p>
-                                    </div>
-                                  )}
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <Clock className="h-4 w-4 text-success" />
-                                    <span className="font-bold text-success">
-                                      {jadwal.jam_mulai} - {jadwal.jam_selesai}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <MapPin className="h-4 w-4 text-warning" />
-                                    <span className="font-bold text-warning">
-                                      {jadwal.laboratorium?.nama_lab || "-"}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {jadwal.catatan && (
-                                  <div className="mt-3 p-3 bg-muted/40 rounded-lg border border-border/50">
-                                    <p className="text-xs font-semibold text-muted-foreground">
-                                      📝 {jadwal.catatan}
+                              {/* Details */}
+                              <div className="space-y-2 mb-3">
+                                {jadwal.topik && (
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-1 h-1 bg-primary rounded-full mt-2"></div>
+                                    <p className="text-sm font-semibold text-muted-foreground">
+                                      <span className="text-primary">
+                                        Topik:
+                                      </span>{" "}
+                                      {jadwal.topik}
                                     </p>
                                   </div>
                                 )}
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Clock className="h-4 w-4 text-success" />
+                                  <span className="font-bold text-success">
+                                    {jadwal.jam_mulai} - {jadwal.jam_selesai}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                  <MapPin className="h-4 w-4 text-warning" />
+                                  <span className="font-bold text-warning">
+                                    {jadwal.laboratorium?.nama_lab || "-"}
+                                  </span>
+                                </div>
                               </div>
 
-                              {/* Actions */}
-                              {isOwner && !isPastJadwal(jadwal) ? (
-                                <div className="flex flex-col gap-2 shrink-0">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleEdit(jadwal)}
-                                    className="border-2 hover:bg-primary/5 font-semibold"
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => handleDelete(jadwal)}
-                                    className="font-semibold"
-                                  >
-                                    Hapus
-                                  </Button>
+                              {jadwal.catatan && (
+                                <div className="mt-3 p-3 bg-muted/40 rounded-lg border border-border/50">
+                                  <p className="text-xs font-semibold text-muted-foreground">
+                                    📝 {jadwal.catatan}
+                                  </p>
                                 </div>
-                              ) : null}
+                              )}
                             </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
 
-        {/* Create Modal */}
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-            <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
-              <DialogTitle className="text-2xl font-bold">
-                Tambah Jadwal Praktikum
-              </DialogTitle>
-              <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-1">
-                Lengkapi form berikut untuk menambahkan jadwal baru
-              </DialogDescription>
-            </div>
+                            {/* Actions */}
+                            {isOwner && !isPastJadwal(jadwal) ? (
+                              <div className="flex flex-col gap-2 shrink-0">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEdit(jadwal)}
+                                  className="border-2 hover:bg-primary/5 font-semibold"
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDelete(jadwal)}
+                                  className="font-semibold"
+                                >
+                                  Hapus
+                                </Button>
+                              </div>
+                            ) : null}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
 
-            <div className="p-6">
-              <Form {...createForm}>
-                <form
-                  onSubmit={createForm.handleSubmit(handleCreate)}
-                  className="space-y-4"
-                >
-                  {renderFormFields(createForm)}
+      {/* Create Modal */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+          <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
+            <DialogTitle className="text-2xl font-bold">
+              Tambah Jadwal Praktikum
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-1">
+              Lengkapi form berikut untuk menambahkan jadwal baru
+            </DialogDescription>
+          </div>
 
-                  <DialogFooter className="mt-6 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsCreateOpen(false)}
-                      disabled={isCreating}
-                      className="border-2 font-semibold"
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isCreating || !navigator.onLine}
-                      className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
-                    >
-                      {isCreating && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      Simpan Jadwal
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </div>
-          </DialogContent>
-        </Dialog>
+          <div className="p-6">
+            <Form {...createForm}>
+              <form
+                onSubmit={createForm.handleSubmit(handleCreate)}
+                className="space-y-4"
+              >
+                {renderFormFields(createForm)}
 
-        {/* Edit Modal */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-            <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
-              <DialogTitle className="text-2xl font-bold">
-                Edit Jadwal Praktikum
-              </DialogTitle>
-              <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-1">
-                Perbarui informasi jadwal praktikum
-              </DialogDescription>
-            </div>
+                <DialogFooter className="mt-6 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsCreateOpen(false)}
+                    disabled={isCreating}
+                    className="border-2 font-semibold"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isCreating || !navigator.onLine}
+                    className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
+                  >
+                    {isCreating && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Simpan Jadwal
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-            <div className="p-6">
-              <Form {...editForm}>
-                <form
-                  onSubmit={editForm.handleSubmit(handleUpdate)}
-                  className="space-y-4"
-                >
-                  {renderFormFields(editForm)}
+      {/* Edit Modal */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+          <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
+            <DialogTitle className="text-2xl font-bold">
+              Edit Jadwal Praktikum
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-1">
+              Perbarui informasi jadwal praktikum
+            </DialogDescription>
+          </div>
 
-                  <DialogFooter className="mt-6 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsEditOpen(false)}
-                      disabled={isUpdating}
-                      className="border-2 font-semibold"
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isUpdating || !navigator.onLine}
-                      className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
-                    >
-                      {isUpdating && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      Perbarui Jadwal
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </div>
-          </DialogContent>
-        </Dialog>
+          <div className="p-6">
+            <Form {...editForm}>
+              <form
+                onSubmit={editForm.handleSubmit(handleUpdate)}
+                className="space-y-4"
+              >
+                {renderFormFields(editForm)}
 
-        {/* Delete Confirmation */}
-        <ConfirmDialog
-          open={isDeleteOpen}
-          onOpenChange={setIsDeleteOpen}
-          title="Hapus Jadwal"
-          description={
-            selectedJadwal
-              ? `Apakah Anda yakin ingin menghapus jadwal praktikum ini?\n\nStatus: ${selectedJadwal.status === "pending" ? "⏳ Menunggu Approval" : selectedJadwal.status === "approved" ? "✅ Approved" : selectedJadwal.status}\n\nTindakan ini tidak dapat dibatalkan.`
-              : "Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan."
-          }
-          confirmLabel="Hapus"
-          cancelLabel="Batal"
-          onConfirm={handleConfirmDelete}
-          variant="danger"
-          isLoading={isDeleting}
-        />
+                <DialogFooter className="mt-6 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditOpen(false)}
+                    disabled={isUpdating}
+                    className="border-2 font-semibold"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isUpdating || !navigator.onLine}
+                    className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
+                  >
+                    {isUpdating && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Perbarui Jadwal
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        {/* Event Detail Dialog */}
-        <EventDialog
-          event={selectedEvent}
-          open={isEventDialogOpen}
-          onOpenChange={setIsEventDialogOpen}
-          onEdit={handleEventEdit}
-          onDelete={handleEventDelete}
-          showActions={true}
-        />
-      </div>
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        title="Hapus Jadwal"
+        description={
+          selectedJadwal
+            ? `Apakah Anda yakin ingin menghapus jadwal praktikum ini?\n\nStatus: ${selectedJadwal.status === "pending" ? "⏳ Menunggu Approval" : selectedJadwal.status === "approved" ? "✅ Approved" : selectedJadwal.status}\n\nTindakan ini tidak dapat dibatalkan.`
+            : "Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan."
+        }
+        confirmLabel="Hapus"
+        cancelLabel="Batal"
+        onConfirm={handleConfirmDelete}
+        variant="danger"
+        isLoading={isDeleting}
+      />
+
+      {/* Event Detail Dialog */}
+      <EventDialog
+        event={selectedEvent}
+        open={isEventDialogOpen}
+        onOpenChange={setIsEventDialogOpen}
+        onEdit={handleEventEdit}
+        onDelete={handleEventDelete}
+        showActions={true}
+      />
     </div>
   );
 }

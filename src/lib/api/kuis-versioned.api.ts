@@ -11,6 +11,7 @@ import {
   getVersion,
   type VersionedUpdateResult,
 } from "./versioned-update.api";
+import logger from "@/lib/utils/logger";
 import {
   getAttemptById,
   getJawabanByAttempt,
@@ -43,7 +44,7 @@ export async function submitQuizWithVersion(
   const attempt = currentAttempt || (await getAttemptById(data.attempt_id));
   const currentVersion = getVersion(attempt);
 
-  console.log("[VersionedKuis] Submitting quiz with version check", {
+  logger.debug("[VersionedKuis] Submitting quiz with version check", {
     attemptId: data.attempt_id,
     currentVersion,
     status: attempt.status,
@@ -62,7 +63,7 @@ export async function submitQuizWithVersion(
   );
 
   if (!result.success) {
-    console.warn("[VersionedKuis] Quiz submission conflict", {
+    logger.debug("[VersionedKuis] Quiz submission conflict", {
       error: result.error,
       hasConflict: !!result.conflict,
     });
@@ -106,7 +107,7 @@ export async function submitQuizSafe(
     }
 
     // No _version column - use original implementation
-    console.warn("[VersionedKuis] No _version column, using original submit");
+    logger.debug("[VersionedKuis] No _version column, using original submit");
     return await originalSubmitQuiz(data);
   } catch (error) {
     // Fallback to original
@@ -143,7 +144,7 @@ export async function submitAnswerWithVersion(
 
   // If no existing answer, create new (no version check needed)
   if (!existing) {
-    console.log("[VersionedKuis] Creating new answer (no version check)");
+    logger.debug("[VersionedKuis] Creating new answer (no version check)");
 
     const { data: newAnswer, error } = await supabase
       .from("jawaban")
@@ -172,7 +173,7 @@ export async function submitAnswerWithVersion(
   // Answer exists - use version check
   const currentVersion = getVersion(currentAnswer || existing);
 
-  console.log("[VersionedKuis] Updating answer with version check", {
+  logger.debug("[VersionedKuis] Updating answer with version check", {
     answerId: existing.id,
     currentVersion,
     isGraded: !!(existing as any).poin_diperoleh,
@@ -190,7 +191,7 @@ export async function submitAnswerWithVersion(
   );
 
   if (!result.success) {
-    console.warn("[VersionedKuis] Answer update conflict", {
+    logger.debug("[VersionedKuis] Answer update conflict", {
       error: result.error,
       hasConflict: !!result.conflict,
     });
@@ -309,7 +310,7 @@ export async function submitAllAnswersWithVersion(
 
   await Promise.all(promises);
 
-  console.log("[VersionedKuis] Batch submit complete", {
+  logger.debug("[VersionedKuis] Batch submit complete", {
     total: soalIds.length,
     success,
     failed,
@@ -354,7 +355,7 @@ export async function gradeAnswerWithVersion(
 
   const currentVersion = getVersion(answer);
 
-  console.log("[VersionedKuis] Grading answer with version check", {
+  logger.debug("[VersionedKuis] Grading answer with version check", {
     answerId,
     currentVersion,
     poinDiperoleh,
@@ -373,7 +374,7 @@ export async function gradeAnswerWithVersion(
   );
 
   if (!result.success && result.conflict) {
-    console.warn(
+    logger.debug(
       "[VersionedKuis] Grade conflict - logged for manual resolution",
       {
         answerId,

@@ -1,8 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { SidebarProvider } from "@/components/layout/SidebarContext";
 
 vi.mock("@/config/navigation.config", async () => {
   const { Home, BookOpen } =
@@ -31,7 +32,8 @@ vi.mock("@/config/navigation.config", async () => {
 });
 
 vi.mock("@/lib/hooks/useRoleTheme", () => ({
-  useRoleTheme: () => ({
+  useRoleTheme: vi.fn(),
+  useRoleThemeConfig: () => ({
     sidebarBg: "bg-slate-950/95",
     sidebarHover: "hover:bg-slate-800/80",
     sidebarActive: "bg-slate-800/90 border-l-4 border-slate-300 text-white",
@@ -41,16 +43,22 @@ vi.mock("@/lib/hooks/useRoleTheme", () => ({
 }));
 
 describe("Sidebar", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it("render user info dan toggle collapse", async () => {
     const user = userEvent.setup();
 
     render(
       <MemoryRouter initialEntries={["/admin/dashboard"]}>
-        <Sidebar
-          userRole="admin"
-          userName="Sidebar User"
-          userEmail="sidebar@example.com"
-        />
+        <SidebarProvider>
+          <Sidebar
+            userRole="admin"
+            userName="Sidebar User"
+            userEmail="sidebar@example.com"
+          />
+        </SidebarProvider>
       </MemoryRouter>,
     );
 
@@ -68,12 +76,14 @@ describe("Sidebar", () => {
 
     render(
       <MemoryRouter initialEntries={["/admin/dashboard"]}>
-        <Sidebar
-          userRole="admin"
-          userName="Sidebar User"
-          userEmail="sidebar@example.com"
-          onLogout={onLogout}
-        />
+        <SidebarProvider>
+          <Sidebar
+            userRole="admin"
+            userName="Sidebar User"
+            userEmail="sidebar@example.com"
+            onLogout={onLogout}
+          />
+        </SidebarProvider>
       </MemoryRouter>,
     );
 

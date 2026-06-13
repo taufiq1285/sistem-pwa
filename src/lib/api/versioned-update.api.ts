@@ -7,6 +7,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 import { smartConflictResolver } from "@/lib/offline/smart-conflict-resolver";
+import logger from "@/lib/utils/logger";
 
 export interface VersionedUpdateResult<T = any> {
   success: boolean;
@@ -62,7 +63,7 @@ export async function safeUpdateWithVersion<T = any>(
 
     if (!result || !result.success) {
       // Version conflict detected
-      console.warn("[VersionedUpdate] Version conflict detected", {
+      logger.debug("[VersionedUpdate] Version conflict detected", {
         table: tableName,
         id,
         expected: expectedVersion,
@@ -146,7 +147,7 @@ export async function updateWithAutoResolve<T = any>(
 
   // If conflict, use smart resolver
   if (result.conflict) {
-    console.log(
+    logger.debug(
       "[VersionedUpdate] Auto-resolving conflict with smart resolver",
     );
 
@@ -220,7 +221,7 @@ export async function updateWithConflictLog<T = any>(
 
   // If conflict, log it
   if (result.conflict) {
-    console.log("[VersionedUpdate] Logging conflict for manual resolution");
+    logger.debug("[VersionedUpdate] Logging conflict for manual resolution");
 
     try {
       const { error: logError } = await supabase.rpc("log_conflict", {
@@ -235,7 +236,7 @@ export async function updateWithConflictLog<T = any>(
       if (logError) {
         console.error("[VersionedUpdate] Failed to log conflict:", logError);
       } else {
-        console.log("[VersionedUpdate] Conflict logged successfully");
+        logger.debug("[VersionedUpdate] Conflict logged successfully");
       }
     } catch (err) {
       console.error("[VersionedUpdate] Error logging conflict:", err);

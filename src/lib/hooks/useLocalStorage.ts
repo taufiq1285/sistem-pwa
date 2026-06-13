@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import logger from "@/lib/utils/logger";
 
 /**
  * Hook for managing state persisted to localStorage
@@ -23,7 +24,7 @@ export function useLocalStorage<T>(
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch {
-      console.warn(`Error reading localStorage key "${key}":`, Error);
+      logger.debug(`Error reading localStorage key "${key}":`, Error);
       return initialValue;
     }
   });
@@ -36,7 +37,7 @@ export function useLocalStorage<T>(
           window.localStorage.setItem(key, JSON.stringify(value));
         }
       } catch (error) {
-        console.warn(`Error setting localStorage key "${key}":`, error);
+        logger.debug(`Error setting localStorage key "${key}":`, error);
       }
     },
     [key],

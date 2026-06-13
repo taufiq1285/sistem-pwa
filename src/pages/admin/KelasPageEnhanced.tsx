@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { normalize } from "@/lib/utils/normalize";
 import { isOnline as isOnlineNow } from "@/lib/offline/api-cache";
+import { TableSkeleton } from "@/components/common";
 
 // UI Components
 import {
@@ -255,19 +256,52 @@ export default function KelasPageEnhanced() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        {/* Header */}
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer rounded-md" />
+            <div className="h-4 w-72 skeleton-shimmer rounded-md" />
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="h-10 w-24 skeleton-shimmer rounded-md" />
+            <div className="h-10 w-36 skeleton-shimmer rounded-md" />
+          </div>
+        </div>
+
+        {/* Alert Info Skeleton */}
+        <div className="h-16 w-full skeleton-shimmer rounded-md" />
+
+        {/* Kelas Table Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Daftar Kelas</CardTitle>
+            <CardDescription>Memuat daftar kelas...</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="space-y-2">
+                <div className="h-4 w-24 skeleton-shimmer rounded-xs" />
+                <div className="h-3 w-48 skeleton-shimmer rounded-xs" />
+              </div>
+              <div className="h-10 w-60 skeleton-shimmer rounded-md" />
+            </div>
+            <TableSkeleton rows={5} columns={5} />
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-3xl font-bold">Manajemen Kelas</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold text-foreground">
+            Manajemen Kelas
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Kelola kelas universal untuk pengelolaan mahasiswa
           </p>
         </div>
@@ -366,27 +400,30 @@ export default function KelasPageEnhanced() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() => handleKelolaMahasiswa(kelas)}
+                          className="table-action-btn table-action-btn-view"
+                          title="Kelola Mahasiswa"
                         >
                           <UserCheck className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleEdit(kelas)}
+                          className="table-action-btn table-action-btn-edit"
+                          title="Edit"
                         >
                           <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleDelete(kelas)}
+                          className="table-action-btn table-action-btn-delete"
+                          title="Hapus"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </div>
                     </TableCell>
                   </TableRow>

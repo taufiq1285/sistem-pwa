@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/auth.types";
 import { getNavigationItems, isRouteActive } from "@/config/navigation.config";
-import { useRoleTheme } from "@/lib/hooks/useRoleTheme";
+import { useRoleThemeConfig } from "@/lib/hooks/useRoleTheme";
 
 // ============================================================================
 // TYPES
@@ -41,7 +41,7 @@ export function MobileNav({
   className,
 }: MobileNavProps) {
   const location = useLocation();
-  const theme = useRoleTheme();
+  const theme = useRoleThemeConfig();
 
   // Get navigation items for current role
   const navItems = getNavigationItems(userRole);
@@ -71,7 +71,7 @@ export function MobileNav({
       {/* Drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[88vw] max-w-xs border-r border-white/10 text-white shadow-2xl backdrop-blur-xl transform transition-transform duration-300 ease-in-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 w-[88vw] max-w-xs border-r border-role-sidebar-dark text-white shadow-2xl backdrop-blur-xl transform transition-transform duration-300 ease-in-out md:hidden",
           theme.sidebarBg,
           isOpen ? "translate-x-0" : "-translate-x-full",
           className,
@@ -79,7 +79,7 @@ export function MobileNav({
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="relative flex h-16 items-center justify-between border-b border-white/10 px-4">
+          <div className="relative flex h-16 items-center justify-between border-b border-role-sidebar-dark px-4">
             <div
               className={cn(
                 "pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent",
@@ -106,7 +106,7 @@ export function MobileNav({
           {/* User Info */}
           <div
             className={cn(
-              "border-b border-white/10 px-4 py-4 bg-linear-to-r",
+              "border-b border-role-sidebar-dark px-4 py-4 bg-linear-to-r",
               theme.mobileBanner,
             )}
           >
@@ -141,18 +141,24 @@ export function MobileNav({
                     to={item.href}
                     onClick={handleLinkClick}
                     className={cn(
-                      "interactive-card flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 overflow-hidden",
                       cn(
-                        "hover:text-white hover:translate-x-0.5",
+                        "hover:text-white hover:bg-white/8",
                         theme.sidebarHover,
                       ),
                       active && cn(theme.sidebarActive, "text-white shadow-sm"),
                     )}
                   >
-                    <Icon className="h-5 w-5 shrink-0" />
-                    <span className="flex-1">{item.label}</span>
+                    {active && <span className="nav-item-active-indicator" />}
+                    {active && (
+                      <div className="absolute inset-0 bg-linear-to-r from-white/10 via-white/5 to-transparent opacity-60" />
+                    )}
+                    <Icon className="h-5 w-5 shrink-0 relative" />
+                    <span className="flex-1 relative">{item.label}</span>
                     {item.badge !== undefined && (
-                      <Badge variant="secondary">{item.badge}</Badge>
+                      <Badge variant="secondary" className="relative">
+                        {item.badge}
+                      </Badge>
                     )}
                   </Link>
                 );
@@ -161,10 +167,10 @@ export function MobileNav({
           </ScrollArea>
 
           {/* Footer - Logout */}
-          <div className="border-t p-4">
+          <div className="border-t border-role-sidebar-dark p-3">
             <Button
               variant="ghost"
-              className="w-full justify-start text-destructive transition-all duration-200 hover:translate-x-0.5 hover:bg-destructive/10 hover:text-destructive"
+              className="w-full justify-start text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-red-300"
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-5 w-5" />

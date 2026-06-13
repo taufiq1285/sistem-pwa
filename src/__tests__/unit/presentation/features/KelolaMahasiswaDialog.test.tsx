@@ -162,7 +162,7 @@ describe("KelolaMahasiswaDialog", () => {
     });
 
     expect(screen.getByText(/Kelola Mahasiswa - TI-1A/i)).toBeInTheDocument();
-    expect(screen.getByText("Andi")).toBeInTheDocument();
+    expect(await screen.findByText("Andi")).toBeInTheDocument();
     expect(screen.getByText("Realtime Active")).toBeInTheDocument();
   });
 

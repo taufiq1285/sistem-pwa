@@ -5,6 +5,7 @@
 
 export { useAuth } from "./useAuth";
 export { useAutoSave } from "./useAutoSave";
+export { useCommandPalette } from "./useCommandPalette";
 export { useDebounce } from "./useDebounce";
 export { useLocalData } from "./useLocalData";
 export { useLocalStorage } from "./useLocalStorage";
@@ -17,9 +18,10 @@ export {
 export { useOffline } from "./useOffline";
 export { usePdfBlobUrl } from "./usePdfBlobUrl";
 export { useRole } from "./useRole";
-export { useRoleTheme } from "./useRoleTheme";
+export { useRoleTheme, useRoleThemeConfig } from "./useRoleTheme";
 export { useSupabase } from "./useSupabase";
 export { useSignedUrl } from "./useSignedUrl";
+export { useSubmitState } from "./useSubmitState";
 export { useSync } from "./useSync";
 export { useTheme } from "./useTheme";
 export { useConflicts } from "./useConflicts";

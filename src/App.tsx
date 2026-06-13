@@ -1,4 +1,3 @@
-import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { NotificationProvider } from "@/providers/NotificationProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
@@ -9,8 +8,27 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import { useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import errorLogger from "@/lib/utils/error-logger";
 import { initializeCacheManager } from "@/lib/utils/cache-manager";
+import { useRoleTheme } from "@/lib/hooks/useRoleTheme";
+import { AnimatePresence } from "framer-motion";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function RoleThemeBridge() {
+  useRoleTheme();
+  return null;
+}
 
 function App() {
   // Initialize cache manager and error logger
@@ -35,21 +53,24 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <NotificationProvider>
             <OfflineProvider>
               <SyncProvider autoSync={true}>
                 <AuthProvider>
+                  <RoleThemeBridge />
                   <OfflineIndicator position="top" hideWhenOnline={true} />
                   <PWAInstallPrompt />
-                  <AppRouter />
+                  <AnimatePresence mode="wait">
+                    <AppRouter />
+                  </AnimatePresence>
                 </AuthProvider>
               </SyncProvider>
             </OfflineProvider>
           </NotificationProvider>
         </ThemeProvider>
-      </BrowserRouter>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

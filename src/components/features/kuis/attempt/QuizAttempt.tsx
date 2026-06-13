@@ -17,6 +17,7 @@ import {
   Loader2,
   FileText,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -166,14 +167,14 @@ export function QuizAttempt({
   const currentQuestion = questions[currentQuestionIndex];
 
   // 🔍 DEBUG: Log current question state
-  console.log("🐛 [QuizAttempt] currentQuestionIndex:", currentQuestionIndex);
-  console.log("🐛 [QuizAttempt] questions.length:", questions.length);
-  console.log("🐛 [QuizAttempt] currentQuestion:", currentQuestion);
-  console.log(
+  logger.debug("🐛 [QuizAttempt] currentQuestionIndex:", currentQuestionIndex);
+  logger.debug("🐛 [QuizAttempt] questions.length:", questions.length);
+  logger.debug("🐛 [QuizAttempt] currentQuestion:", currentQuestion);
+  logger.debug(
     "🐛 [QuizAttempt] currentQuestion?.pertanyaan:",
     currentQuestion?.pertanyaan,
   );
-  console.log(
+  logger.debug(
     "🐛 [QuizAttempt] currentQuestion?.tipe_soal:",
     currentQuestion?.tipe_soal,
   );
@@ -217,7 +218,7 @@ export function QuizAttempt({
   useEffect(() => {
     // ✅ Prevent duplicate calls (React StrictMode protection)
     if (isInitializingRef.current) {
-      console.log("⚠️ Already initializing, skipping duplicate call");
+      logger.debug("⚠️ Already initializing, skipping duplicate call");
       return;
     }
 
@@ -296,10 +297,10 @@ export function QuizAttempt({
         } else {
           questionsData = await getSoalByKuisOffline(kuisId);
         }
-        console.log("✅ Loaded soal securely (jawaban_benar hidden)");
+        logger.debug("✅ Loaded soal securely (jawaban_benar hidden)");
       } catch (err) {
         // Fallback: Load from soal table directly and hide jawaban_benar on client
-        console.warn("⚠️ Secure API failed, using soal table directly:", err);
+        logger.debug("⚠️ Secure API failed, using soal table directly:", err);
         try {
           const { data: soalData, error: soalError } = await supabase
             .from("soal")
@@ -345,12 +346,12 @@ export function QuizAttempt({
             await cacheQuestionsOffline(kuisId, questionsData);
           }
 
-          console.log(
+          logger.debug(
             `✅ Loaded ${questionsData.length} soal from soal table (jawaban_benar removed)`,
           );
         } catch (err2) {
           // Last resort: try offline cache
-          console.warn(
+          logger.debug(
             "⚠️ Direct soal query failed, trying offline cache:",
             err2,
           );
@@ -374,7 +375,7 @@ export function QuizAttempt({
 
       if (existingAttemptId) {
         // Resume existing attempt (fetch real data for accurate status/timer)
-        console.log("🔵 Resuming attempt:", existingAttemptId);
+        logger.debug("🔵 Resuming attempt:", existingAttemptId);
         if (isOnline) {
           attemptData = await getAttemptByIdForMahasiswa(existingAttemptId);
 
@@ -400,7 +401,7 @@ export function QuizAttempt({
         }
       } else {
         // Start new attempt
-        console.log("🔵 Starting new attempt for kuis:", kuisId);
+        logger.debug("🔵 Starting new attempt for kuis:", kuisId);
 
         const cachedAttempt = await getLatestCachedAttemptForQuiz(
           kuisId,
@@ -434,7 +435,7 @@ export function QuizAttempt({
               ));
 
           if (isThisLaporanMode) {
-            console.log("🔵 LAPORAN MODE: Checking for existing attempts...");
+            logger.debug("🔵 LAPORAN MODE: Checking for existing attempts...");
 
             // Check for any existing attempt (submitted or in_progress)
             const { data: existingAttempts } = await supabase
@@ -448,7 +449,7 @@ export function QuizAttempt({
 
             if (existingAttempts && existingAttempts.length > 0) {
               const existingAttempt = existingAttempts[0];
-              console.log(
+              logger.debug(
                 "✅ LAPORAN MODE: Found existing attempt:",
                 existingAttempt.id,
                 "status:",
@@ -490,7 +491,7 @@ export function QuizAttempt({
               errorMessage.includes("percobaan")
             ) {
               // Max attempts reached - try to find existing submitted attempt
-              console.log(
+              logger.debug(
                 "⚠️ Max attempts reached, checking for existing attempts...",
               );
 
@@ -507,7 +508,7 @@ export function QuizAttempt({
 
                 if (attempts && attempts.length > 0) {
                   const existingAttempt = attempts[0];
-                  console.log(
+                  logger.debug(
                     "✅ Found existing attempt, redirecting to results:",
                     existingAttempt.id,
                   );
@@ -569,7 +570,7 @@ export function QuizAttempt({
 
       // ✅ Set attempt state (important!)
       setAttempt(attemptData);
-      console.log("✅ Attempt loaded:", attemptData.id);
+      logger.debug("✅ Attempt loaded:", attemptData.id);
 
       if (existingAttemptId) {
         toast.info("Melanjutkan tugas sebelumnya");
@@ -705,7 +706,7 @@ export function QuizAttempt({
       !currentAnswer ||
       currentAnswer.trim() === ""
     ) {
-      console.log("⚠️ Skipping auto-save: No answer to save");
+      logger.debug("⚠️ Skipping auto-save: No answer to save");
       return;
     }
 
@@ -729,7 +730,7 @@ export function QuizAttempt({
       }
 
       await submitAnswerOffline(submitData);
-      console.log("✅ Answer auto-saved:", currentQuestion.id);
+      logger.debug("✅ Answer auto-saved:", currentQuestion.id);
     } catch (err: any) {
       console.error("Manual save failed:", err);
       // Don't show error to user, will retry
@@ -782,10 +783,10 @@ export function QuizAttempt({
       return;
     }
 
-    console.log("🐛 [QuizAttempt] Submitting quiz...");
-    console.log("🐛 [QuizAttempt] Attempt ID:", attempt.id);
-    console.log("🐛 [QuizAttempt] Kuis ID:", kuisId);
-    console.log("🐛 [QuizAttempt] Mahasiswa ID:", mahasiswaId);
+    logger.debug("🐛 [QuizAttempt] Submitting quiz...");
+    logger.debug("🐛 [QuizAttempt] Attempt ID:", attempt.id);
+    logger.debug("🐛 [QuizAttempt] Kuis ID:", kuisId);
+    logger.debug("🐛 [QuizAttempt] Mahasiswa ID:", mahasiswaId);
 
     setIsSubmitting(true);
 
@@ -828,9 +829,9 @@ export function QuizAttempt({
 
       // ✅ FIX: Save ALL answers from state before submitting
       // Previously only saved current answer, causing answered questions to be lost
-      console.log("🐛 [QuizAttempt] Saving all answers before submit...");
-      console.log("🐛 [QuizAttempt] Answers to save:", answers);
-      console.log("🐛 [QuizAttempt] File uploads:", fileUploads);
+      logger.debug("🐛 [QuizAttempt] Saving all answers before submit...");
+      logger.debug("🐛 [QuizAttempt] Answers to save:", answers);
+      logger.debug("🐛 [QuizAttempt] File uploads:", fileUploads);
 
       // ✅ Offline-critical: gunakan static import agar submit kuis tidak bergantung
       // pada lazy chunk tambahan saat perangkat sudah offline.
@@ -841,14 +842,14 @@ export function QuizAttempt({
         fileUploads,
       );
 
-      console.log("🐛 [QuizAttempt] Save result:", {
+      logger.debug("🐛 [QuizAttempt] Save result:", {
         success: saveResult.success,
         failed: saveResult.failed,
         total: Object.keys(answers).length,
       });
 
       if (saveResult.failed > 0) {
-        console.warn(
+        logger.debug(
           "⚠️ [QuizAttempt] Some answers failed to save:",
           saveResult.results,
         );
@@ -857,7 +858,7 @@ export function QuizAttempt({
       // Get remaining time
       const sisaWaktu = getRemainingTime();
 
-      console.log("🐛 [QuizAttempt] Calling submitQuiz API...");
+      logger.debug("🐛 [QuizAttempt] Calling submitQuiz API...");
 
       // ✅ FIX: Capture returned attempt (contains the id)
       const submittedAttempt = await submitQuiz({
@@ -866,12 +867,12 @@ export function QuizAttempt({
       });
 
       // Debug log
-      console.log("✅ [QuizAttempt] Submit successful!");
-      console.log(
+      logger.debug("✅ [QuizAttempt] Submit successful!");
+      logger.debug(
         "🐛 [QuizAttempt] Submitted attempt ID:",
         submittedAttempt?.id,
       );
-      console.log(
+      logger.debug(
         "🐛 [QuizAttempt] Submitted attempt status:",
         (submittedAttempt as any)?.status,
       );
@@ -887,7 +888,7 @@ export function QuizAttempt({
 
       // Redirect to results - use returned attempt id
       const resultAttemptId = submittedAttempt?.id || attempt.id;
-      console.log(
+      logger.debug(
         "🐛 [QuizAttempt] Navigating to:",
         `/mahasiswa/kuis/${kuisId}/result/${resultAttemptId}`,
       );
@@ -973,14 +974,14 @@ export function QuizAttempt({
             {quiz.judul}
           </h1>
           {quiz.deskripsi && (
-            <p
+            <div
               className={cn(
-                "max-w-3xl text-muted-foreground",
+                "prose prose-slate max-w-none text-body text-muted-foreground dark:prose-invert",
                 isLaporanMode && "text-base leading-relaxed text-slate-600",
               )}
             >
               {quiz.deskripsi}
-            </p>
+            </div>
           )}
           {!isLaporanMode && (
             <p className="mt-2 text-sm font-medium text-muted-foreground">
@@ -1023,7 +1024,7 @@ export function QuizAttempt({
           // Only save if jawaban is not empty
           if (data.jawaban && data.jawaban.trim() !== "") {
             await submitAnswerOffline(data);
-            console.log("✅ Auto-saved (offline):", data.soal_id);
+            logger.debug("✅ Auto-saved (offline):", data.soal_id);
           }
         }}
         delay={3000}
@@ -1185,7 +1186,7 @@ export function QuizAttempt({
                       <FileText className="h-4 w-4 text-blue-600" />
                       <AlertDescription
                         className={cn(
-                          "text-blue-800",
+                          "prose prose-blue max-w-none text-body text-blue-800 dark:prose-invert",
                           isLaporanMode && "leading-relaxed text-blue-900",
                         )}
                       >

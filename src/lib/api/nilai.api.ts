@@ -18,6 +18,7 @@ import type {
   NilaiWithMahasiswa,
   NilaiSummary,
 } from "@/types/nilai.types";
+import logger from "@/lib/utils/logger";
 import type { BobotNilai } from "@/types/kelas.types";
 import { handleError } from "@/lib/utils/errors";
 import {
@@ -911,7 +912,7 @@ async function syncNilaiPraktikumFromAttemptsImpl(
       nilai_praktikum: nilaiPraktikum,
     });
 
-    console.log(
+    logger.debug(
       `[AUTO-SYNC] Nilai praktikum synced for mahasiswa ${mahasiswaId} in kelas ${kelasId}${mataKuliahId ? ` mata kuliah ${mataKuliahId}` : ""}: ${nilaiPraktikum} (from ${kelasAttempts.length} attempts)`,
     );
 

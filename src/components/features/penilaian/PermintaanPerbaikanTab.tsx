@@ -277,7 +277,7 @@ export function PermintaanPerbaikanTab({
                   </span>
                 </div>
               ) : (
-                <span className="text-gray-400">Tidak ada data</span>
+                <span className="text-gray-500">Tidak ada data</span>
               )}
             </div>
           </CardContent>

@@ -5,6 +5,7 @@
 
 import { useContext } from "react";
 import { ThemeContext } from "@/context/ThemeContext";
+import logger from "@/lib/utils/logger";
 
 export function useTheme() {
   const context = useContext(ThemeContext);
@@ -12,13 +13,11 @@ export function useTheme() {
   // Context now has default value, so it should never be null/undefined
   // But we still check for safety
   if (!context) {
-    console.warn("useTheme: ThemeContext not available, using default");
+    logger.debug("useTheme: ThemeContext not available, using default");
     return {
       theme: "system" as const,
-      systemTheme: "light" as const,
-      effectiveTheme: "light" as const,
       setTheme: () => {},
-      toggleTheme: () => {},
+      resolvedTheme: "light" as const,
     };
   }
 

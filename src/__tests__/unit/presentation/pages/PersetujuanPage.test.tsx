@@ -42,8 +42,9 @@ describe("Laboran PersetujuanPage", () => {
         id: "req-1",
         peminjam_nama: "Andi",
         peminjam_nim: "001",
-        inventaris_nama: "Mikroskop",
-        inventaris_kode: "MKR-001",
+        inventaris_nama: "Mikroskop +2 alat lain",
+        inventaris_detail: "1x Mikroskop, 2x Tensimeter, 1x Stetoskop",
+        inventaris_kode: "MKR-001 +2",
         laboratorium_nama: "Lab Anatomi",
         jumlah_pinjam: 2,
         tanggal_pinjam: "2025-01-10",
@@ -69,7 +70,10 @@ describe("Laboran PersetujuanPage", () => {
         ),
       ).toBeInTheDocument();
       expect(screen.getByText("Andi")).toBeInTheDocument();
-      expect(screen.getByText("Mikroskop")).toBeInTheDocument();
+      expect(screen.getByText("Mikroskop +2 alat lain")).toBeInTheDocument();
+      expect(
+        screen.getByText("1x Mikroskop, 2x Tensimeter, 1x Stetoskop"),
+      ).toBeInTheDocument();
     });
   });
 

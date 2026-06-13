@@ -21,6 +21,7 @@ import type {
   MataKuliahInfo,
   KelasInfo,
 } from "@/types/assignment.types";
+import logger from "@/lib/utils/logger";
 
 function resolveAssignmentMataKuliahId(jadwal: any): string {
   return (
@@ -145,7 +146,7 @@ async function getAllAssignmentsImpl(
     throw new Error(`Failed to fetch assignments: ${error.message}`);
   }
 
-  console.log("🔍 Raw assignment data from DB:", {
+  logger.debug("🔍 Raw assignment data from DB:", {
     count: data?.length || 0,
     data: data,
     firstRecord: data?.[0],
@@ -156,7 +157,7 @@ async function getAllAssignmentsImpl(
   // Transform and filter data
   let assignments: DosenAssignmentTracking[] = data
     .filter((jadwal: any) => {
-      console.log("🔍 Processing jadwal:", {
+      logger.debug("🔍 Processing jadwal:", {
         id: jadwal.id,
         hasKelas: !!jadwal.kelas,
         hasDosen: !!jadwal.dosen,
@@ -170,13 +171,13 @@ async function getAllAssignmentsImpl(
 
       // Only include jadwal with complete kelas data
       if (!jadwal.kelas) {
-        console.log("❌ Skipping - no kelas");
+        logger.debug("❌ Skipping - no kelas");
         return false;
       }
 
       // Mata kuliah is optional - allow records without mata_kuliah
       if (!jadwal.kelas.mata_kuliah) {
-        console.log("⚠️ No mata_kuliah - using placeholder values");
+        logger.debug("⚠️ No mata_kuliah - using placeholder values");
         // Don't skip - continue with placeholder values
       }
 
@@ -186,7 +187,7 @@ async function getAllAssignmentsImpl(
 
       // If no dosen info, create a placeholder for admin-managed schedules
       if (!dosenInfo) {
-        console.log("⚠️ No dosen info - creating admin placeholder");
+        logger.debug("⚠️ No dosen info - creating admin placeholder");
         // Don't skip - continue with null dosen info for admin-managed schedules
       }
 
@@ -197,7 +198,7 @@ async function getAllAssignmentsImpl(
           jadwal.dosen_id !== filters.dosen_id &&
           jadwal.kelas?.dosen?.id !== filters.dosen_id
         ) {
-          console.log("❌ Skipping - dosen filter mismatch");
+          logger.debug("❌ Skipping - dosen filter mismatch");
           return false;
         }
       }
@@ -206,12 +207,12 @@ async function getAllAssignmentsImpl(
         filters?.mata_kuliah_id &&
         resolveAssignmentMataKuliahId(jadwal) !== filters.mata_kuliah_id
       ) {
-        console.log("❌ Skipping - mata_kuliah filter mismatch");
+        logger.debug("❌ Skipping - mata_kuliah filter mismatch");
         return false;
       }
 
       if (filters?.kelas_id && jadwal.kelas.id !== filters.kelas_id) {
-        console.log("❌ Skipping - kelas filter mismatch");
+        logger.debug("❌ Skipping - kelas filter mismatch");
         return false;
       }
 
@@ -219,7 +220,7 @@ async function getAllAssignmentsImpl(
         filters?.tahun_ajaran &&
         jadwal.kelas.tahun_ajaran !== filters.tahun_ajaran
       ) {
-        console.log("❌ Skipping - tahun_ajaran filter mismatch");
+        logger.debug("❌ Skipping - tahun_ajaran filter mismatch");
         return false;
       }
 
@@ -227,11 +228,11 @@ async function getAllAssignmentsImpl(
         filters?.semester_ajaran !== undefined &&
         jadwal.kelas.semester_ajaran !== filters.semester_ajaran
       ) {
-        console.log("❌ Skipping - semester_ajaran filter mismatch");
+        logger.debug("❌ Skipping - semester_ajaran filter mismatch");
         return false;
       }
 
-      console.log("✅ Including jadwal:", jadwal.id);
+      logger.debug("✅ Including jadwal:", jadwal.id);
       return true;
     })
     .map((jadwal: any) => ({
@@ -318,7 +319,7 @@ async function getAllAssignmentsImpl(
     );
   }
 
-  console.log("🔍 Final assignments result:", {
+  logger.debug("🔍 Final assignments result:", {
     inputCount: data?.length || 0,
     outputCount: assignments.length,
     assignments: assignments,

@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import logger from "@/lib/utils/logger";
 
 export const ConnectionTest = () => {
   const [status, setStatus] = useState<"checking" | "connected" | "error">(
@@ -35,7 +36,7 @@ export const ConnectionTest = () => {
         .from("mata_kuliah")
         .select("id", { count: "exact", head: true });
 
-      console.log("Tables verified successfully");
+      logger.debug("Tables verified successfully");
     } catch (error: unknown) {
       // <-- PERUBAHAN: dari 'any' ke 'unknown'
       setStatus("error");

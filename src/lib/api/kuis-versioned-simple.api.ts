@@ -15,6 +15,7 @@ import type {
   SubmitAnswerData,
   Soal,
 } from "@/types/kuis.types";
+import logger from "@/lib/utils/logger";
 import { TIPE_SOAL } from "@/types/kuis.types";
 import { supabase } from "@/lib/supabase/client";
 import { clearAllCacheSync, invalidateCache } from "@/lib/offline/api-cache";
@@ -65,7 +66,7 @@ export async function submitAnswerSafe(
 
     // If no existing answer, create new
     if (!existing) {
-      console.log("[KuisAPI] Creating new answer");
+      logger.debug("[KuisAPI] Creating new answer");
 
       // Build insert data with optional file metadata
       const insertData: any = {
@@ -104,7 +105,7 @@ export async function submitAnswerSafe(
     }
 
     // Answer exists - update it
-    console.log("[KuisAPI] Updating existing answer:", existing.id);
+    logger.debug("[KuisAPI] Updating existing answer:", existing.id);
 
     // Build update data with optional file metadata
     const updateData: any = {
@@ -327,7 +328,7 @@ export async function submitQuizSafe(
 
       finalAttempt = recalculatedAttempt as any;
     } catch (gradingError) {
-      console.warn(
+      logger.debug(
         "[KuisAPI] Submit succeeded but auto-grade/recalculate failed:",
         gradingError,
       );
@@ -414,7 +415,7 @@ export async function submitQuizSafe(
 
         finalAttempt = recoveredAttempt as any;
         allQuestionsAutoGradable = fallbackAllAutoGradable;
-        console.log(
+        logger.debug(
           "[KuisAPI] Recovery sync after submit succeeded:",
           finalAttempt?.id,
           finalAttempt?.status,
@@ -464,14 +465,14 @@ export async function submitQuizSafe(
           data.attempt_id,
           attempt.kuis_id,
         );
-        console.log("[NOTIFICATION] Submit tugas notification result:", {
+        logger.debug("[NOTIFICATION] Submit tugas notification result:", {
           attemptId: data.attempt_id,
           kuisId: attempt.kuis_id,
           dosenUserId,
           created: Boolean(notification),
         });
       } else {
-        console.warn(
+        logger.debug(
           "[NOTIFICATION] Missing dosen user target for submitted tugas",
           {
             attemptId: data.attempt_id,
@@ -560,7 +561,7 @@ export async function submitAllAnswersWithVersion(
 
   await Promise.all(promises);
 
-  console.log("[KuisAPI] Batch submit complete", {
+  logger.debug("[KuisAPI] Batch submit complete", {
     total: soalIds.length,
     success,
     failed,
@@ -599,7 +600,7 @@ export async function gradeAnswerWithVersion(
       throw new Error(error.message);
     }
 
-    console.log("[KuisAPI] Grade success:", gradedAnswer);
+    logger.debug("[KuisAPI] Grade success:", gradedAnswer);
 
     // ✅ FIX: Update attempt status to "graded" and total_poin after grading
     const attemptId = (gradedAnswer as any).attempt_id;
@@ -621,7 +622,7 @@ export async function gradeAnswerWithVersion(
 
       const totalPoin = sumAttemptPoints(attemptAnswers as any[]);
 
-      console.log(
+      logger.debug(
         "[KuisAPI] Updating attempt:",
         attemptId,
         "with total:",
@@ -654,11 +655,11 @@ export async function gradeAnswerWithVersion(
         );
       }
 
-      console.log(
+      logger.debug(
         "[KuisAPI] Attempt updated successfully, rows affected:",
         count,
       );
-      console.log("[KuisAPI] Updated data:", attemptData);
+      logger.debug("[KuisAPI] Updated data:", attemptData);
 
       // ✅ VERIFICATION: Verify the update actually worked by querying the attempt
       if (count && count > 0) {
@@ -669,7 +670,7 @@ export async function gradeAnswerWithVersion(
           .single();
 
         if (!verifyError && verifyAttempt) {
-          console.log(
+          logger.debug(
             "[KuisAPI] ✅ VERIFICATION: Attempt status in DB =",
             verifyAttempt.status,
           );
@@ -685,9 +686,9 @@ export async function gradeAnswerWithVersion(
 
       // ✅ FIX: Clear all cache to ensure UI gets fresh data after grading
       // This prevents the status from showing "Menunggu Penilaian" after grading
-      console.log("[KuisAPI] Clearing cache after grading...");
+      logger.debug("[KuisAPI] Clearing cache after grading...");
       const deletedCount = await clearAllCacheSync();
-      console.log(`[KuisAPI] Cache cleared: ${deletedCount} entries deleted`);
+      logger.debug(`[KuisAPI] Cache cleared: ${deletedCount} entries deleted`);
 
       // ✅ FIX: Also invalidate dosen_grading cache specifically
       // This ensures dashboard "Perlu Dinilai" count is updated
@@ -697,19 +698,19 @@ export async function gradeAnswerWithVersion(
           .then((res) => res.data.user?.id);
         if (dosenId) {
           await invalidateCache(`dosen_grading_${dosenId}`);
-          console.log(
+          logger.debug(
             "[KuisAPI] Invalidated dosen_grading cache for:",
             dosenId,
           );
         }
       } catch (err) {
-        console.warn(
+        logger.debug(
           "[KuisAPI] Failed to invalidate dosen_grading cache:",
           err,
         );
       }
     } else {
-      console.warn("[KuisAPI] No attempt_id found in graded answer");
+      logger.debug("[KuisAPI] No attempt_id found in graded answer");
     }
 
     return gradedAnswer as Jawaban;

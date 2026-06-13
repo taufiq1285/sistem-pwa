@@ -823,6 +823,7 @@ export function HomePage() {
       </nav>
 
       {/* ── HERO ───────────────────────────────────────────────── */}
+      <main id="main-content">
       <section
         className="relative overflow-hidden"
         style={{
@@ -1485,6 +1486,8 @@ export function HomePage() {
       </section>
 
       {/* ── FOOTER ─────────────────────────────────────────────── */}
+      </main>
+
       <footer
         className="px-4 pb-8 pt-12 sm:px-6"
         style={{ background: C.dark, borderTop: `4px solid ${C.primary}` }}

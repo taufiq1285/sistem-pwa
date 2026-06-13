@@ -8,6 +8,7 @@
  */
 
 import { networkDetector } from "./network-detector";
+import logger from "@/lib/utils/logger";
 
 // ============================================================================
 // TYPES
@@ -41,7 +42,7 @@ export async function withOfflineFallback<T>(
 
   // If offline, return cached or default value
   if (isOffline()) {
-    console.log("ℹ️ Offline mode - using cached/default value");
+    logger.debug("ℹ️ Offline mode - using cached/default value");
 
     if (cached !== undefined) {
       return cached as T;
@@ -61,7 +62,7 @@ export async function withOfflineFallback<T>(
   } catch (error) {
     // If error occurs and skipOnError is true, return cached/default
     if (skipOnError) {
-      console.warn("⚠️ API call failed, using fallback:", error);
+      logger.debug("⚠️ API call failed, using fallback:", error);
 
       if (cached !== undefined) {
         return cached as T;
@@ -90,7 +91,7 @@ export async function withOfflineFallbackAll<T>(
 
   // If offline, return cached or default value
   if (isOffline()) {
-    console.log("ℹ️ Offline mode - using cached/default values for batch");
+    logger.debug("ℹ️ Offline mode - using cached/default values for batch");
 
     if (cached !== undefined) {
       return cached;
@@ -108,7 +109,7 @@ export async function withOfflineFallbackAll<T>(
     return await Promise.all(functions.map((fn) => fn()));
   } catch (error) {
     if (skipOnError) {
-      console.warn("⚠️ Batch API call failed, using fallback:", error);
+      logger.debug("⚠️ Batch API call failed, using fallback:", error);
 
       if (cached !== undefined) {
         return cached;
@@ -137,7 +138,7 @@ export function shouldSkipApiCall(): boolean {
  * Log offline mode message
  */
 export function logOfflineMode(operation: string): void {
-  console.log(`ℹ️ Offline mode - skipping ${operation}, using cached data`);
+  logger.debug(`ℹ️ Offline mode - skipping ${operation}, using cached data`);
 }
 
 /**
@@ -145,7 +146,7 @@ export function logOfflineMode(operation: string): void {
  */
 export function logApiError(operation: string, error: unknown): void {
   if (isOffline()) {
-    console.log(`ℹ️ Offline mode - ${operation} unavailable`);
+    logger.debug(`ℹ️ Offline mode - ${operation} unavailable`);
   } else {
     console.error(`❌ Error in ${operation}:`, error);
   }

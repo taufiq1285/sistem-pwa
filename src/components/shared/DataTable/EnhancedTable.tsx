@@ -6,6 +6,7 @@
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -19,12 +20,20 @@ export { TableBody };
 interface EnhancedTableProps {
   children: React.ReactNode;
   className?: string;
+  caption?: string;
 }
 
-export function EnhancedTable({ children, className }: EnhancedTableProps) {
+export function EnhancedTable({
+  children,
+  className,
+  caption = "Tabel data admin.",
+}: EnhancedTableProps) {
   return (
     <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-      <Table>{children}</Table>
+      <Table className={className}>
+        <TableCaption className="sr-only">{caption}</TableCaption>
+        {children}
+      </Table>
     </div>
   );
 }
@@ -57,6 +66,7 @@ export function EnhancedTableHead({
 }: React.ThHTMLAttributes<HTMLTableHeaderCellElement>) {
   return (
     <TableHead
+      aria-sort="none"
       className={cn(
         "font-semibold text-foreground px-4 py-3 text-sm whitespace-nowrap",
         className,

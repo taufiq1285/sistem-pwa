@@ -22,6 +22,7 @@ import {
   WifiOff,
   RefreshCw,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -49,7 +50,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DashboardCard } from "@/components/ui/dashboard-card";
-import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import {
+  CardListSkeleton,
+  ErrorFallback,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { ChartCard } from "@/components/common/ChartCard";
+import { useOfflineContext } from "@/context/OfflineContext";
 import { GlassCard } from "@/components/ui/glass-card";
 import {
   Dialog,
@@ -82,6 +90,23 @@ import {
 import { toast } from "sonner";
 import { getGradeStatus } from "@/lib/validations/nilai.schema";
 import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  PolarAngleAxis,
+  PolarGrid,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  transformGradeCompetencyData,
+  transformGradeTrendData,
+} from "@/lib/utils/chart-transformers";
 
 // ============================================================================
 // TYPES
@@ -99,6 +124,12 @@ interface NilaiKumulatifPerMK {
 }
 
 const DEFAULT_KOMPONEN_PERBAIKAN: KomponenNilai = "praktikum";
+const chartTooltipStyle = {
+  backgroundColor: "var(--color-bg-primary)",
+  border: "1px solid var(--color-border)",
+  borderRadius: "12px",
+  color: "var(--color-text-primary)",
+};
 
 // ============================================================================
 // COMPONENT
@@ -106,9 +137,11 @@ const DEFAULT_KOMPONEN_PERBAIKAN: KomponenNilai = "praktikum";
 
 export default function MahasiswaNilaiPageEnhanced() {
   const { user } = useAuth();
+  const { isOffline } = useOfflineContext();
 
   // State
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [nilaiList, setNilaiList] = useState<Nilai[]>([]);
   const [permintaanList, setPermintaanList] = useState<
     PermintaanPerbaikanWithRelations[]
@@ -183,6 +216,7 @@ export default function MahasiswaNilaiPageEnhanced() {
   const loadData = async (forceRefresh = false) => {
     try {
       setLoading(true);
+      setError(null);
       if (!user?.mahasiswa?.id || !nilaiCacheKey || !permintaanCacheKey) return;
 
       const [cachedNilaiEntry, cachedPermintaanEntry] = await Promise.all([
@@ -241,17 +275,19 @@ export default function MahasiswaNilaiPageEnhanced() {
       setPermintaanList(permintaanData);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
-      console.log("[NilaiPage] Data loaded:", nilaiData.length, "nilai");
-    } catch (error: any) {
-      console.error("Error loading data:", error);
+      logger.debug("[NilaiPage] Data loaded:", nilaiData.length, "nilai");
+    } catch (err: any) {
+      console.error("Error loading data:", err);
       if (
         nilaiList.length > 0 ||
         permintaanList.length > 0 ||
         !navigator.onLine
       ) {
         setIsOfflineData(true);
+      } else {
+        setError(err.message || "Gagal memuat data nilai");
       }
-      toast.error(error?.message || "Gagal memuat data nilai");
+      toast.error(err?.message || "Gagal memuat data nilai");
     } finally {
       setLoading(false);
     }
@@ -485,15 +521,32 @@ export default function MahasiswaNilaiPageEnhanced() {
     return nilai.dosen?.nip || nilai.dosen?.user?.email || null;
   };
 
+  // Loading state
   if (loading) {
     return (
-      <div className="app-container py-4 sm:py-6 lg:py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <DashboardSkeleton />
-          <DashboardSkeleton />
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-96 animate-pulse rounded bg-muted" />
         </div>
+        <CardListSkeleton />
       </div>
     );
+  }
+
+  // Error state
+  if (error) {
+    return <ErrorFallback message={error} onRetry={() => loadData(true)} />;
+  }
+
+  // Offline empty state
+  if (isOffline && !nilaiList?.length) {
+    return <EmptyState variant="offline" context="nilai" />;
+  }
+
+  // Empty state
+  if (!nilaiList?.length) {
+    return <EmptyState variant="first-time" context="nilai" />;
   }
 
   const filteredNilai = getFilteredNilai();
@@ -523,57 +576,53 @@ export default function MahasiswaNilaiPageEnhanced() {
   };
 
   const stats = calculateStats();
+  const competencyChartData = transformGradeCompetencyData(filteredNilai);
+  const gradeTrendChartData = transformGradeTrendData(filteredNilai);
 
   return (
-    <div className="app-container py-4 sm:py-6 lg:py-8">
-      <div className="mx-auto max-w-7xl space-y-5">
+    <OfflineAwareContent
+      hasData={nilaiList.length > 0}
+      context="nilai"
+      onSync={() => loadData(true)}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
         {/* Header */}
-        <GlassCard
-          intensity="medium"
-          className="overflow-hidden rounded-[30px] border-white/40 bg-linear-to-br from-white via-[#f5fbff] to-[#eefaf7] shadow-xl shadow-slate-900/5 dark:border-white/10 dark:bg-card"
-        >
-          <CardContent className="relative p-6 sm:p-8">
-            <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-primary/10 blur-3xl" />
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="relative">
-                <div className="mb-3 inline-flex items-center rounded-full border border-primary/15 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">
-                  Ringkasan nilai mahasiswa
-                </div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-                  Nilai Akademik
-                </h1>
-                <p className="mt-1 max-w-2xl text-sm font-medium leading-relaxed text-muted-foreground sm:text-base">
-                  Nilai ditampilkan sesuai kelas dan mata kuliah yang dipilih
-                  dosen saat penilaian.
-                </p>
-                {(isOfflineData || lastUpdatedLabel) && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                    {isOfflineData && (
-                      <span className="inline-flex items-center gap-1 font-medium text-warning">
-                        <WifiOff className="h-4 w-4" />
-                        Menampilkan data nilai tersimpan lokal
-                      </span>
-                    )}
-                    {lastUpdatedLabel && (
-                      <span>Update terakhir: {lastUpdatedLabel}</span>
-                    )}
-                  </div>
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Nilai Akademik
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Nilai ditampilkan sesuai kelas dan mata kuliah yang dipilih dosen
+              saat penilaian.
+            </p>
+            {(isOfflineData || lastUpdatedLabel) && (
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {isOfflineData && (
+                  <span className="inline-flex items-center gap-1 font-medium text-warning">
+                    <WifiOff className="h-3.5 w-3.5" />
+                    Menampilkan data nilai tersimpan lokal
+                  </span>
+                )}
+                {lastUpdatedLabel && (
+                  <span>Update terakhir: {lastUpdatedLabel}</span>
                 )}
               </div>
-              <Button
-                variant="outline"
-                onClick={handleRefreshData}
-                disabled={loading}
-                className="relative w-full gap-2 rounded-xl border-2 bg-white/80 font-semibold shadow-sm sm:w-auto"
-              >
-                <RefreshCw
-                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-                />
-                Refresh Nilai
-              </Button>
-            </div>
-          </CardContent>
-        </GlassCard>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              onClick={handleRefreshData}
+              disabled={loading}
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
+              Refresh Nilai
+            </Button>
+          </div>
+        </div>
 
         {isOfflineData && (
           <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
@@ -615,6 +664,71 @@ export default function MahasiswaNilaiPageEnhanced() {
             />
           </div>
         )}
+
+        <div className="grid gap-5 lg:grid-cols-2">
+          <ChartCard
+            title="Nilai per Kompetensi"
+            subtitle="Rata-rata komponen nilai pada filter aktif"
+            isLoading={loading}
+            isEmpty={filteredNilai.length === 0}
+          >
+            <ResponsiveContainer width="100%" height={220}>
+              <RadarChart data={competencyChartData}>
+                <PolarGrid stroke="var(--color-border)" />
+                <PolarAngleAxis
+                  dataKey="kompetensi"
+                  tick={{ fill: "var(--color-text-secondary)", fontSize: 12 }}
+                />
+                <Radar
+                  name="Nilai"
+                  dataKey="nilai"
+                  stroke="var(--role-accent)"
+                  fill="var(--role-accent)"
+                  fillOpacity={0.18}
+                  isAnimationActive={true}
+                  animationDuration={600}
+                />
+                <Tooltip contentStyle={chartTooltipStyle} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard
+            title="Tren Nilai"
+            subtitle="Rata-rata nilai akhir per semester"
+            period="semester"
+            isLoading={loading}
+            isEmpty={gradeTrendChartData.length === 0}
+          >
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={gradeTrendChartData}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--color-border)"
+                />
+                <XAxis
+                  dataKey="semester"
+                  tick={{ fill: "var(--color-text-secondary)", fontSize: 12 }}
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fill: "var(--color-text-secondary)", fontSize: 12 }}
+                />
+                <Tooltip contentStyle={chartTooltipStyle} />
+                <Line
+                  type="monotone"
+                  dataKey="nilai"
+                  name="Nilai"
+                  stroke="var(--role-accent)"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: "var(--role-accent)" }}
+                  isAnimationActive={true}
+                  animationDuration={600}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
 
         {/* Filters */}
         <GlassCard
@@ -1192,6 +1306,6 @@ export default function MahasiswaNilaiPageEnhanced() {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </OfflineAwareContent>
   );
 }

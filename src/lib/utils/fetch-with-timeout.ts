@@ -1,3 +1,4 @@
+import logger from "@/lib/utils/logger";
 /**
  * Fetch with Timeout Utility
  *
@@ -115,7 +116,7 @@ export async function retryWithBackoff<T>(
 
       // Exponential backoff: 1s, 2s, 4s, 8s...
       const delay = initialDelay * Math.pow(2, i);
-      console.log(`Retry attempt ${i + 1}/${maxRetries} after ${delay}ms`);
+      logger.debug(`Retry attempt ${i + 1}/${maxRetries} after ${delay}ms`);
 
       await new Promise((resolve) => setTimeout(resolve, delay));
     }

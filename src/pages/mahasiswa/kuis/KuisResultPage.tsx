@@ -19,6 +19,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ArrowLeft, Loader2, WifiOff } from "lucide-react";
 import { QuizResult } from "@/components/features/kuis/result/QuizResult";
+import { CardListSkeleton } from "@/components/common";
 import {
   getAttemptByIdForMahasiswa,
   canAttemptQuiz,
@@ -29,6 +30,7 @@ import {
   getOfflineAnswers,
   syncPendingOfflineQuizSubmission,
 } from "@/lib/api/kuis.api";
+import logger from "@/lib/utils/logger";
 // ✅ SECURITY FIX: Import secure API to show jawaban_benar in results
 import { getSoalForResult } from "@/lib/api/kuis-secure.api";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -150,7 +152,7 @@ export default function KuisResultPage() {
         try {
           await syncPendingOfflineQuizSubmission(attemptId);
         } catch (syncError) {
-          console.warn(
+          logger.debug(
             "Pending offline submission belum berhasil disinkronkan, menampilkan cache lokal:",
             syncError,
           );
@@ -224,10 +226,10 @@ export default function KuisResultPage() {
       try {
         // Use secure API to get questions WITH jawaban_benar
         questionsData = await getSoalForResult(quizData.id);
-        console.log("✅ Loaded soal with jawaban_benar for results");
+        logger.debug("✅ Loaded soal with jawaban_benar for results");
       } catch (err) {
         // Fallback to data from attempt if API fails
-        console.warn(
+        logger.debug(
           "⚠️ Failed to load soal for result, using attempt data:",
           err,
         );
@@ -294,13 +296,17 @@ export default function KuisResultPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-100">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">
-            Memuat hasil tugas praktikum...
-          </p>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-96 animate-pulse rounded bg-muted" />
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="h-[120px] animate-pulse rounded-xl bg-muted" />
+          <div className="h-[120px] animate-pulse rounded-xl bg-muted" />
+          <div className="h-[120px] animate-pulse rounded-xl bg-muted" />
+        </div>
+        <CardListSkeleton count={3} />
       </div>
     );
   }
@@ -328,7 +334,7 @@ export default function KuisResultPage() {
 
   // Success state - show results
   return (
-    <div className="container mx-auto py-6 max-w-6xl space-y-4">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {isOfflineData && (
         <Alert>
           <WifiOff className="h-4 w-4" />

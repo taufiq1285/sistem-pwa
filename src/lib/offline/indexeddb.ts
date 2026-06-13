@@ -13,6 +13,7 @@
  */
 
 import { openDB, type IDBPDatabase } from "idb";
+import { logger } from "@/lib/utils/logger";
 import type {
   IndexedDBConfig,
   StoreName,
@@ -209,7 +210,7 @@ export class IndexedDBManager {
 
       this.db = await openDB(DB_CONFIG.dbName, DB_CONFIG.version, {
         upgrade(db, oldVersion, newVersion) {
-          console.log(
+          logger.info(
             `🔄 Upgrading IndexedDB from v${oldVersion} to v${newVersion}`,
           );
 
@@ -229,28 +230,28 @@ export class IndexedDBManager {
                 }
               }
 
-              console.log(`✅ Created store: ${storeConfig.name}`);
+              logger.info(`✅ Created store: ${storeConfig.name}`);
             }
           }
         },
         blocked() {
-          console.warn("⚠️ IndexedDB upgrade blocked by another connection");
+          logger.warn("⚠️ IndexedDB upgrade blocked by another connection");
         },
         blocking() {
-          console.warn("⚠️ This connection is blocking a database upgrade");
+          logger.warn("⚠️ This connection is blocking a database upgrade");
         },
         terminated() {
-          console.error("❌ IndexedDB connection terminated unexpectedly");
+          logger.error("❌ IndexedDB connection terminated unexpectedly");
         },
       });
 
       this.isInitialized = true;
-      console.log("✅ IndexedDB initialized successfully");
+      logger.info("✅ IndexedDB initialized successfully");
 
       // Set initialization metadata
       await this.setMetadata("db_version", DB_VERSION);
     } catch (error) {
-      console.error("❌ IndexedDB initialization failed:", error);
+      logger.error("❌ IndexedDB initialization failed:", error);
       throw this.createError(
         "Failed to initialize IndexedDB",
         "INIT_FAILED",
@@ -267,7 +268,7 @@ export class IndexedDBManager {
       this.db.close();
       this.db = null;
       this.isInitialized = false;
-      console.log("🔒 IndexedDB connection closed");
+      logger.info("🔒 IndexedDB connection closed");
     }
   }
 
@@ -303,7 +304,7 @@ export class IndexedDBManager {
 
       return item;
     } catch (error) {
-      console.error(`Create failed in ${storeName}:`, error);
+      logger.error(`Create failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to create item in ${storeName}`,
         "CREATE_FAILED",
@@ -325,7 +326,7 @@ export class IndexedDBManager {
 
       return (await store.get(id)) as T | undefined;
     } catch (error) {
-      console.error(`Read failed in ${storeName}:`, error);
+      logger.error(`Read failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to read item from ${storeName}`,
         "READ_FAILED",
@@ -359,7 +360,7 @@ export class IndexedDBManager {
 
       return item;
     } catch (error) {
-      console.error(`Update failed in ${storeName}:`, error);
+      logger.error(`Update failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to update item in ${storeName}`,
         "UPDATE_FAILED",
@@ -382,7 +383,7 @@ export class IndexedDBManager {
       await store.delete(id);
       await tx.done;
     } catch (error) {
-      console.error(`Delete failed in ${storeName}:`, error);
+      logger.error(`Delete failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to delete item from ${storeName}`,
         "DELETE_FAILED",
@@ -425,7 +426,7 @@ export class IndexedDBManager {
 
       return items;
     } catch (error) {
-      console.error(`GetAll failed in ${storeName}:`, error);
+      logger.error(`GetAll failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to get all items from ${storeName}`,
         "GETALL_FAILED",
@@ -452,7 +453,7 @@ export class IndexedDBManager {
 
       return (await index.getAll(value)) as T[];
     } catch (error) {
-      console.error(`GetByIndex failed in ${storeName}:`, error);
+      logger.error(`GetByIndex failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to get items by index from ${storeName}`,
         "GET_BY_INDEX_FAILED",
@@ -474,7 +475,7 @@ export class IndexedDBManager {
 
       return await store.count();
     } catch (error) {
-      console.error(`Count failed in ${storeName}:`, error);
+      logger.error(`Count failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to count items in ${storeName}`,
         "COUNT_FAILED",
@@ -497,9 +498,9 @@ export class IndexedDBManager {
       await store.clear();
       await tx.done;
 
-      console.log(`🗑️ Cleared all items from ${storeName}`);
+      logger.info(`🗑️ Cleared all items from ${storeName}`);
     } catch (error) {
-      console.error(`Clear failed in ${storeName}:`, error);
+      logger.error(`Clear failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to clear ${storeName}`,
         "CLEAR_FAILED",
@@ -547,7 +548,7 @@ export class IndexedDBManager {
         count: succeeded.length,
       };
     } catch (error) {
-      console.error(`Batch create failed in ${storeName}:`, error);
+      logger.error(`Batch create failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to batch create items in ${storeName}`,
         "BATCH_CREATE_FAILED",
@@ -591,7 +592,7 @@ export class IndexedDBManager {
         count: succeeded.length,
       };
     } catch (error) {
-      console.error(`Batch update failed in ${storeName}:`, error);
+      logger.error(`Batch update failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to batch update items in ${storeName}`,
         "BATCH_UPDATE_FAILED",
@@ -635,7 +636,7 @@ export class IndexedDBManager {
         count: succeeded.length,
       };
     } catch (error) {
-      console.error(`Batch delete failed in ${storeName}:`, error);
+      logger.error(`Batch delete failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to batch delete items from ${storeName}`,
         "BATCH_DELETE_FAILED",
@@ -721,7 +722,7 @@ export class IndexedDBManager {
       await this.clear(storeName as StoreName);
     }
 
-    console.log("🗑️ Cleared all data from IndexedDB");
+    logger.info("🗑️ Cleared all data from IndexedDB");
   }
 
   // ============================================================================
@@ -762,7 +763,7 @@ export async function initializeIndexedDB(): Promise<void> {
   try {
     await indexedDBManager.initialize();
   } catch (error) {
-    console.error("Failed to initialize IndexedDB:", error);
+    logger.error("Failed to initialize IndexedDB:", error);
     throw error;
   }
 }

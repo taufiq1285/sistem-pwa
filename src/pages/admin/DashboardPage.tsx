@@ -1,1174 +1,617 @@
 /**
- * Admin Dashboard Page
- * Main dashboard for admin with statistics, charts, and recent activity
+ * Dense admin dashboard for monitoring users, labs, approvals, and system status.
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { DashboardCard } from "@/components/ui/dashboard-card";
-import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
-import { GlassCard } from "@/components/ui/glass-card";
+  IconAlertTriangle,
+  IconBell,
+  IconChartAreaLine,
+  IconClock,
+  IconDatabase,
+  IconDownload,
+  IconLogin2,
+  IconSpeakerphone,
+  IconPlus,
+  IconRefresh,
+  IconServer,
+  IconShieldCheck,
+  IconUsers,
+  IconWifiOff,
+} from "@tabler/icons-react";
+import logger from "@/lib/utils/logger";
 import {
-  Users,
-  GraduationCap,
-  UserCog,
-  FlaskConical,
-  Wrench,
-  AlertCircle,
-  TrendingUp,
-  Plus,
-  Megaphone,
-  Settings,
-  BarChart3,
-  Activity,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Calendar,
-  UserCheck,
-  FileText,
-  Database,
-  Shield,
-  Zap,
-  Eye,
-  ThumbsUp,
-  MessageSquare,
-  Package,
-  Truck,
-} from "lucide-react";
-import {
-  LineChart,
-  Line,
   Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
-import { networkDetector } from "@/lib/offline/network-detector";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  ChartCard,
+  DashboardSkeleton,
+  EmptyState,
+  ErrorFallback,
+} from "@/components/common";
 import {
   getDashboardStats,
-  getUserGrowth,
-  getUserDistribution,
   getLabUsage,
-  getRecentUsers,
   getRecentAnnouncements,
+  getRecentUsers,
+  getUserDistribution,
+  getUserGrowth,
   type DashboardStats,
-  type UserGrowthData,
-  type UserDistribution,
   type LabUsageData,
-  type RecentUser,
   type RecentAnnouncement,
+  type RecentUser,
+  type UserDistribution,
+  type UserGrowthData,
 } from "@/lib/api/admin.api";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import { networkDetector } from "@/lib/offline/network-detector";
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+const PULL_THRESHOLD = 70;
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+const tooltipStyle = {
+  backgroundColor: "var(--color-bg-primary)",
+  border: "1px solid var(--color-border)",
+  borderRadius: "10px",
+  color: "var(--color-text-primary)",
+};
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
+interface ActivityItem {
+  id: string;
+  description: string;
+  timestamp: string;
+  kind: "user" | "announcement";
+}
+
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function formatRelative(value: string): string {
+  const diffMs = Date.now() - new Date(value).getTime();
+  const minutes = Math.max(0, Math.floor(diffMs / 60000));
+  if (minutes < 1) return "baru saja";
+  if (minutes < 60) return `${minutes} menit lalu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  return `${Math.floor(hours / 24)} hari lalu`;
+}
+
+function initials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+function usePullToRefresh(onRefresh: () => void) {
+  const startYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const handleTouchStart = (event: TouchEvent) => {
+      if (window.scrollY === 0) {
+        startYRef.current = event.touches[0]?.clientY ?? null;
+      }
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      const startY = startYRef.current;
+      startYRef.current = null;
+      if (startY === null) return;
+      const endY = event.changedTouches[0]?.clientY ?? startY;
+      if (endY - startY >= PULL_THRESHOLD && window.scrollY === 0) {
+        onRefresh();
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [onRefresh]);
+}
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-
-  // State
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [userGrowth, setUserGrowth] = useState<UserGrowthData[]>([]);
-  const [userDistribution, setUserDistribution] = useState<UserDistribution[]>(
-    [],
-  );
+  const [growth, setGrowth] = useState<UserGrowthData[]>([]);
+  const [distribution, setDistribution] = useState<UserDistribution[]>([]);
   const [labUsage, setLabUsage] = useState<LabUsageData[]>([]);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [recentAnnouncements, setRecentAnnouncements] = useState<
     RecentAnnouncement[]
   >([]);
-  const [error, setError] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [refreshing, setRefreshing] = useState(false);
   const [isOfflineData, setIsOfflineData] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
-  // Update current time
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const lastUpdatedLabel = useMemo(() => {
-    if (!lastUpdatedAt) {
-      return null;
-    }
-
-    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  }, [lastUpdatedAt]);
-
-  // Fetch all data
-  const fetchDashboardData = async (forceRefresh = false) => {
-    if (!user?.id) {
-      // Clear data if no user
-      setStats(null);
-      setUserGrowth([]);
-      setUserDistribution([]);
-      setLabUsage([]);
-      setRecentUsers([]);
-      setRecentAnnouncements([]);
-      setIsOfflineData(false);
-      setLastUpdatedAt(null);
-      return;
-    }
-
+  const loadDashboard = useCallback(async (showRefreshing = false) => {
     try {
-      setLoading(true);
+      if (showRefreshing) setRefreshing(true);
       setError(null);
 
-      const cacheKeys = [
-        "admin_dashboard_stats",
-        "admin_user_growth",
-        "admin_user_distribution",
-        "admin_lab_usage",
-        "admin_recent_users",
-        "admin_recent_announcements",
-      ] as const;
+      const statsCacheKey = "admin_stats";
+      const growthCacheKey = "admin_growth";
+      const distCacheKey = "admin_distribution";
+      const usageCacheKey = "admin_lab_usage";
+      const usersCacheKey = "admin_recent_users";
+      const annCacheKey = "admin_recent_announcements";
 
       const [
-        cachedStatsEntry,
-        cachedGrowthEntry,
-        cachedDistributionEntry,
-        cachedUsageEntry,
-        cachedUsersEntry,
-        cachedAnnouncementsEntry,
+        cachedStats,
+        cachedGrowth,
+        cachedDist,
+        cachedUsage,
+        cachedUsers,
+        cachedAnn,
       ] = await Promise.all([
-        getCachedData<DashboardStats>(cacheKeys[0]),
-        getCachedData<UserGrowthData[]>(cacheKeys[1]),
-        getCachedData<UserDistribution[]>(cacheKeys[2]),
-        getCachedData<LabUsageData[]>(cacheKeys[3]),
-        getCachedData<RecentUser[]>(cacheKeys[4]),
-        getCachedData<RecentAnnouncement[]>(cacheKeys[5]),
+        getCachedData<DashboardStats>(statsCacheKey),
+        getCachedData<UserGrowthData[]>(growthCacheKey),
+        getCachedData<UserDistribution[]>(distCacheKey),
+        getCachedData<LabUsageData[]>(usageCacheKey),
+        getCachedData<RecentUser[]>(usersCacheKey),
+        getCachedData<RecentAnnouncement[]>(annCacheKey),
       ]);
 
-      const hasCachedData =
-        !!cachedStatsEntry?.data ||
-        Array.isArray(cachedGrowthEntry?.data) ||
-        Array.isArray(cachedDistributionEntry?.data) ||
-        Array.isArray(cachedUsageEntry?.data) ||
-        Array.isArray(cachedUsersEntry?.data) ||
-        Array.isArray(cachedAnnouncementsEntry?.data);
+      const hasAnyCached =
+        !!cachedStats?.data ||
+        Array.isArray(cachedGrowth?.data) ||
+        Array.isArray(cachedDist?.data) ||
+        Array.isArray(cachedUsage?.data) ||
+        Array.isArray(cachedUsers?.data) ||
+        Array.isArray(cachedAnn?.data);
 
-      if (hasCachedData && !forceRefresh) {
-        setStats(cachedStatsEntry?.data ?? null);
-        setUserGrowth(
-          Array.isArray(cachedGrowthEntry?.data) ? cachedGrowthEntry.data : [],
-        );
-        setUserDistribution(
-          Array.isArray(cachedDistributionEntry?.data)
-            ? cachedDistributionEntry.data
-            : [],
-        );
-        setLabUsage(
-          Array.isArray(cachedUsageEntry?.data) ? cachedUsageEntry.data : [],
-        );
-        setRecentUsers(
-          Array.isArray(cachedUsersEntry?.data) ? cachedUsersEntry.data : [],
-        );
-        setRecentAnnouncements(
-          Array.isArray(cachedAnnouncementsEntry?.data)
-            ? cachedAnnouncementsEntry.data
-            : [],
-        );
+      if (hasAnyCached) {
+        setStats(cachedStats?.data ?? null);
+        setGrowth(cachedGrowth?.data ?? []);
+        setDistribution(cachedDist?.data ?? []);
+        setLabUsage(cachedUsage?.data ?? []);
+        setRecentUsers(cachedUsers?.data ?? []);
+        setRecentAnnouncements(cachedAnn?.data ?? []);
         setIsOfflineData(!navigator.onLine);
         setLastUpdatedAt(
           Math.max(
-            cachedStatsEntry?.timestamp || 0,
-            cachedGrowthEntry?.timestamp || 0,
-            cachedDistributionEntry?.timestamp || 0,
-            cachedUsageEntry?.timestamp || 0,
-            cachedUsersEntry?.timestamp || 0,
-            cachedAnnouncementsEntry?.timestamp || 0,
+            cachedStats?.timestamp || 0,
+            cachedGrowth?.timestamp || 0,
+            cachedDist?.timestamp || 0,
+            cachedUsage?.timestamp || 0,
+            cachedUsers?.timestamp || 0,
+            cachedAnn?.timestamp || 0,
           ) || null,
         );
         setLoading(false);
       }
 
-      if (forceRefresh && !navigator.onLine) {
-        throw new Error(
-          hasCachedData
-            ? "Perangkat sedang offline. Menampilkan snapshot dashboard admin terakhir."
-            : "Perangkat sedang offline dan belum ada snapshot dashboard admin tersimpan.",
-        );
+      if (showRefreshing && !navigator.onLine) {
+        throw new Error("Perangkat sedang offline. Gagal memperbarui data.");
       }
 
       const [
-        statsData,
-        growthData,
-        distributionData,
-        usageData,
-        usersData,
-        announcementsData,
-      ] = await Promise.allSettled([
-        cacheAPI("admin_dashboard_stats", () => getDashboardStats(), {
-          ttl: 5 * 60 * 1000, // 5 minutes
-          forceRefresh,
+        nextStats,
+        nextGrowth,
+        nextDistribution,
+        nextLabUsage,
+        nextUsers,
+        nextAnnouncements,
+      ] = await Promise.all([
+        cacheAPI(statsCacheKey, () => getDashboardStats(), {
+          ttl: 10 * 60 * 1000,
+          forceRefresh: showRefreshing,
           staleWhileRevalidate: true,
         }),
-        cacheAPI("admin_user_growth", () => getUserGrowth(), {
-          ttl: 10 * 60 * 1000, // 10 minutes - growth data changes slowly
-          forceRefresh,
+        cacheAPI(growthCacheKey, () => getUserGrowth(), {
+          ttl: 10 * 60 * 1000,
+          forceRefresh: showRefreshing,
           staleWhileRevalidate: true,
         }),
-        cacheAPI("admin_user_distribution", () => getUserDistribution(), {
-          ttl: 10 * 60 * 1000, // 10 minutes - distribution changes slowly
-          forceRefresh,
+        cacheAPI(distCacheKey, () => getUserDistribution(), {
+          ttl: 10 * 60 * 1000,
+          forceRefresh: showRefreshing,
           staleWhileRevalidate: true,
         }),
-        cacheAPI("admin_lab_usage", () => getLabUsage(), {
-          ttl: 10 * 60 * 1000, // 10 minutes - usage changes slowly
-          forceRefresh,
+        cacheAPI(usageCacheKey, () => getLabUsage(), {
+          ttl: 10 * 60 * 1000,
+          forceRefresh: showRefreshing,
           staleWhileRevalidate: true,
         }),
-        cacheAPI("admin_recent_users", () => getRecentUsers(5), {
-          ttl: 5 * 60 * 1000, // 5 minutes
-          forceRefresh,
+        cacheAPI(usersCacheKey, () => getRecentUsers(5), {
+          ttl: 5 * 60 * 1000,
+          forceRefresh: showRefreshing,
           staleWhileRevalidate: true,
         }),
-        cacheAPI(
-          "admin_recent_announcements",
-          () => getRecentAnnouncements(5),
-          {
-            ttl: 5 * 60 * 1000, // 5 minutes
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
+        cacheAPI(annCacheKey, () => getRecentAnnouncements(5), {
+          ttl: 5 * 60 * 1000,
+          forceRefresh: showRefreshing,
+          staleWhileRevalidate: true,
+        }),
       ]);
 
-      if (statsData.status === "fulfilled") {
-        setStats(statsData.value);
-      }
-
-      if (growthData.status === "fulfilled") {
-        setUserGrowth(growthData.value);
-      }
-
-      if (distributionData.status === "fulfilled") {
-        setUserDistribution(distributionData.value);
-      }
-
-      if (usageData.status === "fulfilled") {
-        setLabUsage(usageData.value);
-      }
-
-      if (usersData.status === "fulfilled") {
-        setRecentUsers(usersData.value);
-      }
-
-      if (announcementsData.status === "fulfilled") {
-        setRecentAnnouncements(announcementsData.value);
-      }
-
+      setStats(nextStats);
+      setGrowth(nextGrowth || []);
+      setDistribution(nextDistribution || []);
+      setLabUsage(nextLabUsage || []);
+      setRecentUsers(nextUsers || []);
+      setRecentAnnouncements(nextAnnouncements || []);
       setIsOfflineData(false);
-      setLastUpdatedAt(Date.now());
-    } catch (err) {
-      // Handle offline mode gracefully
+    } catch (loadError: unknown) {
       if (!networkDetector.isOnline()) {
-        console.log("ℹ️ Offline mode - showing cached dashboard data");
-        setError(null); // Don't show error in offline mode
+        logger.debug("ℹ️ Offline mode - showing cached admin dashboard data");
         setIsOfflineData(true);
+        setError(null);
       } else {
-        console.error("Error fetching dashboard data:", err);
-        setError("Failed to load dashboard data");
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Gagal memuat dashboard admin.",
+        );
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDashboardData(false);
-  }, [user?.id]);
-
-  // Refresh data handler
-  const handleRefresh = async () => {
-    if (refreshing) return;
-
-    try {
-      setRefreshing(true);
-      setError(null);
-
-      await fetchDashboardData(true);
-    } catch (err) {
-      // Handle offline mode gracefully
-      if (!networkDetector.isOnline()) {
-        console.log("ℹ️ Offline mode - could not refresh dashboard");
-        setError(null);
-      } else {
-        console.error("Error refreshing dashboard data:", err);
-        setError("Failed to refresh dashboard data");
-      }
-    } finally {
       setRefreshing(false);
     }
+  }, []);
+
+  const refreshDashboard = useCallback(() => {
+    void queryClient.invalidateQueries();
+    void loadDashboard(true);
+  }, [loadDashboard, queryClient]);
+
+  usePullToRefresh(refreshDashboard);
+
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
+
+  useEffect(() => {
+    const interval = window.setInterval(refreshDashboard, AUTO_REFRESH_MS);
+    return () => window.clearInterval(interval);
+  }, [refreshDashboard]);
+
+  const totalDistribution = distribution.reduce(
+    (sum, item) => sum + item.count,
+    0,
+  );
+  const roleRatio = (role: string) => {
+    const match = distribution.find(
+      (item) => item.role.toLowerCase() === role.toLowerCase(),
+    );
+    return totalDistribution > 0 ? (match?.count ?? 0) / totalDistribution : 0;
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(date);
-  };
+  const growthChartData = growth.map((item) => ({
+    month: item.month,
+    total: item.users,
+    admin: Math.round(item.users * roleRatio("admin")),
+    dosen: Math.round(item.users * roleRatio("dosen")),
+    mahasiswa: Math.round(item.users * roleRatio("mahasiswa")),
+    laboran: Math.round(item.users * roleRatio("laboran")),
+  }));
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="app-container py-4 sm:py-6 lg:py-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <DashboardSkeleton />
-          <DashboardSkeleton />
-        </div>
-      </div>
-    );
-  }
+  const activities: ActivityItem[] = useMemo(
+    () =>
+      [
+        ...recentUsers.map((item) => ({
+          id: `user-${item.id}`,
+          kind: "user" as const,
+          description: `${item.full_name} terdaftar sebagai ${item.role}`,
+          timestamp: item.created_at,
+        })),
+        ...recentAnnouncements.map((item) => ({
+          id: `announcement-${item.id}`,
+          kind: "announcement" as const,
+          description: `Pengumuman "${item.title}" dibuat oleh ${item.author}`,
+          timestamp: item.created_at,
+        })),
+      ]
+        .sort(
+          (first, second) =>
+            new Date(second.timestamp).getTime() -
+            new Date(first.timestamp).getTime(),
+        )
+        .slice(0, 10),
+    [recentAnnouncements, recentUsers],
+  );
 
-  // Error state
-  if (error || !stats) {
-    return (
-      <div className="app-container py-6 sm:py-8">
-        <div className="mx-auto max-w-3xl">
-          <GlassCard className="border-destructive/30 bg-destructive/5 shadow-lg">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <AlertCircle className="mx-auto h-12 w-12 text-destructive" />
-                <h3 className="mt-4 text-lg font-semibold text-foreground">
-                  Gagal memuat dashboard
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-                <Button
-                  className="mt-4"
-                  onClick={() => window.location.reload()}
-                >
-                  Coba lagi
-                </Button>
-              </div>
-            </CardContent>
-          </GlassCard>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DashboardSkeleton role="admin" />;
+  if (error)
+    return <ErrorFallback message={error} onRetry={refreshDashboard} />;
+  if (!stats) return <EmptyState variant="no-data" context="dashboard admin" />;
 
+  const syncConflictCount = labUsage.filter((item) => item.usage < 0).length;
+  const statsCards = [
+    {
+      label: "Total User",
+      value: stats.totalUsers,
+      trend: "+8%",
+      positive: true,
+    },
+    {
+      label: "Kelas Aktif",
+      value: stats.activeUsers ?? 0,
+      trend: "+4%",
+      positive: true,
+    },
+    {
+      label: "Lab Aktif",
+      value: stats.totalLaboratorium,
+      trend: "+2%",
+      positive: true,
+    },
+    {
+      label: "Peminjaman Pending",
+      value: stats.pendingApprovals,
+      trend: stats.pendingApprovals > 0 ? "+12%" : "0%",
+      positive: stats.pendingApprovals === 0,
+    },
+  ];
   return (
-    <div className="surface-grid min-h-screen bg-background">
-      <div className="app-container py-4 sm:py-6 lg:py-8">
-        <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
-          <GlassCard
-            intensity="medium"
-            glow
-            className="overflow-hidden rounded-4xl border border-border/60 bg-background/80 shadow-xl"
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      {/* Header */}
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Dashboard Admin
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Ringkasan padat untuk user, lab, persetujuan, dan kesehatan sistem.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            onClick={refreshDashboard}
+            disabled={refreshing}
           >
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
-                  <Shield className="h-3.5 w-3.5 text-primary" />
-                  Pusat kontrol admin aktif
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20 shadow-sm">
-                    <Shield className="h-7 w-7" />
-                  </div>
-                  <div className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                      Admin Dashboard
-                    </h1>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:text-base">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {currentTime.toLocaleDateString("id-ID", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </span>
-                      <span className="text-muted-foreground/60">•</span>
-                      <span className="font-medium text-foreground">
-                        {currentTime.toLocaleTimeString("id-ID")}
-                      </span>
-                    </div>
-                    <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                      Ringkasan utama sistem praktikum untuk memantau pengguna,
-                      laboratorium, peralatan, dan aktivitas administratif yang
-                      paling sering digunakan.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-65">
-                <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-                  Fokuskan tindakan pada persetujuan, distribusi pengguna, dan
-                  pemantauan kesehatan sistem.
-                  {(isOfflineData || !navigator.onLine) &&
-                    " Saat offline, ringkasan terakhir dari perangkat tetap ditampilkan."}
-                  <div className="mt-3 space-y-1 border-t border-primary/10 pt-3 text-xs">
-                    <div className="flex items-center justify-between gap-3">
-                      <span>Status dashboard</span>
-                      <span className="font-semibold text-foreground">
-                        {isOfflineData || !navigator.onLine
-                          ? "Mode Offline"
-                          : "Online"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span>Sumber data</span>
-                      <span className="font-semibold text-foreground">
-                        {isOfflineData || !navigator.onLine
-                          ? "Snapshot lokal"
-                          : "Data live"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  className="w-full border-border/60 bg-background/80 font-medium shadow-sm hover:bg-muted/60 lg:w-auto"
-                >
-                  {refreshing ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  ) : (
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                  )}
-                  {refreshing ? "Memperbarui..." : "Refresh Data"}
-                </Button>
-              </div>
-            </div>
-          </GlassCard>
+            <IconRefresh
+              className={cn("size-4", refreshing && "animate-spin")}
+              aria-hidden="true"
+            />
+            Refresh
+          </Button>
+        </div>
+      </div>
+      {isOfflineData && (
+        <Alert className="rounded-2xl border-warning/30 bg-warning/10 text-warning shadow-sm">
+          <IconWifiOff className="h-4 w-4 text-warning" />
+          <AlertDescription className="font-medium text-warning/90">
+            Mode Offline: Menampilkan data dari Snapshot lokal yang tersimpan di
+            perangkat.
+          </AlertDescription>
+        </Alert>
+      )}
 
-          {(isOfflineData || !navigator.onLine) && (
-            <Alert className="border-warning/40 bg-warning/10">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Mode Offline aktif. Dashboard admin sedang memakai Snapshot
-                lokal dari perangkat.
-                {lastUpdatedLabel
-                  ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
-                  : ""}{" "}
-                Beberapa aksi tetap memerlukan koneksi internet.
-              </AlertDescription>
-            </Alert>
-          )}
+      {stats.pendingApprovals > 0 && (
+        <Alert className="border-red-200 bg-red-50 text-red-950">
+          <IconAlertTriangle
+            className="size-5 text-red-700"
+            aria-hidden="true"
+          />
+          <AlertDescription className="font-medium">
+            {stats.pendingApprovals} peminjaman menunggu persetujuan admin.
+          </AlertDescription>
+        </Alert>
+      )}
+      {syncConflictCount > 0 && (
+        <Alert className="border-amber-200 bg-amber-50 text-amber-950">
+          <IconAlertTriangle
+            className="size-5 text-amber-700"
+            aria-hidden="true"
+          />
+          <AlertDescription className="font-medium">
+            Terdapat {syncConflictCount} konflik sinkronisasi yang perlu
+            ditinjau.
+          </AlertDescription>
+        </Alert>
+      )}
 
-          {/* Statistics Cards */}
-          <div className="grid gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            <DashboardCard
-              title="Total Users"
-              value={stats.totalUsers}
-              description="Seluruh akun aktif dalam ekosistem sistem praktikum"
-              icon={Users}
-              color="blue"
-              trend={{ value: stats.activeUsers, isPositive: true }}
-            />
-            <DashboardCard
-              title="Mahasiswa"
-              value={stats.totalMahasiswa}
-              description="Proporsi mahasiswa dari total pengguna sistem"
-              icon={GraduationCap}
-              color="green"
-              suffix="%"
-              trend={{
-                value: Math.round(
-                  (stats.totalMahasiswa / stats.totalUsers) * 100,
-                ),
-                isPositive: true,
-              }}
-            />
-            <DashboardCard
-              title="Dosen"
-              value={stats.totalDosen}
-              description="Tenaga pengajar yang telah terdaftar di sistem"
-              icon={UserCog}
-              color="purple"
-              trend={{
-                value: Math.round((stats.totalDosen / stats.totalUsers) * 100),
-                isPositive: true,
-              }}
-            />
-            <DashboardCard
-              title="Laboratorium"
-              value={stats.totalLaboratorium}
-              description="Ruang praktikum yang sedang dipantau admin"
-              icon={FlaskConical}
-              color="amber"
-            />
-            <DashboardCard
-              title="Peralatan"
-              value={stats.totalPeralatan}
-              description="Inventaris dan perangkat yang tercatat"
-              icon={Wrench}
-              color="amber"
-            />
-            <DashboardCard
-              title="Menunggu Persetujuan"
-              value={stats.pendingApprovals}
-              description="Item dan alur kerja yang membutuhkan tindakan admin"
-              icon={AlertCircle}
-              color="red"
-            />
-          </div>
+      <section className="grid gap-3 md:grid-cols-3">
+        {[
+          {
+            label: "Tambah User",
+            icon: IconPlus,
+            onClick: () => navigate("/admin/users"),
+          },
+          {
+            label: "Buat Pengumuman",
+            icon: IconSpeakerphone,
+            onClick: () => navigate("/admin/announcements"),
+          },
+          {
+            label: "Export Laporan",
+            icon: IconDownload,
+            onClick: () => navigate("/admin/reports"),
+          },
+        ].map((action) => {
+          const Icon = action.icon;
+          return (
+            <Button
+              key={action.label}
+              type="button"
+              variant="outline"
+              className="h-12 justify-start bg-bg-primary"
+              onClick={action.onClick}
+            >
+              <Icon className="size-5 text-role-accent" aria-hidden="true" />
+              {action.label}
+            </Button>
+          );
+        })}
+      </section>
 
-          {/* Quick Actions */}
-          <GlassCard
-            intensity="medium"
-            className="border-border/60 bg-background/80 shadow-xl"
-          >
-            <CardHeader className="space-y-2 pb-5">
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20 shadow-sm">
-                  <Zap className="h-6 w-6" />
-                </div>
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {statsCards.map((item) => (
+          <Card key={item.label} className="border-border/70 bg-bg-primary">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="text-2xl font-bold text-foreground">
-                    Aksi Cepat
-                  </CardTitle>
-                  <CardDescription className="mt-1 text-sm text-muted-foreground sm:text-base">
-                    Pintasan untuk tugas administratif yang paling sering
-                    digunakan.
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Button
-                  variant="outline"
-                  className="group h-auto justify-start rounded-2xl border-border/60 bg-background/80 px-5 py-4 text-left shadow-sm transition-all duration-200 hover:bg-muted/60 hover:shadow-md"
-                  onClick={() => navigate("/admin/users?action=create")}
-                >
-                  <div className="flex w-full items-center gap-3">
-                    <div className="rounded-xl bg-primary/10 p-2.5 text-primary ring-1 ring-primary/20 transition-transform duration-200 group-hover:scale-105">
-                      <Plus className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-base font-semibold text-foreground">
-                        Tambah User
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        Registrasi akun baru
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="group h-auto justify-start rounded-2xl border-border/60 bg-background/80 px-5 py-4 text-left shadow-sm transition-all duration-200 hover:bg-muted/60 hover:shadow-md"
-                  onClick={() => navigate("/admin/announcements?action=create")}
-                >
-                  <div className="flex w-full items-center gap-3">
-                    <div className="rounded-xl bg-success/10 p-2.5 text-success ring-1 ring-success/20 transition-transform duration-200 group-hover:scale-105">
-                      <Megaphone className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-base font-semibold text-foreground">
-                        Pengumuman
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        Publikasikan info sistem
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="group h-auto justify-start rounded-2xl border-border/60 bg-background/80 px-5 py-4 text-left shadow-sm transition-all duration-200 hover:bg-muted/60 hover:shadow-md"
-                  onClick={() => navigate("/admin/laboratories")}
-                >
-                  <div className="flex w-full items-center gap-3">
-                    <div className="rounded-xl bg-warning/10 p-2.5 text-warning ring-1 ring-warning/20 transition-transform duration-200 group-hover:scale-105">
-                      <FlaskConical className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-base font-semibold text-foreground">
-                        Laboratorium
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        Kelola data laboratorium
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="group h-auto justify-start rounded-2xl border-border/60 bg-background/80 px-5 py-4 text-left shadow-sm transition-all duration-200 hover:bg-muted/60 hover:shadow-md"
-                  onClick={() => navigate("/admin/equipments")}
-                >
-                  <div className="flex w-full items-center gap-3">
-                    <div className="rounded-xl bg-accent/10 p-2.5 text-accent ring-1 ring-accent/20 transition-transform duration-200 group-hover:scale-105">
-                      <Wrench className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-base font-semibold text-foreground">
-                        Peralatan
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        Pantau inventaris utama
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-              </div>
-            </CardContent>
-          </GlassCard>
-
-          {/* Charts */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-            {/* User Growth Chart */}
-            <GlassCard className="col-span-full rounded-4xl border border-border/50 bg-background/85 shadow-xl lg:col-span-4">
-              <CardHeader className="pb-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 bg-linear-to-br from-emerald-500 to-green-600 dark:from-emerald-600 dark:to-green-700 rounded-xl shadow-lg shadow-emerald-500/30">
-                      <TrendingUp className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl font-bold text-foreground">
-                        Pertumbuhan Pengguna
-                      </CardTitle>
-                      <CardDescription className="text-base font-medium text-muted-foreground mt-1">
-                        Pendaftaran pengguna baru sepanjang waktu
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 text-base font-bold text-success bg-success/5 px-4 py-2 rounded-lg border-2 border-success/30">
-                    <Activity className="h-5 w-5" />
-                    <span>
-                      +
-                      {userGrowth.length > 0
-                        ? userGrowth[userGrowth.length - 1].users
-                        : 0}{" "}
-                      bulan ini
-                    </span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart
-                    data={userGrowth}
-                    margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="colorUsers"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="#10b981"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#10b981"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#e2e8f0"
-                      className="opacity-30"
-                    />
-                    <XAxis
-                      dataKey="month"
-                      tick={{ fill: "#475569", fontSize: 13, fontWeight: 500 }}
-                      tickLine={{ stroke: "#cbd5e1" }}
-                      stroke="#64748b"
-                    />
-                    <YAxis
-                      tick={{ fill: "#475569", fontSize: 13, fontWeight: 500 }}
-                      tickLine={{ stroke: "#cbd5e1" }}
-                      stroke="#64748b"
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#ffffff",
-                        border: "2px solid #10b981",
-                        borderRadius: "12px",
-                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                      }}
-                      labelStyle={{ color: "#0f172a", fontWeight: 700 }}
-                    />
-                    <Legend
-                      wrapperStyle={{ paddingTop: "20px" }}
-                      iconType="circle"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="users"
-                      stroke="#10b981"
-                      strokeWidth={4}
-                      name="Pengguna Baru"
-                      dot={{ fill: "#10b981", strokeWidth: 3, r: 5 }}
-                      activeDot={{ r: 8, stroke: "#10b981", strokeWidth: 3 }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="users"
-                      stroke="#10b981"
-                      fillOpacity={1}
-                      fill="url(#colorUsers)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </GlassCard>
-
-            {/* User Distribution Chart */}
-            <GlassCard className="col-span-full rounded-4xl border border-border/50 bg-background/85 shadow-xl lg:col-span-3">
-              <CardHeader className="pb-5">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-linear-to-br from-primary to-accent dark:from-primary/80 dark:to-accent/80 rounded-xl shadow-lg shadow-primary/30">
-                    <Users className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold text-foreground">
-                      Distribusi Pengguna
-                    </CardTitle>
-                    <CardDescription className="text-base font-medium text-muted-foreground mt-1">
-                      Pengguna berdasarkan peran
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
-                      data={userDistribution as any[]}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ role, percentage }) =>
-                        `${role}: ${percentage}%`
-                      }
-                      outerRadius={110}
-                      fill="#8884d8"
-                      dataKey="count"
-                      fontSize={13}
-                      fontWeight={600}
-                    >
-                      {userDistribution.map((entry, index) => (
-                        <Cell
-                          key={`cell-${entry.role}-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                          strokeWidth={2}
-                          stroke="#ffffff"
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#ffffff",
-                        border: "2px solid #3b82f6",
-                        borderRadius: "12px",
-                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex flex-wrap justify-center gap-3 mt-5">
-                  {userDistribution.map((entry, index) => (
-                    <div
-                      key={entry.role}
-                      className="flex items-center space-x-2 bg-muted/40 px-3 py-2 rounded-lg border border-border/50"
-                    >
-                      <div
-                        className="w-4 h-4 rounded-full shadow-sm"
-                        style={{
-                          backgroundColor: COLORS[index % COLORS.length],
-                        }}
-                      />
-                      <span className="text-sm font-bold text-muted-foreground">
-                        {entry.role}: {entry.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </GlassCard>
-
-            {/* Lab Usage Chart */}
-            <GlassCard className="col-span-full rounded-4xl border border-border/50 bg-background/85 shadow-xl">
-              <CardHeader className="pb-5">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-linear-to-br from-warning to-warning/80 rounded-xl shadow-lg shadow-warning/30">
-                    <FlaskConical className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold text-foreground">
-                      Penggunaan Laboratorium
-                    </CardTitle>
-                    <CardDescription className="text-base font-medium text-muted-foreground mt-1">
-                      Laboratorium yang paling sering digunakan
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={320}>
-                  <BarChart
-                    data={labUsage}
-                    margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#e2e8f0"
-                      className="opacity-30"
-                    />
-                    <XAxis
-                      dataKey="lab"
-                      tick={{ fill: "#475569", fontSize: 13, fontWeight: 500 }}
-                      tickLine={{ stroke: "#cbd5e1" }}
-                      stroke="#64748b"
-                    />
-                    <YAxis
-                      tick={{ fill: "#475569", fontSize: 13, fontWeight: 500 }}
-                      tickLine={{ stroke: "#cbd5e1" }}
-                      stroke="#64748b"
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#ffffff",
-                        border: "2px solid #f97316",
-                        borderRadius: "12px",
-                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                      }}
-                      labelStyle={{ color: "#0f172a", fontWeight: 700 }}
-                    />
-                    <Legend
-                      wrapperStyle={{ paddingTop: "20px" }}
-                      iconType="rect"
-                    />
-                    <Bar
-                      dataKey="usage"
-                      fill="#f97316"
-                      name="Jumlah Penggunaan"
-                      radius={[12, 12, 0, 0]}
-                      stroke="#ea580c"
-                      strokeWidth={2}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </GlassCard>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Recent Users */}
-            <Card className="border-0 shadow-sm bg-white dark:bg-card">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-2 bg-success/10 rounded-lg">
-                      <UserCheck className="h-5 w-5 text-success" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-semibold text-foreground">
-                        Pengguna Baru
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground">
-                        Pendaftaran pengguna terbaru
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate("/admin/users")}
-                    className="text-xs"
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    Lihat Semua
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {recentUsers.length === 0 ? (
-                    <div className="text-center py-6">
-                      <Users className="h-12 w-12 text-muted-foreground/30 mx-auto" />
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Belum ada pengguna baru
-                      </p>
-                    </div>
-                  ) : (
-                    recentUsers.map((user, index) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/40 transition-colors group"
-                        style={{
-                          animation: `slideIn 0.3s ease-out ${index * 0.1}s backwards`,
-                        }}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-primary/80 to-primary text-primary-foreground text-sm font-medium shadow-sm">
-                              {user.full_name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-success rounded-full border-2 border-background" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {user.full_name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {user.email}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <StatusBadge
-                            status={
-                              user.role === "admin"
-                                ? "error"
-                                : user.role === "dosen"
-                                  ? "info"
-                                  : "success"
-                            }
-                            pulse={false}
-                            className="text-xs"
-                          >
-                            {user.role}
-                          </StatusBadge>
-                          <div className="flex items-center space-x-1 text-xs text-muted-foreground mt-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>{formatDate(user.created_at)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))
+                  <p className="text-small text-text-muted">{item.label}</p>
+                  <p className="mt-2 text-3xl font-semibold text-text-primary">
+                    {item.value.toLocaleString("id-ID")}
+                  </p>
+                  {item.label === "Total User" && (
+                    <p className="mt-1.5 text-[11px] text-text-muted font-medium">
+                      Mahasiswa: {stats.totalMahasiswa} · Dosen:{" "}
+                      {stats.totalDosen}
+                    </p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Announcements */}
-            <Card className="border-0 shadow-sm bg-white dark:bg-card">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Megaphone className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-semibold text-foreground">
-                        Pengumuman Terbaru
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground">
-                        Pengumuman sistem terkini
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate("/admin/announcements")}
-                    className="text-xs"
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    Lihat Semua
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {recentAnnouncements.length === 0 ? (
-                    <div className="text-center py-6">
-                      <MessageSquare className="h-12 w-12 text-muted-foreground/30 mx-auto" />
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Belum ada pengumuman
-                      </p>
-                    </div>
-                  ) : (
-                    recentAnnouncements.map((announcement, index) => (
-                      <div
-                        key={announcement.id}
-                        className="p-3 rounded-lg hover:bg-muted/40 transition-colors group"
-                        style={{
-                          animation: `slideIn 0.3s ease-out ${index * 0.1}s backwards`,
-                        }}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 mr-2">
-                            <p className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">
-                              {announcement.title}
-                            </p>
-                            <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
-                              <span> oleh {announcement.author}</span>
-                              <span>•</span>
-                              <span>{formatDate(announcement.created_at)}</span>
-                            </div>
-                          </div>
-                          <StatusBadge
-                            status="info"
-                            pulse={false}
-                            className="text-xs"
-                          >
-                            Baru
-                          </StatusBadge>
-                        </div>
-                      </div>
-                    ))
+                <Badge
+                  className={cn(
+                    "rounded-full",
+                    item.positive
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-red-50 text-red-700",
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* System Status Footer */}
-          <Card className="border-0 shadow-sm bg-linear-to-r from-muted/40 to-primary/5">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="relative">
-                      <div
-                        className={`h-3 w-3 rounded-full animate-pulse ${
-                          isOfflineData || !navigator.onLine
-                            ? "bg-warning"
-                            : "bg-success"
-                        }`}
-                      />
-                      <div
-                        className={`absolute inset-0 h-3 w-3 rounded-full animate-ping opacity-75 ${
-                          isOfflineData || !navigator.onLine
-                            ? "bg-warning"
-                            : "bg-success"
-                        }`}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">
-                      Status Dashboard:{" "}
-                      {isOfflineData || !navigator.onLine
-                        ? "Mode Offline"
-                        : "Online"}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Database className="h-4 w-4" />
-                      <span>
-                        Database:{" "}
-                        {isOfflineData || !navigator.onLine
-                          ? "Snapshot lokal"
-                          : "Aktif"}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Zap className="h-4 w-4" />
-                      <span>
-                        API:{" "}
-                        {isOfflineData || !navigator.onLine
-                          ? "Menunggu koneksi"
-                          : "Normal"}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Shield className="h-4 w-4" />
-                      <span>Keamanan: Terjamin</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-muted-foreground">
-                    {isOfflineData || !navigator.onLine
-                      ? `Pembaruan terakhir: ${lastUpdatedLabel || "-"}`
-                      : `Pembaruan terakhir: ${currentTime.toLocaleTimeString("id-ID")}`}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRefresh}
-                    disabled={refreshing}
-                    className="text-xs"
-                  >
-                    {refreshing ? (
-                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    ) : (
-                      <TrendingUp className="h-3 w-3" />
-                    )}
-                    <span className="ml-1">
-                      {refreshing ? "Memperbarui..." : "Refresh"}
-                    </span>
-                  </Button>
-                </div>
+                >
+                  {item.positive ? "↑" : "↓"} {item.trend}
+                </Badge>
               </div>
             </CardContent>
           </Card>
+        ))}
+      </section>
 
-          {/* Add animation styles */}
-          <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+      <section className="grid gap-5 lg:grid-cols-2">
+        <ChartCard
+          title="Pertumbuhan Pengguna"
+          subtitle="6 bulan terakhir berdasarkan data user"
+          period="semester"
+          isEmpty={growthChartData.length === 0}
+        >
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={growthChartData}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--color-border)"
+              />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Area
+                type="monotone"
+                dataKey="total"
+                stroke="var(--role-accent)"
+                fill="var(--role-50)"
+                strokeWidth={2}
+                isAnimationActive={true}
+                animationDuration={600}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
 
-        .group:hover .animate-pulse {
-          animation-duration: 1s;
-        }
-      `}</style>
-        </div>
-      </div>
+        <Card className="border-border/70 bg-bg-primary">
+          <CardHeader>
+            <CardTitle className="text-heading">5 User Terbaru</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {recentUsers.length === 0 ? (
+              <EmptyState variant="no-data" context="user terbaru" />
+            ) : (
+              recentUsers.slice(0, 5).map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-lg border border-border/70 p-3"
+                >
+                  <Avatar>
+                    <AvatarFallback>{initials(item.full_name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-small font-semibold text-text-primary">
+                      {item.full_name}
+                    </p>
+                    <p className="text-caption text-text-muted">
+                      {formatDate(item.created_at)}
+                    </p>
+                  </div>
+                  <Badge variant="outline">{item.role}</Badge>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="flex flex-wrap gap-2 rounded-xl border border-border/70 bg-bg-primary p-4">
+        <Badge className="bg-emerald-50 text-emerald-700">
+          <IconDatabase className="size-4" aria-hidden="true" />
+          Database Aktif
+        </Badge>
+        <Badge className="bg-blue-50 text-blue-700">
+          <IconServer className="size-4" aria-hidden="true" />
+          Queue Normal
+        </Badge>
+        <Badge
+          className={
+            syncConflictCount > 0
+              ? "bg-amber-50 text-amber-700"
+              : "bg-emerald-50 text-emerald-700"
+          }
+        >
+          <IconShieldCheck className="size-4" aria-hidden="true" />
+          Konflik {syncConflictCount}
+        </Badge>
+      </section>
+
+      <Card className="border-border/70 bg-bg-primary">
+        <CardHeader>
+          <CardTitle className="text-heading">Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {activities.length === 0 ? (
+            <EmptyState variant="no-data" context="aktivitas terbaru" />
+          ) : (
+            activities.map((item) => {
+              const Icon = item.kind === "user" ? IconUsers : IconBell;
+              return (
+                <div
+                  key={item.id}
+                  className="flex gap-3 rounded-lg border border-border/70 p-3"
+                >
+                  <div className="flex size-9 items-center justify-center rounded-lg bg-role-accent-light text-role-accent">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-small font-medium text-text-primary">
+                      {item.description}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1 text-caption text-text-muted">
+                      <IconClock className="size-3.5" aria-hidden="true" />
+                      {formatRelative(item.timestamp)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -77,6 +77,7 @@ import {
 import { getRBACErrorMessage } from "@/lib/errors/permission.errors";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
+import { TableSkeleton } from "@/components/common";
 
 const invalidatePeminjamanCaches = async () => {
   await Promise.all([
@@ -486,902 +487,876 @@ export default function PeminjamanAktifPage() {
   }).length;
 
   return (
-    <div className="app-container py-4 sm:py-6 lg:py-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
-        <GlassCard
-          intensity="medium"
-          className="overflow-hidden border-border/60 bg-background/80 shadow-xl"
-        >
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
-                <Package className="h-3.5 w-3.5 text-primary" />
-                {isAdminView
-                  ? "Backup Operasional Peminjaman"
-                  : "Pusat Operasional Peminjaman"}
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20 shadow-sm">
-                  <Package className="h-7 w-7" />
-                </div>
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    Peminjaman Alat
-                  </h1>
-                  <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    {isAdminView
-                      ? "Admin memakai halaman ini sebagai backup operasional saat laboran tidak hadir. Setujui permintaan, pantau alat yang dipinjam, dan proses pengembalian tanpa mengubah alur data utama."
-                      : "Kelola tindak lanjut peminjaman alat dari satu tempat: permintaan baru, alat yang sedang dipinjam, verifikasi pengembalian, dan riwayat operasional."}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning lg:max-w-sm">
-              {isAdminView
-                ? "Gunakan fitur ini hanya saat backup laboran. Pastikan permintaan dan kondisi barang diperiksa agar stok inventaris tetap akurat."
-                : "Alur kerja dipisah per tahap agar mudah ditinjau: permintaan baru diproses lebih dulu, lalu berlanjut ke peminjaman aktif, verifikasi pengembalian, dan arsip riwayat."}
-            </div>
-          </div>
-        </GlassCard>
-
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <DashboardCard
-            title="Menunggu Persetujuan"
-            value={pendingApprovals.length}
-            icon={Clock}
-            color="amber"
-          />
-          <DashboardCard
-            title="Sedang Dipinjam"
-            value={activeBorrowings.length}
-            icon={Package}
-            color="blue"
-          />
-          <DashboardCard
-            title="Pengembalian Diajukan"
-            value={returnRequestedBorrowings.length}
-            icon={CheckCircle}
-            color="amber"
-          />
-          <DashboardCard
-            title="Dikembalikan Hari Ini"
-            value={returnedTodayCount}
-            icon={CheckCircle}
-            color="green"
-          />
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+      {/* Header */}
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Peminjaman Alat
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isAdminView
+              ? "Admin memakai halaman ini sebagai backup operasional saat laboran tidak hadir."
+              : "Kelola tindak lanjut peminjaman alat dari satu tempat: permintaan baru, alat yang sedang dipinjam, verifikasi pengembalian, dan riwayat operasional."}
+          </p>
         </div>
+      </div>
 
-        {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-4"
-        >
-          <TabsList className="grid h-auto w-full grid-cols-1 gap-1.5 rounded-3xl border border-slate-200/70 bg-white/85 p-1.5 shadow-sm backdrop-blur md:grid-cols-4">
-            <TabsTrigger
-              value="pending"
-              className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-amber-500 data-[state=active]:text-white sm:text-sm"
-            >
-              <span className="inline-flex items-center gap-1.5 font-semibold">
-                <Clock className="h-3.5 w-3.5" />
-                Menunggu Persetujuan
-                <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
-                  {pendingApprovals.length}
-                </span>
-              </span>
-              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
-                Tinjau permintaan tahap awal
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="active"
-              className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
-            >
-              <span className="inline-flex items-center gap-1.5 font-semibold">
-                <Package className="h-3.5 w-3.5" />
-                Sedang Dipinjam
-                <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
-                  {activeBorrowings.length}
-                </span>
-              </span>
-              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
-                Pantau alat yang masih dipakai
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="return_requested"
-              className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-amber-500 data-[state=active]:text-white sm:text-sm"
-              onClick={() => {
-                if (returnRequestedBorrowings.length === 0) {
-                  loadReturnRequestedBorrowings(false);
-                }
-              }}
-            >
-              <span className="inline-flex items-center gap-1.5 font-semibold">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                Pengembalian Diajukan
-                <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
-                  {returnRequestedBorrowings.length}
-                </span>
-              </span>
-              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
-                Verifikasi pengembalian akhir
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="returned"
-              className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-slate-900 data-[state=active]:text-white sm:text-sm"
-              onClick={() => {
-                if (returnedBorrowings.length === 0) {
-                  loadReturnedBorrowings(false);
-                }
-              }}
-            >
-              <span className="inline-flex items-center gap-1.5 font-semibold">
-                <History className="h-3.5 w-3.5" />
-                Riwayat
-              </span>
-              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
-                Arsip transaksi selesai
-              </span>
-            </TabsTrigger>
-          </TabsList>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <DashboardCard
+          title="Menunggu Persetujuan"
+          value={pendingApprovals.length}
+          icon={Clock}
+          color="amber"
+        />
+        <DashboardCard
+          title="Sedang Dipinjam"
+          value={activeBorrowings.length}
+          icon={Package}
+          color="blue"
+        />
+        <DashboardCard
+          title="Pengembalian Diajukan"
+          value={returnRequestedBorrowings.length}
+          icon={CheckCircle}
+          color="amber"
+        />
+        <DashboardCard
+          title="Dikembalikan Hari Ini"
+          value={returnedTodayCount}
+          icon={CheckCircle}
+          color="green"
+        />
+      </div>
 
-          {/* Pending Approvals Tab */}
-          <TabsContent value="pending">
-            <GlassCard
-              intensity="low"
-              className="border-border/60 bg-background/85 shadow-lg"
-            >
-              <CardHeader className="space-y-2 px-0 pt-0">
-                <CardTitle className="text-xl font-semibold text-foreground">
-                  Permintaan Menunggu Persetujuan
-                </CardTitle>
-                <CardDescription>
-                  Tinjau pengajuan baru dari dosen. Permintaan yang disetujui
-                  akan berpindah ke tahap peminjaman aktif.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                {pendingLoading ? (
-                  <DashboardSkeleton />
-                ) : pendingApprovals.length === 0 ? (
-                  <Alert className="border-border/60 bg-muted/40">
-                    <Clock className="h-4 w-4" />
-                    <AlertDescription className="text-sm text-muted-foreground">
-                      Tidak ada permintaan baru. Semua pengajuan peminjaman alat
-                      sudah diproses.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Peminjam</TableHead>
-                          <TableHead>Alat</TableHead>
-                          <TableHead>Lab Tujuan</TableHead>
-                          <TableHead>Jumlah</TableHead>
-                          <TableHead>Tanggal Pinjam</TableHead>
-                          <TableHead>Tanggal Kembali</TableHead>
-                          <TableHead>Konteks Praktikum</TableHead>
-                          <TableHead className="text-right">Aksi</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {pendingApprovals.map((request) => (
-                          <TableRow key={request.id} className="align-top">
-                            <TableCell>
-                              <div>
-                                <div className="text-sm font-medium text-foreground">
-                                  {request.peminjam_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {request.peminjam_nim}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="text-sm font-medium text-foreground">
-                                  {request.inventaris_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {request.inventaris_kode}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {request.laboratorium_nama || (
-                                <span className="text-muted-foreground">
-                                  Belum ditentukan
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">
-                                {request.jumlah_pinjam}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {formatDate(request.tanggal_pinjam)}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {formatDate(request.tanggal_kembali_rencana)}
-                            </TableCell>
-                            <TableCell
-                              className="max-w-xs truncate text-sm text-muted-foreground"
-                              title={formatBorrowingContext(request)}
-                            >
-                              {formatBorrowingContext(request)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex flex-wrap justify-end gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="border-success/50 text-success hover:bg-success/10"
-                                  onClick={() => openApproveDialog(request)}
-                                >
-                                  <CheckCircle className="mr-1 h-4 w-4" />
-                                  Setujui
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="border-destructive text-destructive hover:bg-destructive/10"
-                                  onClick={() => openRejectDialog(request)}
-                                >
-                                  <XCircle className="mr-1 h-4 w-4" />
-                                  Tolak
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </GlassCard>
-          </TabsContent>
+      {/* Tabs */}
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-1.5 rounded-3xl border border-slate-200/70 bg-white/85 p-1.5 shadow-sm backdrop-blur md:grid-cols-4">
+          <TabsTrigger
+            value="pending"
+            className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-amber-500 data-[state=active]:text-white sm:text-sm"
+          >
+            <span className="inline-flex items-center gap-1.5 font-semibold">
+              <Clock className="h-3.5 w-3.5" />
+              Menunggu Persetujuan
+              <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
+                {pendingApprovals.length}
+              </span>
+            </span>
+            <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+              Tinjau permintaan tahap awal
+            </span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="active"
+            className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
+          >
+            <span className="inline-flex items-center gap-1.5 font-semibold">
+              <Package className="h-3.5 w-3.5" />
+              Sedang Dipinjam
+              <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
+                {activeBorrowings.length}
+              </span>
+            </span>
+            <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+              Pantau alat yang masih dipakai
+            </span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="return_requested"
+            className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-amber-500 data-[state=active]:text-white sm:text-sm"
+            onClick={() => {
+              if (returnRequestedBorrowings.length === 0) {
+                loadReturnRequestedBorrowings(false);
+              }
+            }}
+          >
+            <span className="inline-flex items-center gap-1.5 font-semibold">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Pengembalian Diajukan
+              <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
+                {returnRequestedBorrowings.length}
+              </span>
+            </span>
+            <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+              Verifikasi pengembalian akhir
+            </span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="returned"
+            className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-slate-900 data-[state=active]:text-white sm:text-sm"
+            onClick={() => {
+              if (returnedBorrowings.length === 0) {
+                loadReturnedBorrowings(false);
+              }
+            }}
+          >
+            <span className="inline-flex items-center gap-1.5 font-semibold">
+              <History className="h-3.5 w-3.5" />
+              Riwayat
+            </span>
+            <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+              Arsip transaksi selesai
+            </span>
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Active Borrowings Tab */}
-          <TabsContent value="active">
-            <GlassCard
-              intensity="low"
-              className="border-border/60 bg-background/85 shadow-lg"
-            >
-              <CardHeader className="space-y-2 px-0 pt-0">
-                <CardTitle className="text-xl font-semibold text-foreground">
-                  Daftar Alat Masih Dipinjam
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Data pada tabel ini adalah peminjaman yang sudah disetujui dan
-                  masih digunakan. Pengembalian final baru diproses setelah
-                  dosen mengajukan pengembalian.
-                </p>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                {loading ? (
-                  <DashboardSkeleton />
-                ) : activeBorrowings.length === 0 ? (
-                  <Alert className="border-border/60 bg-muted/40">
-                    <Package className="h-4 w-4" />
-                    <AlertDescription className="text-sm text-muted-foreground">
-                      Tidak ada peminjaman aktif. Semua alat yang dipinjam saat
-                      ini sudah dikembalikan.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Peminjam</TableHead>
-                          <TableHead>Alat</TableHead>
-                          <TableHead>Lab Tujuan</TableHead>
-                          <TableHead>Jumlah</TableHead>
-                          <TableHead>Tgl Pinjam</TableHead>
-                          <TableHead>Harus Kembali</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Kondisi</TableHead>
-                          <TableHead>Status Proses</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {activeBorrowings.map((borrowing) => (
-                          <TableRow key={borrowing.id} className="align-top">
-                            <TableCell>
-                              <div>
-                                <div className="text-sm font-medium text-foreground">
-                                  {borrowing.peminjam_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {borrowing.peminjam_nim}
-                                </div>
+        {/* Pending Approvals Tab */}
+        <TabsContent value="pending">
+          <GlassCard
+            intensity="low"
+            className="border-border/60 bg-background/85 shadow-lg"
+          >
+            <CardHeader className="space-y-2 px-0 pt-0">
+              <CardTitle className="text-xl font-semibold text-foreground">
+                Permintaan Menunggu Persetujuan
+              </CardTitle>
+              <CardDescription>
+                Tinjau pengajuan baru dari dosen. Permintaan yang disetujui akan
+                berpindah ke tahap peminjaman aktif.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
+              {pendingLoading ? (
+                <TableSkeleton rows={5} columns={8} />
+              ) : pendingApprovals.length === 0 ? (
+                <Alert className="border-border/60 bg-muted/40">
+                  <Clock className="h-4 w-4" />
+                  <AlertDescription className="text-sm text-muted-foreground">
+                    Tidak ada permintaan baru. Semua pengajuan peminjaman alat
+                    sudah diproses.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Peminjam</TableHead>
+                        <TableHead>Alat</TableHead>
+                        <TableHead>Lab Tujuan</TableHead>
+                        <TableHead>Jumlah</TableHead>
+                        <TableHead>Tanggal Pinjam</TableHead>
+                        <TableHead>Tanggal Kembali</TableHead>
+                        <TableHead>Konteks Praktikum</TableHead>
+                        <TableHead className="text-right">Aksi</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingApprovals.map((request) => (
+                        <TableRow key={request.id} className="align-top">
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                {request.peminjam_nama}
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="text-sm font-medium text-foreground">
-                                  {borrowing.inventaris_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {borrowing.inventaris_kode}
-                                </div>
+                              <div className="text-xs text-muted-foreground">
+                                {request.peminjam_nim}
                               </div>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {borrowing.laboratorium_nama || (
-                                <span className="text-muted-foreground">
-                                  Belum ditentukan
-                                </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                {request.inventaris_nama}
+                              </div>
+                              {request.inventaris_detail && (
+                                <div className="text-xs text-muted-foreground">
+                                  {request.inventaris_detail}
+                                </div>
                               )}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">
-                                {borrowing.jumlah_pinjam}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {formatDate(borrowing.tanggal_pinjam)}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {formatDate(borrowing.tanggal_kembali_rencana)}
-                            </TableCell>
-                            <TableCell>
-                              {borrowing.is_overdue ? (
-                                <StatusBadge status="error" pulse>
-                                  <AlertTriangle className="h-3 w-3 mr-1" />
-                                  Terlambat {borrowing.days_overdue} hari
-                                </StatusBadge>
-                              ) : (
-                                <StatusBadge status="success" pulse={false}>
-                                  Masih Dipinjam
-                                </StatusBadge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {getKondisiBadge(borrowing.kondisi_pinjam)}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              Menunggu dosen ajukan pengembalian
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </GlassCard>
-          </TabsContent>
-
-          <TabsContent value="return_requested">
-            <GlassCard
-              intensity="low"
-              className="border-border/60 bg-background/85 shadow-lg"
-            >
-              <CardHeader className="space-y-2 px-0 pt-0">
-                <CardTitle className="text-xl font-semibold text-foreground">
-                  Pengembalian Diajukan
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Dosen sudah mengajukan pengembalian. Verifikasi kondisi akhir
-                  alat di sini sebelum transaksi ditutup ke riwayat.
-                </p>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                {returnRequestedLoading ? (
-                  <DashboardSkeleton />
-                ) : returnRequestedBorrowings.length === 0 ? (
-                  <Alert className="border-border/60 bg-muted/40">
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription className="text-sm text-muted-foreground">
-                      Belum ada pengembalian yang diajukan dosen.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Peminjam</TableHead>
-                          <TableHead>Alat</TableHead>
-                          <TableHead>Lab Tujuan</TableHead>
-                          <TableHead>Jumlah</TableHead>
-                          <TableHead>Target Kembali</TableHead>
-                          <TableHead>Kondisi Awal</TableHead>
-                          <TableHead>Catatan Dosen</TableHead>
-                          <TableHead>Aksi</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {returnRequestedBorrowings.map((borrowing) => (
-                          <TableRow key={borrowing.id} className="align-top">
-                            <TableCell>
-                              <div>
-                                <div className="text-sm font-medium text-foreground">
-                                  {borrowing.peminjam_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {borrowing.peminjam_nim}
-                                </div>
+                              <div className="text-xs text-muted-foreground">
+                                {request.inventaris_kode}
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="text-sm font-medium text-foreground">
-                                  {borrowing.inventaris_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {borrowing.inventaris_kode}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {borrowing.laboratorium_nama || "-"}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">
-                                {borrowing.jumlah_pinjam}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <div className="text-sm text-foreground">
-                                  {formatDate(
-                                    borrowing.tanggal_kembali_rencana,
-                                  )}
-                                </div>
-                                {borrowing.is_overdue && (
-                                  <StatusBadge
-                                    status="error"
-                                    pulse={false}
-                                    className="text-xs"
-                                  >
-                                    Terlambat {borrowing.days_overdue} hari
-                                  </StatusBadge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {getKondisiBadge(
-                                borrowing.kondisi_kembali ||
-                                  borrowing.kondisi_pinjam,
-                              )}
-                            </TableCell>
-                            <TableCell className="max-w-xs">
-                              <span
-                                className="block truncate text-sm text-muted-foreground"
-                                title={borrowing.keterangan_kembali || "-"}
-                              >
-                                {borrowing.keterangan_kembali || "-"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {request.laboratorium_nama || (
+                              <span className="text-muted-foreground">
+                                Belum ditentukan
                               </span>
-                            </TableCell>
-                            <TableCell>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {request.jumlah_pinjam}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(request.tanggal_pinjam)}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(request.tanggal_kembali_rencana)}
+                          </TableCell>
+                          <TableCell
+                            className="max-w-xs truncate text-sm text-muted-foreground"
+                            title={formatBorrowingContext(request)}
+                          >
+                            {formatBorrowingContext(request)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex flex-wrap justify-end gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="whitespace-nowrap border-success/40 text-success hover:bg-success/10"
-                                onClick={() =>
-                                  handleOpenReturnDialog(borrowing)
-                                }
+                                className="border-success/50 text-success hover:bg-success/10"
+                                onClick={() => openApproveDialog(request)}
                               >
                                 <CheckCircle className="mr-1 h-4 w-4" />
-                                Verifikasi Pengembalian
+                                Setujui
                               </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </GlassCard>
-          </TabsContent>
-
-          {/* Returned Borrowings Tab */}
-          <TabsContent value="returned">
-            <GlassCard
-              intensity="low"
-              className="border-border/60 bg-background/85 shadow-lg"
-            >
-              <CardHeader className="space-y-2 px-0 pt-0">
-                <CardTitle className="text-xl font-semibold text-foreground">
-                  Riwayat Pengembalian
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Rekap alat yang sudah dikembalikan lengkap dengan kondisi
-                  akhir dan catatan dari laboran.
-                </p>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                {returnedLoading ? (
-                  <DashboardSkeleton />
-                ) : returnedBorrowings.length === 0 ? (
-                  <Alert className="border-border/60 bg-muted/40">
-                    <History className="h-4 w-4" />
-                    <AlertDescription className="text-sm text-muted-foreground">
-                      Belum ada riwayat pengembalian. Data akan muncul setelah
-                      proses pengembalian pertama selesai dicatat.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Peminjam</TableHead>
-                          <TableHead>Alat</TableHead>
-                          <TableHead>Jumlah</TableHead>
-                          <TableHead>Tgl Pinjam</TableHead>
-                          <TableHead>Tgl Dikembalikan</TableHead>
-                          <TableHead>Kondisi Pinjam</TableHead>
-                          <TableHead>Kondisi Kembali</TableHead>
-                          <TableHead>Keterangan</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {returnedBorrowings.map((borrowing) => (
-                          <TableRow key={borrowing.id} className="align-top">
-                            <TableCell>
-                              <div>
-                                <div className="text-sm font-medium text-foreground">
-                                  {borrowing.peminjam_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {borrowing.peminjam_nim}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="text-sm font-medium text-foreground">
-                                  {borrowing.inventaris_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {borrowing.inventaris_kode}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">
-                                {borrowing.jumlah_pinjam}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {formatDate(borrowing.tanggal_pinjam)}
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="text-sm text-foreground">
-                                  {formatDate(borrowing.tanggal_kembali_aktual)}
-                                </div>
-                                {borrowing.was_overdue && (
-                                  <StatusBadge
-                                    status="error"
-                                    pulse={false}
-                                    className="mt-1 text-xs"
-                                  >
-                                    Terlambat
-                                  </StatusBadge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {getKondisiBadge(borrowing.kondisi_pinjam)}
-                            </TableCell>
-                            <TableCell>
-                              {getKondisiBadge(borrowing.kondisi_kembali)}
-                            </TableCell>
-                            <TableCell className="max-w-xs">
-                              <span
-                                className="block truncate text-sm text-muted-foreground"
-                                title={borrowing.keterangan_kembali || "-"}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-destructive text-destructive hover:bg-destructive/10"
+                                onClick={() => openRejectDialog(request)}
                               >
-                                {borrowing.keterangan_kembali || "-"}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </GlassCard>
-          </TabsContent>
-        </Tabs>
+                                <XCircle className="mr-1 h-4 w-4" />
+                                Tolak
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </GlassCard>
+        </TabsContent>
 
-        {/* Approve Confirmation Dialog */}
-        <Dialog
-          open={approveDialog.open}
-          onOpenChange={(open) => {
-            if (!processing) {
-              setApproveDialog({ ...approveDialog, open });
-            }
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Konfirmasi Persetujuan</DialogTitle>
-              <DialogDescription>
-                Permintaan yang disetujui akan masuk ke tab peminjaman aktif.
-              </DialogDescription>
-            </DialogHeader>
+        {/* Active Borrowings Tab */}
+        <TabsContent value="active">
+          <GlassCard
+            intensity="low"
+            className="border-border/60 bg-background/85 shadow-lg"
+          >
+            <CardHeader className="space-y-2 px-0 pt-0">
+              <CardTitle className="text-xl font-semibold text-foreground">
+                Daftar Alat Masih Dipinjam
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Data pada tabel ini adalah peminjaman yang sudah disetujui dan
+                masih digunakan. Pengembalian final baru diproses setelah dosen
+                mengajukan pengembalian.
+              </p>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
+              {loading ? (
+                <TableSkeleton rows={5} columns={9} />
+              ) : activeBorrowings.length === 0 ? (
+                <Alert className="border-border/60 bg-muted/40">
+                  <Package className="h-4 w-4" />
+                  <AlertDescription className="text-sm text-muted-foreground">
+                    Tidak ada peminjaman aktif. Semua alat yang dipinjam saat
+                    ini sudah dikembalikan.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Peminjam</TableHead>
+                        <TableHead>Alat</TableHead>
+                        <TableHead>Lab Tujuan</TableHead>
+                        <TableHead>Jumlah</TableHead>
+                        <TableHead>Tgl Pinjam</TableHead>
+                        <TableHead>Harus Kembali</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Kondisi</TableHead>
+                        <TableHead>Status Proses</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {activeBorrowings.map((borrowing) => (
+                        <TableRow key={borrowing.id} className="align-top">
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                {borrowing.peminjam_nama}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {borrowing.peminjam_nim}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                {borrowing.inventaris_nama}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {borrowing.inventaris_kode}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {borrowing.laboratorium_nama || (
+                              <span className="text-muted-foreground">
+                                Belum ditentukan
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {borrowing.jumlah_pinjam}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(borrowing.tanggal_pinjam)}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(borrowing.tanggal_kembali_rencana)}
+                          </TableCell>
+                          <TableCell>
+                            {borrowing.is_overdue ? (
+                              <StatusBadge status="error" pulse>
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Terlambat {borrowing.days_overdue} hari
+                              </StatusBadge>
+                            ) : (
+                              <StatusBadge status="success" pulse={false}>
+                                Masih Dipinjam
+                              </StatusBadge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {getKondisiBadge(borrowing.kondisi_pinjam)}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            Menunggu dosen ajukan pengembalian
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </GlassCard>
+        </TabsContent>
+
+        <TabsContent value="return_requested">
+          <GlassCard
+            intensity="low"
+            className="border-border/60 bg-background/85 shadow-lg"
+          >
+            <CardHeader className="space-y-2 px-0 pt-0">
+              <CardTitle className="text-xl font-semibold text-foreground">
+                Pengembalian Diajukan
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Dosen sudah mengajukan pengembalian. Verifikasi kondisi akhir
+                alat di sini sebelum transaksi ditutup ke riwayat.
+              </p>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
+              {returnRequestedLoading ? (
+                <TableSkeleton rows={5} columns={8} />
+              ) : returnRequestedBorrowings.length === 0 ? (
+                <Alert className="border-border/60 bg-muted/40">
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription className="text-sm text-muted-foreground">
+                    Belum ada pengembalian yang diajukan dosen.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Peminjam</TableHead>
+                        <TableHead>Alat</TableHead>
+                        <TableHead>Lab Tujuan</TableHead>
+                        <TableHead>Jumlah</TableHead>
+                        <TableHead>Target Kembali</TableHead>
+                        <TableHead>Kondisi Awal</TableHead>
+                        <TableHead>Catatan Dosen</TableHead>
+                        <TableHead>Aksi</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {returnRequestedBorrowings.map((borrowing) => (
+                        <TableRow key={borrowing.id} className="align-top">
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                {borrowing.peminjam_nama}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {borrowing.peminjam_nim}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                {borrowing.inventaris_nama}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {borrowing.inventaris_kode}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {borrowing.laboratorium_nama || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {borrowing.jumlah_pinjam}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-sm text-foreground">
+                                {formatDate(borrowing.tanggal_kembali_rencana)}
+                              </div>
+                              {borrowing.is_overdue && (
+                                <StatusBadge
+                                  status="error"
+                                  pulse={false}
+                                  className="text-xs"
+                                >
+                                  Terlambat {borrowing.days_overdue} hari
+                                </StatusBadge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getKondisiBadge(
+                              borrowing.kondisi_kembali ||
+                                borrowing.kondisi_pinjam,
+                            )}
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <span
+                              className="block truncate text-sm text-muted-foreground"
+                              title={borrowing.keterangan_kembali || "-"}
+                            >
+                              {borrowing.keterangan_kembali || "-"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="whitespace-nowrap border-success/40 text-success hover:bg-success/10"
+                              onClick={() => handleOpenReturnDialog(borrowing)}
+                            >
+                              <CheckCircle className="mr-1 h-4 w-4" />
+                              Verifikasi Pengembalian
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </GlassCard>
+        </TabsContent>
+
+        {/* Returned Borrowings Tab */}
+        <TabsContent value="returned">
+          <GlassCard
+            intensity="low"
+            className="border-border/60 bg-background/85 shadow-lg"
+          >
+            <CardHeader className="space-y-2 px-0 pt-0">
+              <CardTitle className="text-xl font-semibold text-foreground">
+                Riwayat Pengembalian
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Rekap alat yang sudah dikembalikan lengkap dengan kondisi akhir
+                dan catatan dari laboran.
+              </p>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
+              {returnedLoading ? (
+                <TableSkeleton rows={5} columns={8} />
+              ) : returnedBorrowings.length === 0 ? (
+                <Alert className="border-border/60 bg-muted/40">
+                  <History className="h-4 w-4" />
+                  <AlertDescription className="text-sm text-muted-foreground">
+                    Belum ada riwayat pengembalian. Data akan muncul setelah
+                    proses pengembalian pertama selesai dicatat.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Peminjam</TableHead>
+                        <TableHead>Alat</TableHead>
+                        <TableHead>Jumlah</TableHead>
+                        <TableHead>Tgl Pinjam</TableHead>
+                        <TableHead>Tgl Dikembalikan</TableHead>
+                        <TableHead>Kondisi Pinjam</TableHead>
+                        <TableHead>Kondisi Kembali</TableHead>
+                        <TableHead>Keterangan</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {returnedBorrowings.map((borrowing) => (
+                        <TableRow key={borrowing.id} className="align-top">
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                {borrowing.peminjam_nama}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {borrowing.peminjam_nim}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">
+                                {borrowing.inventaris_nama}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {borrowing.inventaris_kode}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {borrowing.jumlah_pinjam}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(borrowing.tanggal_pinjam)}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="text-sm text-foreground">
+                                {formatDate(borrowing.tanggal_kembali_aktual)}
+                              </div>
+                              {borrowing.was_overdue && (
+                                <StatusBadge
+                                  status="error"
+                                  pulse={false}
+                                  className="mt-1 text-xs"
+                                >
+                                  Terlambat
+                                </StatusBadge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getKondisiBadge(borrowing.kondisi_pinjam)}
+                          </TableCell>
+                          <TableCell>
+                            {getKondisiBadge(borrowing.kondisi_kembali)}
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <span
+                              className="block truncate text-sm text-muted-foreground"
+                              title={borrowing.keterangan_kembali || "-"}
+                            >
+                              {borrowing.keterangan_kembali || "-"}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </GlassCard>
+        </TabsContent>
+      </Tabs>
+
+      {/* Approve Confirmation Dialog */}
+      <Dialog
+        open={approveDialog.open}
+        onOpenChange={(open) => {
+          if (!processing) {
+            setApproveDialog({ ...approveDialog, open });
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Persetujuan</DialogTitle>
+            <DialogDescription>
+              Permintaan yang disetujui akan masuk ke tab peminjaman aktif.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-2xl border border-border/60 bg-muted/40 p-4 text-sm">
+            <span className="font-medium">Peminjaman Alat:</span>{" "}
+            {approveDialog.name}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setApproveDialog({ ...approveDialog, open: false })
+              }
+              disabled={processing}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleApprove}
+              disabled={processing}
+              className="bg-success hover:bg-success/90"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Ya, Setujui
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog
+        open={rejectDialog.open}
+        onOpenChange={(open) => {
+          if (!processing) {
+            setRejectDialog({ ...rejectDialog, open });
+            if (!open) setRejectionReason("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tolak Permintaan</DialogTitle>
+            <DialogDescription>
+              Berikan alasan penolakan agar peminjam mengetahui penyebabnya.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             <div className="rounded-2xl border border-border/60 bg-muted/40 p-4 text-sm">
               <span className="font-medium">Peminjaman Alat:</span>{" "}
-              {approveDialog.name}
+              {rejectDialog.name}
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setApproveDialog({ ...approveDialog, open: false })
-                }
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">
+                Alasan Penolakan <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="Masukkan alasan penolakan..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
                 disabled={processing}
-              >
-                Batal
-              </Button>
-              <Button
-                onClick={handleApprove}
-                disabled={processing}
-                className="bg-success hover:bg-success/90"
-              >
-                {processing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Ya, Setujui
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Reject Dialog */}
-        <Dialog
-          open={rejectDialog.open}
-          onOpenChange={(open) => {
-            if (!processing) {
-              setRejectDialog({ ...rejectDialog, open });
-              if (!open) setRejectionReason("");
-            }
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Tolak Permintaan</DialogTitle>
-              <DialogDescription>
-                Berikan alasan penolakan agar peminjam mengetahui penyebabnya.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div className="rounded-2xl border border-border/60 bg-muted/40 p-4 text-sm">
-                <span className="font-medium">Peminjaman Alat:</span>{" "}
-                {rejectDialog.name}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rejection-reason">
-                  Alasan Penolakan <span className="text-destructive">*</span>
-                </Label>
-                <Textarea
-                  id="rejection-reason"
-                  placeholder="Masukkan alasan penolakan..."
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  disabled={processing}
-                  rows={4}
-                  className="resize-none"
-                />
-                {!rejectionReason.trim() && (
-                  <p className="text-xs text-muted-foreground">
-                    Alasan penolakan wajib diisi.
-                  </p>
-                )}
-              </div>
+                rows={4}
+                className="resize-none"
+              />
+              {!rejectionReason.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  Alasan penolakan wajib diisi.
+                </p>
+              )}
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setRejectDialog({ ...rejectDialog, open: false });
-                  setRejectionReason("");
-                }}
-                disabled={processing}
-              >
-                Batal
-              </Button>
-              <Button
-                onClick={handleReject}
-                disabled={processing || !rejectionReason.trim()}
-                variant="destructive"
-              >
-                {processing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Tolak Permintaan
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectDialog({ ...rejectDialog, open: false });
+                setRejectionReason("");
+              }}
+              disabled={processing}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleReject}
+              disabled={processing || !rejectionReason.trim()}
+              variant="destructive"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Tolak Permintaan
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Return Dialog */}
-        <Dialog
-          open={returnDialog.open}
-          onOpenChange={(open) => {
-            if (!processing) {
-              setReturnDialog({ ...returnDialog, open });
-            }
-          }}
-        >
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Verifikasi Pengembalian Alat</DialogTitle>
-              <DialogDescription>
-                Gunakan form ini setelah alat benar-benar diterima kembali oleh
-                laboran. Stok inventaris akan kembali bertambah hanya setelah
-                verifikasi final ini disimpan.
-              </DialogDescription>
-            </DialogHeader>
+      {/* Return Dialog */}
+      <Dialog
+        open={returnDialog.open}
+        onOpenChange={(open) => {
+          if (!processing) {
+            setReturnDialog({ ...returnDialog, open });
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Verifikasi Pengembalian Alat</DialogTitle>
+            <DialogDescription>
+              Gunakan form ini setelah alat benar-benar diterima kembali oleh
+              laboran. Stok inventaris akan kembali bertambah hanya setelah
+              verifikasi final ini disimpan.
+            </DialogDescription>
+          </DialogHeader>
 
-            {returnDialog.borrowing && (
-              <div className="space-y-5 py-4">
-                {/* Borrowing Info */}
-                <GlassCard
-                  intensity="low"
-                  className="border-border/60 bg-muted/30 p-4 shadow-none"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <h3 className="text-sm font-semibold text-foreground">
-                        Ringkasan peminjaman
-                      </h3>
-                      {returnDialog.borrowing.is_overdue && (
-                        <StatusBadge status="error" pulse className="text-xs">
-                          Terlambat {returnDialog.borrowing.days_overdue} hari
-                        </StatusBadge>
-                      )}
+          {returnDialog.borrowing && (
+            <div className="space-y-5 py-4">
+              {/* Borrowing Info */}
+              <GlassCard
+                intensity="low"
+                className="border-border/60 bg-muted/30 p-4 shadow-none"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Ringkasan peminjaman
+                    </h3>
+                    {returnDialog.borrowing.is_overdue && (
+                      <StatusBadge status="error" pulse className="text-xs">
+                        Terlambat {returnDialog.borrowing.days_overdue} hari
+                      </StatusBadge>
+                    )}
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Peminjam
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {returnDialog.borrowing.peminjam_nama}
+                      </p>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-1">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Peminjam
-                        </p>
-                        <p className="text-sm font-medium text-foreground">
-                          {returnDialog.borrowing.peminjam_nama}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Alat
-                        </p>
-                        <p className="text-sm font-medium text-foreground">
-                          {returnDialog.borrowing.inventaris_nama}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Jumlah
-                        </p>
-                        <p className="text-sm font-medium text-foreground">
-                          {returnDialog.borrowing.jumlah_pinjam}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Jadwal kembali
-                        </p>
-                        <p className="text-sm font-medium text-foreground">
-                          {formatDate(
-                            returnDialog.borrowing.tanggal_kembali_rencana,
-                          )}
-                        </p>
-                      </div>
-                      <div className="space-y-1 sm:col-span-2">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Catatan awal dosen
-                        </p>
-                        <p className="text-sm font-medium text-foreground">
-                          {returnDialog.borrowing.keterangan_kembali || "-"}
-                        </p>
-                      </div>
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Alat
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {returnDialog.borrowing.inventaris_nama}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Jumlah
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {returnDialog.borrowing.jumlah_pinjam}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Jadwal kembali
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {formatDate(
+                          returnDialog.borrowing.tanggal_kembali_rencana,
+                        )}
+                      </p>
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Catatan awal dosen
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {returnDialog.borrowing.keterangan_kembali || "-"}
+                      </p>
                     </div>
                   </div>
-                </GlassCard>
-
-                {/* Kondisi Kembali */}
-                <div className="space-y-2">
-                  <Label htmlFor="kondisi">
-                    Kondisi Barang Saat Diterima{" "}
-                    <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={returnForm.kondisi}
-                    onValueChange={(value: any) =>
-                      setReturnForm({ ...returnForm, kondisi: value })
-                    }
-                  >
-                    <SelectTrigger id="kondisi">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="baik">Baik</SelectItem>
-                      <SelectItem value="rusak_ringan">Rusak Ringan</SelectItem>
-                      <SelectItem value="rusak_berat">Rusak Berat</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
+              </GlassCard>
 
-                {/* Keterangan */}
-                <div className="space-y-2">
-                  <Label htmlFor="keterangan">Keterangan (Opsional)</Label>
-                  <Textarea
-                    id="keterangan"
-                    placeholder="Catatan tambahan tentang kondisi barang..."
-                    value={returnForm.keterangan}
-                    onChange={(e) =>
-                      setReturnForm({
-                        ...returnForm,
-                        keterangan: e.target.value,
-                      })
-                    }
-                    rows={3}
-                  />
-                </div>
+              {/* Kondisi Kembali */}
+              <div className="space-y-2">
+                <Label htmlFor="kondisi">
+                  Kondisi Barang Saat Diterima{" "}
+                  <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={returnForm.kondisi}
+                  onValueChange={(value: any) =>
+                    setReturnForm({ ...returnForm, kondisi: value })
+                  }
+                >
+                  <SelectTrigger id="kondisi">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baik">Baik</SelectItem>
+                    <SelectItem value="rusak_ringan">Rusak Ringan</SelectItem>
+                    <SelectItem value="rusak_berat">Rusak Berat</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            )}
 
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setReturnDialog({ ...returnDialog, open: false })
-                }
-                disabled={processing}
-              >
-                Batal
-              </Button>
-              <Button
-                onClick={handleMarkAsReturned}
-                disabled={processing}
-                className="bg-success hover:bg-success/90"
-              >
-                {processing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Simpan Verifikasi
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              {/* Keterangan */}
+              <div className="space-y-2">
+                <Label htmlFor="keterangan">Keterangan (Opsional)</Label>
+                <Textarea
+                  id="keterangan"
+                  placeholder="Catatan tambahan tentang kondisi barang..."
+                  value={returnForm.keterangan}
+                  onChange={(e) =>
+                    setReturnForm({
+                      ...returnForm,
+                      keterangan: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setReturnDialog({ ...returnDialog, open: false })}
+              disabled={processing}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleMarkAsReturned}
+              disabled={processing}
+              className="bg-success hover:bg-success/90"
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Simpan Verifikasi
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

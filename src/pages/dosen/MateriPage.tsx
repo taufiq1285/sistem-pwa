@@ -23,6 +23,7 @@ import {
   TrendingUp,
   RefreshCw,
 } from "lucide-react";
+import logger from "@/lib/utils/logger";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,6 +72,13 @@ import { MAX_FILE_SIZE, formatFileSize } from "@/lib/supabase/storage";
 import { supabase } from "@/lib/supabase/client";
 import { notifyMahasiswaMateriBaru } from "@/lib/api/notification.api";
 import { cn } from "@/lib/utils";
+import {
+  CardListSkeleton,
+  EmptyState,
+  FileUploadZone,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 
 // ============================================================================
 // COMPONENT
@@ -80,6 +88,7 @@ const MASTER_DATA_CACHE_TTL = 60 * 1000;
 
 export default function DosenMateriPage() {
   const { user } = useAuth();
+  const { isOffline } = useOfflineContext();
 
   // ============================================================================
   // STATE
@@ -224,7 +233,7 @@ export default function DosenMateriPage() {
       setResolvedDosenId(nextDosenId);
       return nextDosenId;
     } catch (error) {
-      console.warn(
+      logger.debug(
         "[Dosen MateriPage] Failed to resolve fresh dosen_id",
         error,
       );
@@ -358,7 +367,7 @@ export default function DosenMateriPage() {
       setKelasList(safeKelasData);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
-      console.log(
+      logger.debug(
         "[Dosen MateriPage] Data loaded:",
         safeMateriData.length,
         "materi",
@@ -509,9 +518,11 @@ export default function DosenMateriPage() {
       setSearchQuery("");
       await invalidateMateriCaches();
       loadData(true); // Reload fresh data so mahasiswa cache stays in sync
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error uploading materi:", error);
-      toast.error(error.message || "Gagal mengupload materi");
+      toast.error(
+        error instanceof Error ? error.message : "Gagal mengupload materi",
+      );
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -612,17 +623,11 @@ export default function DosenMateriPage() {
 
   if (loading) {
     return (
-      <div className="role-page-shell">
-        <div className="role-page-content">
-          <div className="flex items-center justify-center min-h-100">
-            <div className="text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-              <p className="text-lg font-semibold text-muted-foreground">
-                Memuat materi...
-              </p>
-            </div>
-          </div>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-20 w-full skeleton-shimmer rounded-xl" />
         </div>
+        <CardListSkeleton count={4} />
       </div>
     );
   }
@@ -635,49 +640,40 @@ export default function DosenMateriPage() {
     : null;
 
   return (
-    <div className="role-page-shell">
-      <div className="role-page-content space-y-8">
+    <OfflineAwareContent
+      hasData={materiList.length > 0}
+      context="materi"
+      onSync={() => loadData(true)}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
         {/* Enhanced Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex-1">
-            <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
-              <div className="p-3 bg-linear-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/30">
-                <BookOpen className="h-8 w-8 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-primary to-accent dark:from-primary/80 dark:to-accent/80">
-                  Materi Pembelajaran
-                </h1>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground mt-1">
-                  Kelola materi pembelajaran untuk kelas Anda
-                </p>
-              </div>
-            </div>
-            <p className="text-sm sm:text-base font-semibold text-muted-foreground ml-1">
-              Upload dan atur materi pembelajaran dengan mudah
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Materi Pembelajaran
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Kelola materi pembelajaran untuk kelas Anda
             </p>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => loadData(true)}
               disabled={loading || !navigator.onLine}
-              className="w-full border-2 font-semibold sm:w-auto"
-              size="lg"
-              title="Ambil ulang data master terbaru dari admin"
+              className="gap-2"
             >
-              <RefreshCw
-                className={cn("mr-2 h-5 w-5", loading && "animate-spin")}
-              />
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
               Refresh Data
             </Button>
             <Button
               onClick={handleOpenUploadDialog}
               disabled={!navigator.onLine}
-              className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
-              size="lg"
+              size="sm"
+              className="gap-2"
             >
-              <Plus className="mr-2 h-5 w-5" />
+              <Plus className="h-4 w-4" />
               Upload Materi
             </Button>
           </div>
@@ -835,19 +831,38 @@ export default function DosenMateriPage() {
         </Card>
 
         {/* Materi List */}
-        <div className="rounded-2xl border-0 shadow-xl bg-linear-to-br from-white to-primary/5 dark:from-slate-900 dark:to-primary/10 p-1">
-          <MateriList
-            materiList={filteredMateri}
-            variant="dosen"
-            showActions={true}
-            showDosenActions={true}
-            onView={handleView}
-            onDownload={handleDownload}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            emptyMessage="Belum ada materi. Upload materi pertama Anda!"
+        {filteredMateri.length === 0 ? (
+          <EmptyState
+            variant={materiList.length === 0 ? "no-data" : "no-results"}
+            context="materi"
+            actionLabel={
+              materiList.length === 0 ? "Upload Materi" : "Reset Filter"
+            }
+            onAction={
+              materiList.length === 0
+                ? handleOpenUploadDialog
+                : () => {
+                    setSelectedMataKuliah("all");
+                    setSelectedKelas("all");
+                    setSelectedMinggu("all");
+                    setSearchQuery("");
+                  }
+            }
           />
-        </div>
+        ) : (
+          <div className="rounded-2xl border-0 shadow-xl bg-linear-to-br from-white to-primary/5 dark:from-slate-900 dark:to-primary/10 p-1">
+            <MateriList
+              materiList={filteredMateri}
+              variant="dosen"
+              showActions={true}
+              showDosenActions={true}
+              onView={handleView}
+              onDownload={handleDownload}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </div>
+        )}
 
         {/* Enhanced Upload Dialog */}
         <UploadDialog
@@ -879,10 +894,9 @@ export default function DosenMateriPage() {
             setShowViewer(false);
             setViewingMateri(null);
           }}
-          onDownload={() => viewingMateri && handleDownload(viewingMateri)}
         />
       </div>
-    </div>
+    </OfflineAwareContent>
   );
 }
 
@@ -917,22 +931,12 @@ function UploadDialog({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    onUpload(formData);
-  }
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error(
-          `Ukuran file terlalu besar. Maksimal ${formatFileSize(MAX_FILE_SIZE)}`,
-        );
-        e.target.value = "";
-        return;
-      }
-      setSelectedFile(file);
+    if (!selectedFile) {
+      toast.error("Pilih file materi terlebih dahulu");
+      return;
     }
+    formData.set("file", selectedFile);
+    onUpload(formData);
   }
 
   return (
@@ -955,7 +959,7 @@ function UploadDialog({
               onValueChange={setSelectedMataKuliahId}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Pilih mata kuliah" />
+                <SelectValue placeholder="Pilih mata kuliah..." />
               </SelectTrigger>
               <SelectContent>
                 {mataKuliahList.map((mataKuliah) => (
@@ -979,7 +983,7 @@ function UploadDialog({
             <Label htmlFor="kelas_id">Kelas *</Label>
             <Select value={selectedKelasId} onValueChange={setSelectedKelasId}>
               <SelectTrigger>
-                <SelectValue placeholder="Pilih kelas" />
+                <SelectValue placeholder="Pilih kelas..." />
               </SelectTrigger>
               <SelectContent>
                 {kelasList.map((kelas) => (
@@ -1024,7 +1028,7 @@ function UploadDialog({
               onValueChange={setSelectedMingguKe}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Pilih minggu (opsional)" />
+                <SelectValue placeholder="Pilih minggu (opsional)..." />
               </SelectTrigger>
               <SelectContent>
                 {Array.from({ length: 16 }, (_, i) => i + 1).map((minggu) => (
@@ -1040,40 +1044,32 @@ function UploadDialog({
           </div>
 
           <div>
-            <Label htmlFor="file">File *</Label>
-            <Input
-              id="file"
-              name="file"
-              type="file"
-              required
-              onChange={handleFileChange}
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.webm,.zip,.rar"
+            <Label>File *</Label>
+            <FileUploadZone
+              accept={[
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.ms-powerpoint",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "text/plain",
+                "image/*",
+                "video/*",
+                "application/zip",
+                "application/x-rar-compressed",
+              ]}
+              maxSizeMB={Math.floor(MAX_FILE_SIZE / (1024 * 1024))}
+              onFileSelect={setSelectedFile}
+              isUploading={uploading}
+              uploadProgress={uploadProgress}
             />
-            {selectedFile && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {selectedFile.name} ({formatFileSize(selectedFile.size)})
-              </p>
-            )}
             <p className="text-xs text-muted-foreground mt-1">
               Max {formatFileSize(MAX_FILE_SIZE)}. Format: PDF, Word, Excel,
               PowerPoint, Images, Videos, Archives
             </p>
           </div>
-
-          {uploading && (
-            <div>
-              <div className="flex items-center justify-between text-base font-bold mb-2">
-                <span>Uploading...</span>
-                <span className="text-primary">{uploadProgress}%</span>
-              </div>
-              <div className="h-3 bg-muted rounded-full overflow-hidden border-2">
-                <div
-                  className="h-full bg-linear-to-r from-primary to-accent transition-all"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
 
           <div className="flex gap-2">
             <Button

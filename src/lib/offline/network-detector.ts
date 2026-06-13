@@ -1,3 +1,5 @@
+import { logger } from "@/lib/utils/logger";
+
 /**
  * Network Detector
  *
@@ -115,7 +117,7 @@ export class NetworkDetector {
    */
   initialize(): void {
     if (this.isInitialized) {
-      console.warn("NetworkDetector already initialized");
+      logger.warn("NetworkDetector already initialized");
       return;
     }
 
@@ -131,7 +133,7 @@ export class NetworkDetector {
     }
 
     this.isInitialized = true;
-    console.log("✅ NetworkDetector initialized");
+    logger.info("✅ NetworkDetector initialized");
 
     // Emit initial status
     this.emitStatusChange(this.currentStatus, true);
@@ -156,14 +158,14 @@ export class NetworkDetector {
     this.listeners.clear();
 
     this.isInitialized = false;
-    console.log("🛑 NetworkDetector destroyed");
+    logger.info("🛑 NetworkDetector destroyed");
   }
 
   /**
    * Handle browser online event
    */
   private handleOnline = async (): Promise<void> => {
-    console.log("📶 Browser online event detected");
+    logger.info("📶 Browser online event detected");
 
     // Verify with ping test
     const isReachable = await this.ping();
@@ -179,7 +181,7 @@ export class NetworkDetector {
    * Handle browser offline event
    */
   private handleOffline = (): void => {
-    console.log("📵 Browser offline event detected");
+    logger.info("📵 Browser offline event detected");
     this.updateStatus("offline");
   };
 
@@ -192,7 +194,7 @@ export class NetworkDetector {
     const previousStatus = this.currentStatus;
     this.currentStatus = newStatus;
 
-    console.log(`🔄 Network status changed: ${previousStatus} → ${newStatus}`);
+    logger.info(`🔄 Network status changed: ${previousStatus} → ${newStatus}`);
 
     this.emitStatusChange(newStatus);
   }
@@ -224,7 +226,7 @@ export class NetworkDetector {
       try {
         listener(event);
       } catch (error) {
-        console.error("Error in network listener:", error);
+        logger.error("Error in network listener:", error);
       }
     });
 
@@ -257,7 +259,7 @@ export class NetworkDetector {
       }
     }, this.config.pingInterval);
 
-    console.log(
+    logger.info(
       `⏰ Periodic network check started (interval: ${this.config.pingInterval}ms)`,
     );
   }
@@ -269,7 +271,7 @@ export class NetworkDetector {
     if (this.pingIntervalId) {
       clearInterval(this.pingIntervalId);
       this.pingIntervalId = null;
-      console.log("⏸️  Periodic network check stopped");
+      logger.info("⏸️  Periodic network check stopped");
     }
   }
 
@@ -330,7 +332,7 @@ export class NetworkDetector {
         rtt: connection.rtt || 0,
       };
     } catch (error) {
-      console.warn("Failed to check network quality:", error);
+      logger.warn("Failed to check network quality:", error);
       return undefined;
     }
   }

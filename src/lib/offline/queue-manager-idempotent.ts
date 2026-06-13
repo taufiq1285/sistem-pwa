@@ -24,6 +24,7 @@ import {
   markRequestProcessed,
   cleanupProcessedRequests,
 } from "../utils/idempotency";
+import logger from "@/lib/utils/logger";
 import type {
   SyncEntity,
   SyncOperation,
@@ -91,11 +92,11 @@ export class IdempotentQueueManager {
     if (this.config.autoCleanup) {
       const removed = cleanupProcessedRequests(this.config.cleanupMaxAge);
       if (removed > 0) {
-        console.log(`🧹 Idempotent Queue: Cleaned up ${removed} old requests`);
+        logger.debug(`🧹 Idempotent Queue: Cleaned up ${removed} old requests`);
       }
     }
 
-    console.log("✅ Idempotent Queue Manager initialized");
+    logger.debug("✅ Idempotent Queue Manager initialized");
   }
 
   /**
@@ -131,7 +132,7 @@ export class IdempotentQueueManager {
     // Client-side deduplication check
     if (this.config.enableDeduplication) {
       if (wasRequestProcessed(requestId)) {
-        console.warn(
+        logger.debug(
           `⚠️  Duplicate request detected (already processed): ${requestId}`,
         );
 
@@ -142,13 +143,13 @@ export class IdempotentQueueManager {
         );
 
         if (existing) {
-          console.log(`📋 Returning existing queue item: ${existing.id}`);
+          logger.debug(`📋 Returning existing queue item: ${existing.id}`);
           return existing;
         }
 
         // If not in queue but marked as processed, it means it was already synced
         // Create a "virtual" completed item (not actually enqueued)
-        console.log(`✅ Request already synced successfully: ${requestId}`);
+        logger.debug(`✅ Request already synced successfully: ${requestId}`);
         const virtualItem: SyncQueueItem = {
           id: `virtual-${Date.now()}`,
           entity,
@@ -173,7 +174,7 @@ export class IdempotentQueueManager {
       ...item,
     } as any;
 
-    console.log(`📥 Enqueued with idempotency: ${requestId}`);
+    logger.debug(`📥 Enqueued with idempotency: ${requestId}`);
 
     return enhancedItem;
   }
@@ -305,7 +306,7 @@ export class IdempotentQueueManager {
    */
   markProcessed(requestId: string): void {
     markRequestProcessed(requestId);
-    console.log(`✅ Manually marked as processed: ${requestId}`);
+    logger.debug(`✅ Manually marked as processed: ${requestId}`);
   }
 
   /**
@@ -366,14 +367,14 @@ export class IdempotentQueueManager {
       const sorted = group.items.sort((a, b) => a.timestamp - b.timestamp);
       const toRemove = sorted.slice(1); // Remove all except first
 
-      console.warn(
+      logger.debug(
         `⚠️  Found ${toRemove.length} duplicates for requestId: ${group.requestId}`,
       );
 
       // Note: Direct deletion not available in current QueueManager
       // This would require adding a delete method to QueueManager
       // For now, just log the duplicates
-      console.log(
+      logger.debug(
         `📋 Duplicate items to remove manually:`,
         toRemove.map((i) => i.id),
       );
@@ -452,7 +453,7 @@ export const idempotentQueueManager = new IdempotentQueueManager({
  * @returns Number of items migrated
  */
 export async function migrateToIdempotentQueue(): Promise<number> {
-  console.log("🔄 Migrating queue to idempotent version...");
+  logger.debug("🔄 Migrating queue to idempotent version...");
 
   const allItems = await queueManager.getAllItems();
   let migrated = 0;
@@ -473,13 +474,13 @@ export async function migrateToIdempotentQueue(): Promise<number> {
       // Update item
       // Note: This requires queue manager update method
       // For now, log the migration
-      console.log(
+      logger.debug(
         `📋 Would migrate item ${item.id} with requestId ${requestId}`,
       );
       migrated++;
     }
   }
 
-  console.log(`✅ Migration complete: ${migrated} items migrated`);
+  logger.debug(`✅ Migration complete: ${migrated} items migrated`);
   return migrated;
 }

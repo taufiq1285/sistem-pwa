@@ -38,7 +38,9 @@
     <title>Sistem Praktikum - Akademi Kebidanan Mega Buana</title>
     <!-- Preload critical resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
     <!-- App container -->
@@ -131,13 +133,9 @@
       (function() {
         'use strict';
 
-        const MIGRATION_FLAG = 'pwa_v105_migration_completed';
-        const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-        // Check if migration already completed
-        if (localStorage.getItem(MIGRATION_FLAG)) {
-          return; // Already migrated, skip
-        }
+        const TARGET_SW_VERSION = 'v1.0.5';
+        const MIGRATION_FLAG = 'pwa_sw_migration_' + TARGET_SW_VERSION.replace(/\W/g, '_') + '_completed';
+        const debugSwMigration = localStorage.getItem('debug_sw_migration') === 'true';
 
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations()
@@ -148,7 +146,7 @@
                 return;
               }
 
-              if (isDev) {
+              if (debugSwMigration) {
                 console.log('[SW Migration] Found ' + registrations.length + ' Service Worker(s) to check');
               }
 
@@ -167,19 +165,20 @@
 
                   channel.port1.onmessage = function(event) {
                     var version = event.data && event.data.version;
-                    // Unregister if old version (before v1.0.5)
-                    if (version && version !== 'v1.0.5') {
-                      if (isDev) console.log('[SW Migration] Old version detected:', version);
+                    // Unregister if old version
+                    if (version !== TARGET_SW_VERSION) {
+                      if (debugSwMigration) console.log('[SW Migration] Old version detected:', version);
                       resolve(true);
                     } else {
                       resolve(false);
                     }
                   };
 
-                  // Timeout after 1 second
+                  // Old service workers may not answer GET_VERSION.
                   setTimeout(function() {
-                    resolve(false);
-                  }, 1000);
+                    if (debugSwMigration) console.log('[SW Migration] No version response, cleanup needed');
+                    resolve(true);
+                  }, 1200);
                 });
               });
 
@@ -189,7 +188,7 @@
                 if (!needsCleanup) {
                   // Current SW is already v1.0.2, no cleanup needed
                   localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
-                  if (isDev) console.log('[SW Migration] Current version OK, no migration needed');
+                  if (debugSwMigration) console.log('[SW Migration] Current version OK, no migration needed');
                   return;
                 }
 
@@ -214,7 +213,25 @@
                   return reg.unregister();
                 });
 
+                var cacheCleanup = Promise.resolve();
+                if ('caches' in window) {
+                  cacheCleanup = caches.keys().then(function(cacheNames) {
+                    return Promise.all(cacheNames.map(function(cacheName) {
+                      if (
+                        cacheName.indexOf('praktikum-pwa') !== -1 ||
+                        cacheName.indexOf('workbox-precache') !== -1
+                      ) {
+                        return caches.delete(cacheName);
+                      }
+                      return null;
+                    }));
+                  });
+                }
+
                 Promise.all(unregisterPromises)
+                  .then(function() {
+                    return cacheCleanup;
+                  })
                   .then(function() {
                     // Restore auth
                     if (authBackup && authBackup.value) {
@@ -225,10 +242,10 @@
                       }
                     }
 
-                    // ✅ Mark migration complete BEFORE reload agar tidak loop jika reload cepat
+                    // âœ… Mark migration complete BEFORE reload agar tidak loop jika reload cepat
                     localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
 
-                    if (isDev) console.log('[SW Migration] ✅ Migration complete, reloading...');
+                    if (debugSwMigration) console.log('[SW Migration] âœ… Migration complete, reloading...');
 
                     // Reload once
                     setTimeout(function() {

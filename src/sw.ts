@@ -39,6 +39,18 @@ const CACHE_NAMES = {
   fonts: `${CACHE_PREFIX}-fonts-${CACHE_VERSION}`,
 };
 
+const ENABLE_SW_DEBUG =
+  import.meta.env.DEV || import.meta.env.VITE_DEBUG_SW === "true";
+const swLog = (...args: unknown[]) => {
+  if (ENABLE_SW_DEBUG) console.log(...args);
+};
+const swWarn = (...args: unknown[]) => {
+  if (ENABLE_SW_DEBUG) console.warn(...args);
+};
+const swError = (...args: unknown[]) => {
+  console.error(...args);
+};
+
 // Static assets to cache on install
 const STATIC_ASSETS = [
   "/",
@@ -81,13 +93,14 @@ const CACHE_CONFIG = {
  * Install event - Cache static assets
  */
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installing Service Worker...", CACHE_VERSION);
+  swLog("[SW] Installing Service Worker...", CACHE_VERSION);
+  self.skipWaiting();
 
   event.waitUntil(
     caches
       .open(CACHE_NAMES.static)
       .then(async (cache) => {
-        console.log("[SW] Caching static assets");
+        swLog("[SW] Caching static assets");
 
         // Cache files individually to avoid failing if one fails
         const cachePromises = STATIC_ASSETS.map(async (url) => {
@@ -95,20 +108,20 @@ self.addEventListener("install", (event) => {
             const response = await fetch(url);
             if (response.ok) {
               await cache.put(url, response);
-              console.log(`[SW] Cached: ${url}`);
+              swLog(`[SW] Cached: ${url}`);
             } else {
-              console.warn(`[SW] Failed to cache (${response.status}): ${url}`);
+              swWarn(`[SW] Failed to cache (${response.status}): ${url}`);
             }
           } catch (error) {
-            console.warn(`[SW] Failed to fetch: ${url}`, error);
+            swWarn(`[SW] Failed to fetch: ${url}`, error);
           }
         });
 
         await Promise.allSettled(cachePromises);
-        console.log("[SW] Custom static assets caching completed");
+        swLog("[SW] Custom static assets caching completed");
       })
       .catch((error) => {
-        console.error("[SW] Install failed:", error);
+        swError("[SW] Install failed:", error);
       }),
   );
 });
@@ -121,7 +134,7 @@ self.addEventListener("install", (event) => {
  * Activate event - Clean old caches
  */
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activating Service Worker...", CACHE_VERSION);
+  swLog("[SW] Activating Service Worker...", CACHE_VERSION);
 
   event.waitUntil(
     caches
@@ -136,7 +149,7 @@ self.addEventListener("activate", (event) => {
             }
 
             // Delete old version caches
-            console.log("[SW] Deleting old cache:", cacheName);
+            swLog("[SW] Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }),
         );
@@ -144,16 +157,16 @@ self.addEventListener("activate", (event) => {
       .then(async () => {
         if ("navigationPreload" in self.registration) {
           await self.registration.navigationPreload.enable();
-          console.log("[SW] Navigation preload enabled");
+          swLog("[SW] Navigation preload enabled");
         }
       })
       .then(() => {
-        console.log("[SW] Old caches cleaned up");
+        swLog("[SW] Old caches cleaned up");
         // Take control of all clients immediately
         return self.clients.claim();
       })
       .catch((error) => {
-        console.error("[SW] Activation failed:", error);
+        swError("[SW] Activation failed:", error);
       }),
   );
 });
@@ -312,7 +325,7 @@ async function cacheFirstStrategy(request, cacheName) {
     // Check if it's an image request - return a placeholder instead of error
     const url = new URL(request.url);
     if (url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i)) {
-      console.log(
+      swLog(
         "[SW] Image not available offline, returning placeholder:",
         url.pathname,
       );
@@ -322,7 +335,7 @@ async function cacheFirstStrategy(request, cacheName) {
       return fetch(transparentPixel);
     }
 
-    console.error("[SW] Cache First failed:", error);
+    swError("[SW] Cache First failed:", error);
     return handleOfflineFallback(request);
   }
 }
@@ -339,10 +352,14 @@ async function networkFirstStrategy(request, cacheName) {
   const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
   try {
-    // Try network first with timeout
-    const networkResponse = await fetch(request, {
+    // Force API requests past the browser HTTP cache so fresh server data can
+    // replace stale IndexedDB/SW entries after writes.
+    const fetchOptions: RequestInit = {
       signal: controller.signal,
-    });
+      cache: "no-store",
+    };
+
+    const networkResponse = await fetch(request, fetchOptions);
 
     clearTimeout(timeoutId);
 
@@ -359,13 +376,13 @@ async function networkFirstStrategy(request, cacheName) {
     // Check if it's a timeout/abort error
     const isTimeout = error.name === "AbortError";
     if (isTimeout) {
-      console.log("[SW] Network timeout, falling back to cache:", request.url);
+      swLog("[SW] Network timeout, falling back to cache:", request.url);
     }
 
     // Network failed or timeout - try cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      console.log(
+      swLog(
         "[SW] Serving from cache (network " +
           (isTimeout ? "timeout" : "failed") +
           ")",
@@ -374,7 +391,7 @@ async function networkFirstStrategy(request, cacheName) {
     }
 
     // Both failed
-    console.warn("[SW] No cache available for:", request.url);
+    swWarn("[SW] No cache available for:", request.url);
     return handleOfflineFallback(request);
   }
 }
@@ -395,6 +412,7 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
 
   const fetchPromise = fetch(request, {
     signal: controller.signal,
+    cache: "no-store",
   })
     .then((networkResponse) => {
       clearTimeout(timeoutId);
@@ -425,7 +443,7 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
 
       // Only log real errors for non-dev files
       if (!isDevFile && !isTimeout && !cachedResponse) {
-        console.warn(
+        swWarn(
           "[SW] Background fetch failed:",
           request.url,
           error.message,
@@ -452,7 +470,7 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
       url.search.includes("?t=");
 
     if (!isDevFile) {
-      console.warn(
+      swWarn(
         "[SW] Stale While Revalidate failed (no cache):",
         request.url,
       );
@@ -504,7 +522,7 @@ async function handleNavigationRequest(event) {
       clearTimeout(timeoutId);
 
       if (cachedNavigation) {
-        console.log(
+        swLog(
           "[SW] Serving cached navigation after network failure:",
           url.pathname,
         );
@@ -512,7 +530,7 @@ async function handleNavigationRequest(event) {
       }
 
       if (precachedIndex) {
-        console.log(
+        swLog(
           "[SW] Serving precached index.html after navigation timeout/failure:",
           url.pathname,
         );
@@ -520,7 +538,7 @@ async function handleNavigationRequest(event) {
       }
 
       if (cachedRoot) {
-        console.log(
+        swLog(
           "[SW] Serving cached root after navigation timeout/failure:",
           url.pathname,
         );
@@ -530,7 +548,7 @@ async function handleNavigationRequest(event) {
       throw error;
     }
   } catch (error) {
-    console.warn(
+    swWarn(
       "[SW] Navigation request failed, falling back offline:",
       url.pathname,
       error,
@@ -582,7 +600,7 @@ async function handleOfflineFallback(request) {
   if (request.mode === "navigate") {
     const precachedIndex = await caches.match("/index.html");
     if (precachedIndex) {
-      console.log(
+      swLog(
         "[SW] Serving precached index.html for offline navigation:",
         url.pathname,
       );
@@ -591,7 +609,7 @@ async function handleOfflineFallback(request) {
 
     const precachedRoot = await caches.match("/");
     if (precachedRoot) {
-      console.log(
+      swLog(
         "[SW] Serving cached root for offline navigation:",
         url.pathname,
       );
@@ -603,7 +621,7 @@ async function handleOfflineFallback(request) {
     // Fallback to offline.html only if app shell is not cached yet
     const offlinePage = await cache.match("/offline.html");
     if (offlinePage) {
-      console.log("[SW] Serving offline.html (app shell not cached)");
+      swLog("[SW] Serving offline.html (app shell not cached)");
       return offlinePage;
     }
   }
@@ -677,7 +695,7 @@ function isStaticAsset(url) {
  * - sync-periodic: Periodic sync check
  */
 self.addEventListener("sync", (event) => {
-  console.log("[SW] Background sync triggered:", event.tag);
+  swLog("[SW] Background sync triggered:", event.tag);
 
   // Handle different sync tags
   if (event.tag === "sync-quiz-answers") {
@@ -696,14 +714,14 @@ self.addEventListener("sync", (event) => {
  * Sync quiz answers specifically
  */
 async function syncQuizAnswers(tag) {
-  console.log("[SW] Syncing quiz answers...");
+  swLog("[SW] Syncing quiz answers...");
 
   try {
     // Notify all clients to process quiz answer sync
     const clients = await self.clients.matchAll({ includeUncontrolled: true });
 
     if (clients.length === 0) {
-      console.log(
+      swLog(
         "[SW] No active clients, sync will be handled when app opens",
       );
       return;
@@ -717,10 +735,10 @@ async function syncQuizAnswers(tag) {
 
         messageChannel.port1.onmessage = (event) => {
           if (event.data.success) {
-            console.log("[SW] Client sync successful:", event.data);
+            swLog("[SW] Client sync successful:", event.data);
             resolve(true);
           } else {
-            console.error("[SW] Client sync failed:", event.data.error);
+            swError("[SW] Client sync failed:", event.data.error);
             resolve(false);
           }
         };
@@ -737,7 +755,7 @@ async function syncQuizAnswers(tag) {
 
         // Timeout after 30 seconds
         setTimeout(() => {
-          console.warn("[SW] Sync timeout for client");
+          swWarn("[SW] Sync timeout for client");
           resolve(false);
         }, 30000);
       });
@@ -746,7 +764,7 @@ async function syncQuizAnswers(tag) {
     const results = await Promise.all(syncPromises);
     const successCount = results.filter((r) => r).length;
 
-    console.log(
+    swLog(
       `[SW] Quiz answers sync completed: ${successCount}/${clients.length} clients synced`,
     );
 
@@ -756,7 +774,7 @@ async function syncQuizAnswers(tag) {
       totalClients: clients.length,
     });
   } catch (error) {
-    console.error("[SW] Quiz answers sync failed:", error);
+    swError("[SW] Quiz answers sync failed:", error);
     await logSyncToStorage("failed", tag, { error: error.message });
     throw error;
   }
@@ -766,7 +784,7 @@ async function syncQuizAnswers(tag) {
  * Sync all offline data
  */
 async function syncOfflineData(tag) {
-  console.log("[SW] Syncing all offline data...");
+  swLog("[SW] Syncing all offline data...");
   // Similar implementation to syncQuizAnswers but for all data types
   return syncQueuedRequests(tag);
 }
@@ -775,7 +793,7 @@ async function syncOfflineData(tag) {
  * Periodic sync check
  */
 async function syncPeriodic(tag) {
-  console.log("[SW] Running periodic sync...");
+  swLog("[SW] Running periodic sync...");
   return syncQueuedRequests(tag);
 }
 
@@ -784,13 +802,13 @@ async function syncPeriodic(tag) {
  */
 async function syncQueuedRequests(tag) {
   try {
-    console.log("[SW] Syncing queued requests for tag:", tag);
+    swLog("[SW] Syncing queued requests for tag:", tag);
 
     // Get all active clients
     const clients = await self.clients.matchAll({ includeUncontrolled: true });
 
     if (clients.length === 0) {
-      console.log("[SW] No active clients, will sync when app opens");
+      swLog("[SW] No active clients, will sync when app opens");
       return;
     }
 
@@ -815,7 +833,7 @@ async function syncQueuedRequests(tag) {
     // Wait for clients to process (increased timeout for reliability)
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    console.log("[SW] Sync completed successfully for tag:", tag);
+    swLog("[SW] Sync completed successfully for tag:", tag);
 
     // Notify clients that sync completed
     clients.forEach((client) => {
@@ -828,7 +846,7 @@ async function syncQueuedRequests(tag) {
 
     await logSyncToStorage("completed", tag, { clientCount: clients.length });
   } catch (error) {
-    console.error("[SW] Sync failed for tag:", tag, error);
+    swError("[SW] Sync failed for tag:", tag, error);
 
     // Notify clients that sync failed
     const clients = await self.clients.matchAll({ includeUncontrolled: true });
@@ -859,9 +877,9 @@ async function logSyncToStorage(event, tag, details) {
       details,
     };
 
-    console.log("[SW] Sync log:", logEntry);
+    swLog("[SW] Sync log:", logEntry);
   } catch (error) {
-    console.error("[SW] Failed to log sync event:", error);
+    swError("[SW] Failed to log sync event:", error);
   }
 }
 
@@ -873,7 +891,7 @@ async function logSyncToStorage(event, tag, details) {
  * Message event - Communication from clients
  */
 self.addEventListener("message", (event) => {
-  console.log("[SW] Message received:", event.data);
+  swLog("[SW] Message received:", event.data);
 
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
@@ -884,7 +902,7 @@ self.addEventListener("message", (event) => {
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            console.log("[SW] Clearing cache:", cacheName);
+            swLog("[SW] Clearing cache:", cacheName);
             return caches.delete(cacheName);
           }),
         );
@@ -937,7 +955,7 @@ async function cleanupCache(cacheName, maxAge, maxEntries) {
   }
 
   await Promise.all(deletePromises);
-  console.log(
+  swLog(
     `[SW] Cleaned up ${deletePromises.length} entries from ${cacheName}`,
   );
 }
@@ -965,4 +983,4 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-console.log("[SW] Service Worker loaded successfully", CACHE_VERSION);
+swLog("[SW] Service Worker loaded successfully", CACHE_VERSION);

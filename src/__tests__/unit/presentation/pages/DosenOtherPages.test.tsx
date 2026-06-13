@@ -318,13 +318,6 @@ describe("Dosen JadwalPage", () => {
     await waitFor(() => {
       const tabs = screen.queryAllByRole("tab");
       expect(tabs.length).toBeGreaterThan(0);
-    });
-  });
-
-  it("menjaga item pending tetap muncul di calendar dan list view", async () => {
-    wrap(<DosenJadwalPage />);
-
-    await waitFor(() => {
       expect(screen.getByTestId("calendar-view")).toBeInTheDocument();
       expect(screen.getByText("Anatomi - TI-1A - Lab 1")).toBeInTheDocument();
     });
@@ -745,13 +738,18 @@ describe("Dosen PeminjamanPage", () => {
   });
 
   it("me-refresh opsi jadwal saat event jadwal berubah", async () => {
+    let scheduleOptionsLoadCount = 0;
+
     mockCacheAPI.mockImplementation(
       (key: string, _: unknown, options?: any) => {
         if (key.includes("borrowings")) return Promise.resolve([]);
         if (key.includes("equipment")) return Promise.resolve([]);
         if (key.includes("schedule_options")) {
+          scheduleOptionsLoadCount += 1;
           return Promise.resolve(
-            options?.forceRefresh ? mockScheduleOptions : [],
+            scheduleOptionsLoadCount > 1 && options?.forceRefresh
+              ? mockScheduleOptions
+              : [],
           );
         }
         return Promise.resolve([]);

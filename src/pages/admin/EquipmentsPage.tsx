@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TableBody } from "@/components/ui/table";
-import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
+import { TableSkeleton } from "@/components/common";
 import {
   EnhancedTable,
   EnhancedTableHeader,
@@ -524,9 +524,9 @@ export default function EquipmentsPage() {
   }, [currentPage, totalPages]);
 
   return (
-    <div className="app-container space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
       {/* Header */}
-      <div className="section-shell flex items-center justify-between rounded-2xl p-5">
+      <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
             Manajemen Peralatan
@@ -536,7 +536,7 @@ export default function EquipmentsPage() {
             koreksi bila diperlukan
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <Button
             variant="outline"
             onClick={loadData}
@@ -659,30 +659,18 @@ export default function EquipmentsPage() {
         </div>
       </div>
 
-      <Card className="border-0 shadow-xl">
-        <CardHeader className="p-6">
-          <CardTitle className="text-xl font-bold">
+      <Card className="border border-border/60 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold">
             Monitoring Inventaris
           </CardTitle>
-          <CardDescription className="text-base font-semibold mt-1">
+          <CardDescription>
             Daftar inventaris laboratorium untuk pemantauan admin
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <TableSkeleton
-              rows={5}
-              columns={7}
-              columnWidths={[
-                "50px",
-                "120px",
-                "200px",
-                "120px",
-                "100px",
-                "120px",
-                "160px",
-              ]}
-            />
+            <TableSkeleton rows={5} columns={7} />
           ) : filteredInventaris.length === 0 ? (
             searchQuery ? (
               <EmptySearchResults onClear={() => setSearchQuery("")} />
@@ -938,35 +926,35 @@ export default function EquipmentsPage() {
                       {columnVisibility.actions && (
                         <EnhancedTableCell>
                           <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <button
+                              type="button"
                               onClick={() => handleViewDetail(item)}
+                              className="table-action-btn table-action-btn-view"
+                              title="Detail"
                             >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Detail
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleEdit(item)}
+                              className="table-action-btn table-action-btn-edit"
+                              title="Edit"
                             >
-                              <Edit2 className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
                               disabled={!canDeleteItem(item.id)}
                               onClick={() => handleDelete(item)}
+                              className="table-action-btn table-action-btn-delete disabled:opacity-30 disabled:pointer-events-none"
                               title={
                                 canDeleteItem(item.id)
                                   ? "Hapus inventaris"
                                   : "Inventaris dengan riwayat peminjaman tidak bisa dihapus"
                               }
                             >
-                              <Trash2 className="h-4 w-4 text-danger" />
-                            </Button>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
                         </EnhancedTableCell>
                       )}

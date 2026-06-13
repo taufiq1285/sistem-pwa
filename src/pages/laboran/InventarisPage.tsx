@@ -22,7 +22,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DashboardCard } from "@/components/ui/dashboard-card";
-import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import {
+  TableSkeleton,
+  ErrorFallback,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -99,8 +105,10 @@ const DEFAULT_CATEGORIES = [
 ];
 
 export default function InventarisPage() {
+  const { isOffline } = useOfflineContext();
   const [inventaris, setInventaris] = useState<InventarisListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedKategori, setSelectedKategori] = useState<string>("");
@@ -140,6 +148,7 @@ export default function InventarisPage() {
   const loadInventaris = async (forceRefresh = false) => {
     try {
       setLoading(true);
+      setError(null);
       const cacheKey = `inventaris_list_${searchQuery || ""}_${selectedKategori || ""}`;
       const cachedInventarisEntry = await getCachedData<{
         data: InventarisListItem[];
@@ -180,13 +189,14 @@ export default function InventarisPage() {
       setTotalCount(result.count);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
-    } catch (error) {
+    } catch (err: any) {
       if (!navigator.onLine) {
         setIsOfflineData(true);
       } else {
-        toast.error("Gagal memuat data inventaris");
+        setError(err.message || "Gagal memuat data inventaris");
       }
-      console.error(error);
+      toast.error("Gagal memuat data inventaris");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -337,45 +347,71 @@ export default function InventarisPage() {
     a.click();
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-96 animate-pulse rounded bg-muted" />
+        </div>
+        <TableSkeleton />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <ErrorFallback message={error} onRetry={() => loadInventaris(true)} />
+    );
+  }
+
+  // Offline empty state
+  if (isOffline && !inventaris?.length) {
+    return <EmptyState variant="offline" context="peralatan" />;
+  }
+
+  // Empty state
+  if (!inventaris?.length && !searchQuery && !selectedKategori) {
+    return (
+      <EmptyState
+        variant="no-data"
+        context="peralatan"
+        actionLabel="Tambah Peralatan"
+        onAction={handleCreate}
+      />
+    );
+  }
+
   return (
-    <div className="app-container py-4 sm:py-6 lg:py-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <GlassCard
-          intensity="medium"
-          className="border-border/60 bg-background/80 shadow-xl"
-        >
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
-                <Package className="h-7 w-7" />
-              </div>
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  Data inventaris aktif
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    Data Inventaris Laboratorium
-                  </h1>
-                  <p className="text-sm text-muted-foreground sm:text-base">
-                    Kelola peralatan laboratorium, stok tersedia, kategori, dan
-                    kondisi inventaris untuk operasional praktikum.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button variant="outline" onClick={exportToCSV}>
-                <Download className="mr-2 h-4 w-4" />
-                Ekspor CSV
-              </Button>
-              <Button onClick={handleCreate}>
-                <Plus className="mr-2 h-4 w-4" />
-                Tambah Inventaris
-              </Button>
-            </div>
+    <OfflineAwareContent
+      hasData={inventaris.length > 0}
+      context="peralatan"
+      onSync={() => loadInventaris(true)}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Data Inventaris Laboratorium
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Kelola peralatan laboratorium, stok tersedia, kategori, dan
+              kondisi inventaris untuk operasional praktikum.
+            </p>
           </div>
-        </GlassCard>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" onClick={exportToCSV}>
+              <Download className="mr-2 h-4 w-4" />
+              Ekspor CSV
+            </Button>
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Tambah Inventaris
+            </Button>
+          </div>
+        </div>
 
         {(isOfflineData || !navigator.onLine) && (
           <Alert className="border-warning/40 bg-warning/10">
@@ -457,162 +493,159 @@ export default function InventarisPage() {
           </div>
         </GlassCard>
 
-        {loading ? (
-          <DashboardSkeleton />
-        ) : (
-          <GlassCard
-            intensity="low"
-            className="border-border/60 bg-background/85 shadow-lg"
-          >
-            <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-4">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">
-                  Daftar Inventaris
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {totalCount} item terdata pada hasil pencarian saat ini.
-                </p>
-              </div>
+        <GlassCard
+          intensity="low"
+          className="border-border/60 bg-background/85 shadow-lg"
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                Daftar Inventaris
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {totalCount} item terdata pada hasil pencarian saat ini.
+              </p>
             </div>
-            <div className="mt-4 overflow-x-auto rounded-xl border border-border/60">
-              <Table>
-                <TableHeader>
+          </div>
+          <div className="mt-4 overflow-x-auto rounded-xl border border-border/60">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold text-foreground">
+                    Kode
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Nama Barang
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Kategori
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Merk
+                  </TableHead>
+                  <TableHead className="text-right font-semibold text-foreground">
+                    Jumlah
+                  </TableHead>
+                  <TableHead className="text-right font-semibold text-foreground">
+                    Tersedia
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Kondisi
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Lab
+                  </TableHead>
+                  <TableHead className="text-right font-semibold text-foreground">
+                    Aksi
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {inventaris.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-semibold text-foreground">
-                      Kode
-                    </TableHead>
-                    <TableHead className="font-semibold text-foreground">
-                      Nama Barang
-                    </TableHead>
-                    <TableHead className="font-semibold text-foreground">
-                      Kategori
-                    </TableHead>
-                    <TableHead className="font-semibold text-foreground">
-                      Merk
-                    </TableHead>
-                    <TableHead className="text-right font-semibold text-foreground">
-                      Jumlah
-                    </TableHead>
-                    <TableHead className="text-right font-semibold text-foreground">
-                      Tersedia
-                    </TableHead>
-                    <TableHead className="font-semibold text-foreground">
-                      Kondisi
-                    </TableHead>
-                    <TableHead className="font-semibold text-foreground">
-                      Lab
-                    </TableHead>
-                    <TableHead className="text-right font-semibold text-foreground">
-                      Aksi
-                    </TableHead>
+                    <TableCell colSpan={9} className="p-8">
+                      <EmptyState
+                        variant="no-results"
+                        actionLabel="Reset Filter"
+                        onAction={() => {
+                          setSearchQuery("");
+                          setSelectedKategori("");
+                        }}
+                      />
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inventaris.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="p-6">
-                        <Alert className="border-border/60 bg-muted/40">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription className="text-sm text-muted-foreground">
-                            Tidak ada item inventaris yang cocok dengan filter
-                            saat ini.
-                          </AlertDescription>
-                        </Alert>
+                ) : (
+                  inventaris.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-mono text-sm text-foreground">
+                        {item.kode_barang}
+                      </TableCell>
+                      <TableCell className="font-medium text-foreground">
+                        {item.nama_barang}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.kategori || "-"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.merk || "-"}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-foreground">
+                        {item.jumlah}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span
+                          className={
+                            item.jumlah_tersedia < 5
+                              ? "font-semibold text-warning"
+                              : "font-medium text-foreground"
+                          }
+                        >
+                          {item.jumlah_tersedia}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const kondisiStatusMap: Record<
+                            string,
+                            "success" | "warning" | "error" | "info"
+                          > = {
+                            baik: "success",
+                            rusak_ringan: "warning",
+                            rusak_berat: "error",
+                            maintenance: "info",
+                          };
+                          const label =
+                            KONDISI_OPTIONS.find(
+                              (k) => k.value === item.kondisi,
+                            )?.label || item.kondisi;
+                          return (
+                            <StatusBadge
+                              status={kondisiStatusMap[item.kondisi] || "info"}
+                              pulse={false}
+                            >
+                              {label}
+                            </StatusBadge>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.laboratorium?.nama_lab || "Depot"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleStockManagement(item)}
+                            className="table-action-btn table-action-btn-view"
+                            title="Kelola stok"
+                          >
+                            <Package className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(item)}
+                            className="table-action-btn table-action-btn-edit"
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item)}
+                            className="table-action-btn table-action-btn-delete"
+                            title="Hapus"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    inventaris.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-mono text-sm text-foreground">
-                          {item.kode_barang}
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground">
-                          {item.nama_barang}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {item.kategori || "-"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {item.merk || "-"}
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-foreground">
-                          {item.jumlah}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span
-                            className={
-                              item.jumlah_tersedia < 5
-                                ? "font-semibold text-warning"
-                                : "font-medium text-foreground"
-                            }
-                          >
-                            {item.jumlah_tersedia}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {(() => {
-                            const kondisiStatusMap: Record<
-                              string,
-                              "success" | "warning" | "error" | "info"
-                            > = {
-                              baik: "success",
-                              rusak_ringan: "warning",
-                              rusak_berat: "error",
-                              maintenance: "info",
-                            };
-                            const label =
-                              KONDISI_OPTIONS.find(
-                                (k) => k.value === item.kondisi,
-                              )?.label || item.kondisi;
-                            return (
-                              <StatusBadge
-                                status={
-                                  kondisiStatusMap[item.kondisi] || "info"
-                                }
-                                pulse={false}
-                              >
-                                {label}
-                              </StatusBadge>
-                            );
-                          })()}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {item.laboratorium?.nama_lab || "Depot"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleStockManagement(item)}
-                              title="Kelola stok"
-                            >
-                              <Package className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(item)}
-                            >
-                              <Edit className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(item)}
-                            >
-                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </GlassCard>
-        )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </GlassCard>
 
         {/* Form Dialog */}
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -662,7 +695,7 @@ export default function InventarisPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih kategori" />
+                      <SelectValue placeholder="Pilih kategori..." />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (
@@ -922,6 +955,6 @@ export default function InventarisPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </OfflineAwareContent>
   );
 }

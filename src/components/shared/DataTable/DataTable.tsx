@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -125,13 +126,27 @@ export function DataTable<TData, TValue = unknown>({
 
   const renderTableBody = () => {
     if (isLoading) {
-      return (
-        <TableRow>
-          <TableCell colSpan={columns.length} className="h-64 text-center">
-            <LoadingSpinner size="lg" text="Loading data..." />
-          </TableCell>
+      return Array.from({ length: 5 }).map((_, rIndex) => (
+        <TableRow key={rIndex}>
+          {columns.map((_, cIndex) => {
+            const widths = [
+              "w-[60%]",
+              "w-[80%]",
+              "w-[50%]",
+              "w-[70%]",
+              "w-[40%]",
+            ];
+            const widthClass = widths[cIndex % widths.length];
+            return (
+              <TableCell key={cIndex} className="p-4">
+                <div
+                  className={cn("skeleton-shimmer h-4 rounded-xs", widthClass)}
+                />
+              </TableCell>
+            );
+          })}
         </TableRow>
-      );
+      ));
     }
 
     if (table.getRowModel().rows?.length === 0) {
@@ -186,19 +201,32 @@ export function DataTable<TData, TValue = unknown>({
       {/* Table */}
       <div className="rounded-md border">
         <Table>
+          <TableCaption className="sr-only">
+            Tabel data dengan fitur sortir, filter, dan paginasi.
+          </TableCaption>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const sortState = header.column.getIsSorted();
+                  const ariaSort =
+                    sortState === "asc"
+                      ? "ascending"
+                      : sortState === "desc"
+                        ? "descending"
+                        : "none";
+
+                  return (
+                    <TableHead key={header.id} aria-sort={ariaSort}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>

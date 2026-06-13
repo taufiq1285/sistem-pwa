@@ -13,10 +13,8 @@ export type Theme = "light" | "dark" | "system";
 
 export interface ThemeContextValue {
   theme: Theme;
-  systemTheme: "light" | "dark";
-  effectiveTheme: "light" | "dark";
   setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
+  resolvedTheme: "light" | "dark";
 }
 
 // ============================================================================
@@ -26,10 +24,8 @@ export interface ThemeContextValue {
 // Provide a default value to prevent null/undefined errors
 const defaultThemeContext: ThemeContextValue = {
   theme: "system",
-  systemTheme: "light",
-  effectiveTheme: "light",
   setTheme: () => {},
-  toggleTheme: () => {},
+  resolvedTheme: "light",
 };
 
 export const ThemeContext =

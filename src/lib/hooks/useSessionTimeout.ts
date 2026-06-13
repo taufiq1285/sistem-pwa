@@ -7,6 +7,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import logger from "@/lib/utils/logger";
 
 interface UseSessionTimeoutOptions {
   timeoutMinutes?: number;
@@ -50,7 +51,7 @@ export function useSessionTimeout({
               },
             );
           } catch (error) {
-            console.warn("Failed to show session warning toast:", error);
+            logger.debug("Failed to show session warning toast:", error);
           }
         }
       }, warningMs);
@@ -58,24 +59,24 @@ export function useSessionTimeout({
 
     // Set logout timeout
     timeoutRef.current = setTimeout(() => {
-      console.log("Session timeout - auto logout");
+      logger.debug("Session timeout - auto logout");
 
       try {
         toast.error("Sesi Anda telah berakhir karena tidak ada aktivitas");
       } catch (error) {
-        console.warn("Failed to show session timeout toast:", error);
+        logger.debug("Failed to show session timeout toast:", error);
       }
 
       try {
         logout();
       } catch (error) {
-        console.warn("Failed to logout on session timeout:", error);
+        logger.debug("Failed to logout on session timeout:", error);
       }
 
       try {
         window.location.assign("/login");
       } catch (error) {
-        console.warn("Failed to redirect to login on session timeout:", error);
+        logger.debug("Failed to redirect to login on session timeout:", error);
       }
     }, timeoutMs);
   }, [user, timeoutMinutes, warningMinutes, enableWarningDialog, logout]);

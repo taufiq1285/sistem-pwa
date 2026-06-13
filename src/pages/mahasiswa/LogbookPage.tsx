@@ -58,6 +58,12 @@ import {
   invalidateCache,
 } from "@/lib/offline/api-cache";
 import { queueManager } from "@/lib/offline/queue-manager";
+import {
+  CardListSkeleton,
+  EmptyState,
+  OfflineAwareContent,
+} from "@/components/common";
+import { useOfflineContext } from "@/context/OfflineContext";
 import type {
   LogbookEntry,
   CreateLogbookData,
@@ -73,6 +79,7 @@ import { SKILL_KEBIDANAN } from "@/types/logbook.types";
 
 export default function MahasiswaLogbookPage() {
   const { user } = useAuth();
+  const { isOffline } = useOfflineContext();
 
   // ============================================================================
   // STATE
@@ -83,6 +90,8 @@ export default function MahasiswaLogbookPage() {
   const [logbookList, setLogbookList] = useState<LogbookEntry[]>([]);
   const [isOfflineData, setIsOfflineData] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+
+  const [activeTab, setActiveTab] = useState("my-logbook");
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -822,7 +831,6 @@ export default function MahasiswaLogbookPage() {
   // RENDER
   // ============================================================================
 
-  const isOffline = !navigator.onLine;
   const lastUpdatedLabel = useMemo(() => {
     if (!lastUpdatedAt) {
       return null;
@@ -836,738 +844,760 @@ export default function MahasiswaLogbookPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Memuat data...</span>
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        <div className="section-shell rounded-2xl p-5">
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-96 animate-pulse rounded bg-muted" />
+        </div>
+        <CardListSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <BookOpen className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Logbook Praktikum</h1>
+    <OfflineAwareContent
+      hasData={logbookList.length > 0}
+      context="logbook"
+      onSync={() => loadData(true)}
+    >
+      <div className="app-container py-4 sm:py-6 lg:py-8 space-y-6">
+        {/* Header */}
+        <div className="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Logbook Praktikum
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Catat pengalaman, hasil observasi, dan refleksi pembelajaran Anda
+              selama praktikum kebidanan
+            </p>
+          </div>
         </div>
-        <p className="text-muted-foreground">
-          Catat pengalaman, hasil observasi, dan refleksi pembelajaran Anda
-          selama praktikum kebidanan
-        </p>
-      </div>
 
-      {(isOfflineData || isOffline) && (
-        <Alert className="mb-6 border-warning/40 bg-warning/10">
-          <WifiOff className="h-4 w-4" />
-          <AlertDescription>
-            Anda sedang melihat snapshot logbook tersimpan di perangkat.
-            {lastUpdatedLabel
-              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
-              : ""}
-            {!navigator.onLine
-              ? " Aksi buat, edit, kirim, dan hapus logbook sementara dinonaktifkan saat offline."
-              : ""}
-          </AlertDescription>
-        </Alert>
-      )}
+        {(isOfflineData || isOffline) && (
+          <Alert className="mb-6 border-warning/40 bg-warning/10">
+            <WifiOff className="h-4 w-4" />
+            <AlertDescription>
+              Anda sedang melihat snapshot logbook tersimpan di perangkat.
+              {lastUpdatedLabel
+                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                : ""}
+              {!navigator.onLine
+                ? " Aksi buat, edit, kirim, dan hapus logbook sementara dinonaktifkan saat offline."
+                : ""}
+            </AlertDescription>
+          </Alert>
+        )}
 
-      {/* Tabs */}
-      <Tabs defaultValue="my-logbook" className="mb-6">
-        <TabsList>
-          <TabsTrigger value="my-logbook">
-            <FileText className="h-4 w-4 mr-2" />
-            Logbook Saya ({logbookList.length})
-          </TabsTrigger>
-          <TabsTrigger value="create">
-            <Plus className="h-4 w-4 mr-2" />
-            Buat Logbook Baru
-          </TabsTrigger>
-        </TabsList>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList>
+            <TabsTrigger value="my-logbook">
+              <FileText className="h-4 w-4 mr-2" />
+              Logbook Saya ({logbookList.length})
+            </TabsTrigger>
+            <TabsTrigger value="create">
+              <Plus className="h-4 w-4 mr-2" />
+              Buat Logbook Baru
+            </TabsTrigger>
+          </TabsList>
 
-        {/* My Logbooks Tab */}
-        <TabsContent value="my-logbook" className="space-y-4">
-          {logbookList.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <BookOpen className="h-16 w-16 text-muted-foreground/60 mb-4" />
-                <p className="text-muted-foreground mb-2">
-                  Belum ada logbook. Buat logbook pertama Anda!
-                </p>
-                {jadwalList.length === 0 ? (
-                  <p className="text-sm text-warning">
-                    Tidak ada jadwal praktikum aktif untuk Anda.
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Ada {jadwalList.length} jadwal praktikum tersedia.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {logbookList
-                .filter((l): l is LogbookEntry => l != null)
-                .map((logbook) => (
-                  <Card
-                    key={logbook.id}
-                    className="hover:shadow-lg transition-shadow"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-lg font-semibold">
-                              {logbook.jadwal?.topik || "Praktikum"}
-                            </h3>
-                            {getStatusBadge(logbook.status)}
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-1">
-                            {logbook.jadwal?.tanggal_praktikum &&
-                              format(
-                                new Date(logbook.jadwal.tanggal_praktikum),
-                                "dd MMMM yyyy",
-                              )}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Lab: {logbook.jadwal?.laboratorium?.nama_lab || "-"}
-                          </p>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openViewDialog(logbook)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-
-                          {logbook.status === "draft" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openEditDialog(logbook)}
-                                disabled={isOffline}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteLogbook(logbook.id)}
-                                disabled={isOffline}
-                              >
-                                <Trash2 className="h-4 w-4 text-danger" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => openSubmitDialog(logbook)}
-                                disabled={isOffline}
-                              >
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-
-                          {(logbook.status === "reviewed" ||
-                            logbook.status === "graded") && (
-                            <div className="text-right">
-                              {logbook.nilai != null && (
-                                <div className="text-2xl font-bold text-success">
-                                  {logbook.nilai}
-                                </div>
-                              )}
+          {/* My Logbooks Tab */}
+          <TabsContent value="my-logbook" className="space-y-4">
+            {logbookList.length === 0 ? (
+              <EmptyState
+                variant="no-data"
+                context="logbook"
+                actionLabel="Buat Logbook Baru"
+                onAction={() => setActiveTab("create")}
+              />
+            ) : (
+              <div className="grid gap-4">
+                {logbookList
+                  .filter((l): l is LogbookEntry => l != null)
+                  .map((logbook) => (
+                    <Card
+                      key={logbook.id}
+                      className="hover:shadow-lg transition-shadow"
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="text-lg font-semibold">
+                                {logbook.jadwal?.topik || "Praktikum"}
+                              </h3>
+                              {getStatusBadge(logbook.status)}
                             </div>
-                          )}
-                        </div>
-                      </div>
+                            <p className="text-sm text-muted-foreground mb-1">
+                              {logbook.jadwal?.tanggal_praktikum &&
+                                format(
+                                  new Date(logbook.jadwal.tanggal_praktikum),
+                                  "dd MMMM yyyy",
+                                )}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Lab:{" "}
+                              {logbook.jadwal?.laboratorium?.nama_lab || "-"}
+                            </p>
+                          </div>
 
-                      {/* Preview */}
-                      {logbook.prosedur_dilakukan && (
-                        <div className="text-sm mb-2">
-                          <span className="font-medium">Prosedur:</span>{" "}
-                          <span className="text-muted-foreground line-clamp-1">
-                            {logbook.prosedur_dilakukan}
-                          </span>
-                        </div>
-                      )}
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openViewDialog(logbook)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
 
-                      {logbook.skill_dipelajari &&
-                        logbook.skill_dipelajari.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {logbook.skill_dipelajari.map((skill) => (
-                              <Badge
-                                key={skill}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                {skill}
-                              </Badge>
-                            ))}
+                            {logbook.status === "draft" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openEditDialog(logbook)}
+                                  disabled={isOffline}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    handleDeleteLogbook(logbook.id)
+                                  }
+                                  disabled={isOffline}
+                                >
+                                  <Trash2 className="h-4 w-4 text-danger" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => openSubmitDialog(logbook)}
+                                  disabled={isOffline}
+                                >
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+
+                            {(logbook.status === "reviewed" ||
+                              logbook.status === "graded") && (
+                              <div className="text-right">
+                                {logbook.nilai != null && (
+                                  <div className="text-2xl font-bold text-success">
+                                    {logbook.nilai}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Preview */}
+                        {logbook.prosedur_dilakukan && (
+                          <div className="text-sm mb-2">
+                            <span className="font-medium">Prosedur:</span>{" "}
+                            <span className="text-muted-foreground line-clamp-1">
+                              {logbook.prosedur_dilakukan}
+                            </span>
                           </div>
                         )}
 
-                      {logbook.dosen_feedback && (
-                        <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
-                          <p className="mb-1 text-xs font-medium text-primary">
-                            Feedback Dosen:
-                          </p>
-                          <p className="text-sm text-primary">
-                            {logbook.dosen_feedback}
-                          </p>
-                        </div>
-                      )}
+                        {logbook.skill_dipelajari &&
+                          logbook.skill_dipelajari.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {logbook.skill_dipelajari.map((skill) => (
+                                <Badge
+                                  key={skill}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {skill}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                        {logbook.dosen_feedback && (
+                          <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                            <p className="mb-1 text-xs font-medium text-primary">
+                              Feedback Dosen:
+                            </p>
+                            <p className="text-sm text-primary">
+                              {logbook.dosen_feedback}
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Create Logbook Tab */}
+          <TabsContent value="create">
+            {jadwalList.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <AlertCircle className="h-16 w-16 text-warning mb-4" />
+                  <p className="text-muted-foreground font-medium mb-2">
+                    Tidak ada jadwal praktikum aktif
+                  </p>
+                  <p className="text-sm text-muted-foreground text-center max-w-md">
+                    Anda belum terdaftar di kelas mana pun atau belum ada jadwal
+                    praktikum yang dijadwalkan untuk kelas Anda.
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 mt-4">
+                    Hubungi dosen atau admin jika Anda merasa ini adalah
+                    kesalahan.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : getJadwalWithoutLogbook().length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <CheckCircle2 className="h-16 w-16 text-success mb-4" />
+                  <p className="text-muted-foreground font-medium mb-2">
+                    Semua jadwal praktikum sudah memiliki logbook!
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Anda telah membuat logbook untuk semua {jadwalList.length}{" "}
+                    jadwal praktikum.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {getJadwalWithoutLogbook().map((jadwal) => (
+                  <Card
+                    key={jadwal.id}
+                    className="hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => {
+                      if (isOffline) {
+                        toast.error(
+                          "Pembuatan logbook baru belum didukung saat offline. Sambungkan internet untuk melanjutkan.",
+                        );
+                        return;
+                      }
+                      openCreateDialog(jadwal);
+                    }}
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        {typeof jadwal.kelas === "object" &&
+                        jadwal.kelas?.nama_kelas
+                          ? jadwal.kelas.nama_kelas
+                          : jadwal.kelas_relation?.nama_kelas || "Kelas"}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm font-medium mb-1">
+                        {jadwal.topik || "Praktikum"}
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        {jadwal.tanggal_praktikum &&
+                          format(
+                            new Date(jadwal.tanggal_praktikum),
+                            "dd MMM yyyy",
+                          )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Lab: {jadwal.laboratorium?.nama_lab}
+                      </p>
+                      <Button
+                        size="sm"
+                        className="w-full mt-3"
+                        disabled={isOffline}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Buat Logbook
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Create Logbook Tab */}
-        <TabsContent value="create">
-          {jadwalList.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <AlertCircle className="h-16 w-16 text-warning mb-4" />
-                <p className="text-muted-foreground font-medium mb-2">
-                  Tidak ada jadwal praktikum aktif
-                </p>
-                <p className="text-sm text-muted-foreground text-center max-w-md">
-                  Anda belum terdaftar di kelas mana pun atau belum ada jadwal
-                  praktikum yang dijadwalkan untuk kelas Anda.
-                </p>
-                <p className="text-xs text-muted-foreground/60 mt-4">
-                  Hubungi dosen atau admin jika Anda merasa ini adalah
-                  kesalahan.
-                </p>
-              </CardContent>
-            </Card>
-          ) : getJadwalWithoutLogbook().length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <CheckCircle2 className="h-16 w-16 text-success mb-4" />
-                <p className="text-muted-foreground font-medium mb-2">
-                  Semua jadwal praktikum sudah memiliki logbook!
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Anda telah membuat logbook untuk semua {jadwalList.length}{" "}
-                  jadwal praktikum.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {getJadwalWithoutLogbook().map((jadwal) => (
-                <Card
-                  key={jadwal.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => {
-                    if (isOffline) {
-                      toast.error(
-                        "Pembuatan logbook baru belum didukung saat offline. Sambungkan internet untuk melanjutkan.",
-                      );
-                      return;
-                    }
-                    openCreateDialog(jadwal);
-                  }}
-                >
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      {typeof jadwal.kelas === "object" &&
-                      jadwal.kelas?.nama_kelas
-                        ? jadwal.kelas.nama_kelas
-                        : jadwal.kelas_relation?.nama_kelas || "Kelas"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm font-medium mb-1">
-                      {jadwal.topik || "Praktikum"}
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {jadwal.tanggal_praktikum &&
-                        format(
-                          new Date(jadwal.tanggal_praktikum),
-                          "dd MMM yyyy",
-                        )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Lab: {jadwal.laboratorium?.nama_lab}
-                    </p>
-                    <Button
-                      size="sm"
-                      className="w-full mt-3"
-                      disabled={isOffline}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Buat Logbook
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Create Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Buat Logbook Baru</DialogTitle>
-            <DialogDescription>
-              {selectedJadwal?.topik} -{" "}
-              {selectedJadwal?.tanggal_praktikum &&
-                format(
-                  new Date(selectedJadwal.tanggal_praktikum),
-                  "dd MMM yyyy",
-                )}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Prosedur */}
-            <div>
-              <Label htmlFor="prosedur">
-                Prosedur yang Dilakukan <span className="text-danger">*</span>
-              </Label>
-              <Textarea
-                id="prosedur"
-                placeholder="Jelaskan prosedur/praktikum yang Anda lakukan..."
-                value={formData.prosedur_dilakukan}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    prosedur_dilakukan: e.target.value,
-                  })
-                }
-                rows={3}
-              />
-            </div>
-
-            {/* Hasil Observasi */}
-            <div>
-              <Label htmlFor="observasi">
-                Hasil Observasi <span className="text-danger">*</span>
-              </Label>
-              <Textarea
-                id="observasi"
-                placeholder="Catat hasil observasi/pemeriksaan yang Anda dapatkan..."
-                value={formData.hasil_observasi}
-                onChange={(e) =>
-                  setFormData({ ...formData, hasil_observasi: e.target.value })
-                }
-                rows={3}
-              />
-            </div>
-
-            {/* Skill Dipelajari */}
-            <div>
-              <Label>
-                Skill yang Dipelajari <span className="text-danger">*</span>
-              </Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {SKILL_KEBIDANAN.map((skill) => {
-                  const isSelected = formData.skill_dipelajari?.includes(skill);
-                  return (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => toggleSkill(skill)}
-                      className={`text-xs p-2 rounded-lg border transition-colors ${
-                        isSelected
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-white text-muted-foreground border-border/50 hover:bg-muted/40"
-                      }`}
-                    >
-                      {skill}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Dipilih: {formData.skill_dipelajari?.length || 0} skill
-              </p>
-            </div>
-
-            {/* Kendala */}
-            <div>
-              <Label htmlFor="kendala">Kendala yang Dihadapi</Label>
-              <Textarea
-                id="kendala"
-                placeholder="Apakah ada kesulitan atau kendala saat praktikum?"
-                value={formData.kendala_dihadapi}
-                onChange={(e) =>
-                  setFormData({ ...formData, kendala_dihadapi: e.target.value })
-                }
-                rows={2}
-              />
-            </div>
-
-            {/* Refleksi */}
-            <div>
-              <Label htmlFor="refleksi">Refleksi Pembelajaran</Label>
-              <Textarea
-                id="refleksi"
-                placeholder="Apa yang Anda pelajari dari praktikum ini?"
-                value={formData.refleksi}
-                onChange={(e) =>
-                  setFormData({ ...formData, refleksi: e.target.value })
-                }
-                rows={2}
-              />
-            </div>
-
-            {/* Catatan Tambahan */}
-            <div>
-              <Label htmlFor="catatan">Catatan Tambahan</Label>
-              <Textarea
-                id="catatan"
-                placeholder="Catatan tambahan (opsional)"
-                value={formData.catatan_tambahan}
-                onChange={(e) =>
-                  setFormData({ ...formData, catatan_tambahan: e.target.value })
-                }
-                rows={2}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateDialog(false)}
-              disabled={submitting}
-            >
-              Batal
-            </Button>
-            <Button onClick={handleCreateLogbook} disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                "Simpan Draft"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Logbook</DialogTitle>
-            <DialogDescription>
-              Status: <span className="text-warning">Draft</span> - Anda masih
-              bisa mengubah logbook ini
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Same fields as create */}
-            <div>
-              <Label htmlFor="edit-prosedur">
-                Prosedur yang Dilakukan <span className="text-danger">*</span>
-              </Label>
-              <Textarea
-                id="edit-prosedur"
-                value={formData.prosedur_dilakukan}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    prosedur_dilakukan: e.target.value,
-                  })
-                }
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="edit-observasi">
-                Hasil Observasi <span className="text-danger">*</span>
-              </Label>
-              <Textarea
-                id="edit-observasi"
-                value={formData.hasil_observasi}
-                onChange={(e) =>
-                  setFormData({ ...formData, hasil_observasi: e.target.value })
-                }
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label>
-                Skill yang Dipelajari <span className="text-danger">*</span>
-              </Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {SKILL_KEBIDANAN.map((skill) => {
-                  const isSelected = formData.skill_dipelajari?.includes(skill);
-                  return (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() => toggleSkill(skill)}
-                      className={`text-xs p-2 rounded-lg border transition-colors ${
-                        isSelected
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-white text-muted-foreground border-border/50 hover:bg-muted/40"
-                      }`}
-                    >
-                      {skill}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="edit-kendala">Kendala yang Dihadapi</Label>
-              <Textarea
-                id="edit-kendala"
-                value={formData.kendala_dihadapi}
-                onChange={(e) =>
-                  setFormData({ ...formData, kendala_dihadapi: e.target.value })
-                }
-                rows={2}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="edit-refleksi">Refleksi Pembelajaran</Label>
-              <Textarea
-                id="edit-refleksi"
-                value={formData.refleksi}
-                onChange={(e) =>
-                  setFormData({ ...formData, refleksi: e.target.value })
-                }
-                rows={2}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="edit-catatan">Catatan Tambahan</Label>
-              <Textarea
-                id="edit-catatan"
-                value={formData.catatan_tambahan}
-                onChange={(e) =>
-                  setFormData({ ...formData, catatan_tambahan: e.target.value })
-                }
-                rows={2}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowEditDialog(false)}
-              disabled={submitting}
-            >
-              Batal
-            </Button>
-            <Button onClick={handleUpdateLogbook} disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                "Simpan Perubahan"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Submit Dialog */}
-      <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Submit Logbook untuk Review</DialogTitle>
-            <DialogDescription>
-              Pastikan semua data sudah lengkap sebelum diserahkan ke dosen
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 py-4">
-            <div className="flex items-center gap-2 text-sm">
-              {selectedLogbook?.prosedur_dilakukan ? (
-                <CheckCircle2 className="h-4 w-4 text-success" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-danger" />
-              )}
-              <span>Prosedur Dilakukan</span>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm">
-              {selectedLogbook?.hasil_observasi ? (
-                <CheckCircle2 className="h-4 w-4 text-success" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-danger" />
-              )}
-              <span>Hasil Observasi</span>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm">
-              {selectedLogbook?.skill_dipelajari &&
-              selectedLogbook.skill_dipelajari.length > 0 ? (
-                <CheckCircle2 className="h-4 w-4 text-success" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-danger" />
-              )}
-              <span>
-                Skill yang Dipelajari (
-                {selectedLogbook?.skill_dipelajari?.length || 0})
-              </span>
-            </div>
-
-            {selectedLogbook?.skill_dipelajari && (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {selectedLogbook.skill_dipelajari.map((skill) => (
-                  <Badge key={skill} variant="secondary" className="text-xs">
-                    {skill}
-                  </Badge>
-                ))}
               </div>
             )}
-          </div>
+          </TabsContent>
+        </Tabs>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowSubmitDialog(false)}
-              disabled={submitting}
-            >
-              Batal
-            </Button>
-            <Button onClick={handleSubmitLogbook} disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Menyerahkan...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  Submit ke Dosen
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Create Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Buat Logbook Baru</DialogTitle>
+              <DialogDescription>
+                {selectedJadwal?.topik} -{" "}
+                {selectedJadwal?.tanggal_praktikum &&
+                  format(
+                    new Date(selectedJadwal.tanggal_praktikum),
+                    "dd MMM yyyy",
+                  )}
+              </DialogDescription>
+            </DialogHeader>
 
-      {/* View Dialog */}
-      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detail Logbook</DialogTitle>
-            <DialogDescription>
-              {selectedLogbook?.jadwal?.topik} -{" "}
-              {selectedLogbook?.jadwal?.tanggal_praktikum &&
-                format(
-                  new Date(selectedLogbook.jadwal.tanggal_praktikum),
-                  "dd MMM yyyy",
+            <div className="space-y-4 py-4">
+              {/* Prosedur */}
+              <div>
+                <Label htmlFor="prosedur">
+                  Prosedur yang Dilakukan <span className="text-danger">*</span>
+                </Label>
+                <Textarea
+                  id="prosedur"
+                  placeholder="Jelaskan prosedur/praktikum yang Anda lakukan..."
+                  value={formData.prosedur_dilakukan}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      prosedur_dilakukan: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+
+              {/* Hasil Observasi */}
+              <div>
+                <Label htmlFor="observasi">
+                  Hasil Observasi <span className="text-danger">*</span>
+                </Label>
+                <Textarea
+                  id="observasi"
+                  placeholder="Catat hasil observasi/pemeriksaan yang Anda dapatkan..."
+                  value={formData.hasil_observasi}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      hasil_observasi: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+
+              {/* Skill Dipelajari */}
+              <div>
+                <Label>
+                  Skill yang Dipelajari <span className="text-danger">*</span>
+                </Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {SKILL_KEBIDANAN.map((skill) => {
+                    const isSelected =
+                      formData.skill_dipelajari?.includes(skill);
+                    return (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => toggleSkill(skill)}
+                        className={`text-xs p-2 rounded-lg border transition-colors ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-white text-muted-foreground border-border/50 hover:bg-muted/40"
+                        }`}
+                      >
+                        {skill}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Dipilih: {formData.skill_dipelajari?.length || 0} skill
+                </p>
+              </div>
+
+              {/* Kendala */}
+              <div>
+                <Label htmlFor="kendala">Kendala yang Dihadapi</Label>
+                <Textarea
+                  id="kendala"
+                  placeholder="Apakah ada kesulitan atau kendala saat praktikum?"
+                  value={formData.kendala_dihadapi}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      kendala_dihadapi: e.target.value,
+                    })
+                  }
+                  rows={2}
+                />
+              </div>
+
+              {/* Refleksi */}
+              <div>
+                <Label htmlFor="refleksi">Refleksi Pembelajaran</Label>
+                <Textarea
+                  id="refleksi"
+                  placeholder="Apa yang Anda pelajari dari praktikum ini?"
+                  value={formData.refleksi}
+                  onChange={(e) =>
+                    setFormData({ ...formData, refleksi: e.target.value })
+                  }
+                  rows={2}
+                />
+              </div>
+
+              {/* Catatan Tambahan */}
+              <div>
+                <Label htmlFor="catatan">Catatan Tambahan</Label>
+                <Textarea
+                  id="catatan"
+                  placeholder="Catatan tambahan (opsional)"
+                  value={formData.catatan_tambahan}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      catatan_tambahan: e.target.value,
+                    })
+                  }
+                  rows={2}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateDialog(false)}
+                disabled={submitting}
+              >
+                Batal
+              </Button>
+              <Button onClick={handleCreateLogbook} disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  "Simpan Draft"
                 )}
-            </DialogDescription>
-          </DialogHeader>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-          <div className="space-y-4 py-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Status
-              </p>
-              {selectedLogbook && getStatusBadge(selectedLogbook.status)}
+        {/* Edit Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Logbook</DialogTitle>
+              <DialogDescription>
+                Status: <span className="text-warning">Draft</span> - Anda masih
+                bisa mengubah logbook ini
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              {/* Same fields as create */}
+              <div>
+                <Label htmlFor="edit-prosedur">
+                  Prosedur yang Dilakukan <span className="text-danger">*</span>
+                </Label>
+                <Textarea
+                  id="edit-prosedur"
+                  value={formData.prosedur_dilakukan}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      prosedur_dilakukan: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-observasi">
+                  Hasil Observasi <span className="text-danger">*</span>
+                </Label>
+                <Textarea
+                  id="edit-observasi"
+                  value={formData.hasil_observasi}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      hasil_observasi: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label>
+                  Skill yang Dipelajari <span className="text-danger">*</span>
+                </Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {SKILL_KEBIDANAN.map((skill) => {
+                    const isSelected =
+                      formData.skill_dipelajari?.includes(skill);
+                    return (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => toggleSkill(skill)}
+                        className={`text-xs p-2 rounded-lg border transition-colors ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-white text-muted-foreground border-border/50 hover:bg-muted/40"
+                        }`}
+                      >
+                        {skill}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-kendala">Kendala yang Dihadapi</Label>
+                <Textarea
+                  id="edit-kendala"
+                  value={formData.kendala_dihadapi}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      kendala_dihadapi: e.target.value,
+                    })
+                  }
+                  rows={2}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-refleksi">Refleksi Pembelajaran</Label>
+                <Textarea
+                  id="edit-refleksi"
+                  value={formData.refleksi}
+                  onChange={(e) =>
+                    setFormData({ ...formData, refleksi: e.target.value })
+                  }
+                  rows={2}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-catatan">Catatan Tambahan</Label>
+                <Textarea
+                  id="edit-catatan"
+                  value={formData.catatan_tambahan}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      catatan_tambahan: e.target.value,
+                    })
+                  }
+                  rows={2}
+                />
+              </div>
             </div>
 
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Prosedur
-              </p>
-              <p className="text-sm mt-1">
-                {selectedLogbook?.prosedur_dilakukan || "-"}
-              </p>
-            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowEditDialog(false)}
+                disabled={submitting}
+              >
+                Batal
+              </Button>
+              <Button onClick={handleUpdateLogbook} disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  "Simpan Perubahan"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Hasil Observasi
-              </p>
-              <p className="text-sm mt-1">
-                {selectedLogbook?.hasil_observasi || "-"}
-              </p>
-            </div>
+        {/* Submit Dialog */}
+        <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Submit Logbook untuk Review</DialogTitle>
+              <DialogDescription>
+                Pastikan semua data sudah lengkap sebelum diserahkan ke dosen
+              </DialogDescription>
+            </DialogHeader>
 
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Skill yang Dipelajari
-              </p>
-              <div className="flex flex-wrap gap-1 mt-1">
+            <div className="space-y-3 py-4">
+              <div className="flex items-center gap-2 text-sm">
+                {selectedLogbook?.prosedur_dilakukan ? (
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-danger" />
+                )}
+                <span>Prosedur Dilakukan</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm">
+                {selectedLogbook?.hasil_observasi ? (
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-danger" />
+                )}
+                <span>Hasil Observasi</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm">
                 {selectedLogbook?.skill_dipelajari &&
                 selectedLogbook.skill_dipelajari.length > 0 ? (
-                  selectedLogbook.skill_dipelajari.map((skill) => (
-                    <Badge key={skill} variant="secondary">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-danger" />
+                )}
+                <span>
+                  Skill yang Dipelajari (
+                  {selectedLogbook?.skill_dipelajari?.length || 0})
+                </span>
+              </div>
+
+              {selectedLogbook?.skill_dipelajari && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedLogbook.skill_dipelajari.map((skill) => (
+                    <Badge key={skill} variant="secondary" className="text-xs">
                       {skill}
                     </Badge>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground/60">-</p>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {selectedLogbook?.kendala_dihadapi && (
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowSubmitDialog(false)}
+                disabled={submitting}
+              >
+                Batal
+              </Button>
+              <Button onClick={handleSubmitLogbook} disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Menyerahkan...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Submit ke Dosen
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* View Dialog */}
+        <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Detail Logbook</DialogTitle>
+              <DialogDescription>
+                {selectedLogbook?.jadwal?.topik} -{" "}
+                {selectedLogbook?.jadwal?.tanggal_praktikum &&
+                  format(
+                    new Date(selectedLogbook.jadwal.tanggal_praktikum),
+                    "dd MMM yyyy",
+                  )}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Kendala
+                  Status
+                </p>
+                {selectedLogbook && getStatusBadge(selectedLogbook.status)}
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Prosedur
                 </p>
                 <p className="text-sm mt-1">
-                  {selectedLogbook.kendala_dihadapi}
+                  {selectedLogbook?.prosedur_dilakukan || "-"}
                 </p>
               </div>
-            )}
 
-            {selectedLogbook?.refleksi && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Refleksi
+                  Hasil Observasi
                 </p>
-                <p className="text-sm mt-1">{selectedLogbook.refleksi}</p>
-              </div>
-            )}
-
-            {selectedLogbook?.nilai != null && (
-              <div className="p-3 bg-success/10 rounded-lg border border-success/30">
-                <p className="text-sm font-medium text-success mb-1">
-                  Nilai: {selectedLogbook.nilai}
+                <p className="text-sm mt-1">
+                  {selectedLogbook?.hasil_observasi || "-"}
                 </p>
               </div>
-            )}
 
-            {selectedLogbook?.dosen_feedback && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-                <p className="mb-1 text-sm font-medium text-primary">
-                  Feedback Dosen:
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Skill yang Dipelajari
                 </p>
-                <p className="text-sm text-primary">
-                  {selectedLogbook.dosen_feedback}
-                </p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedLogbook?.skill_dipelajari &&
+                  selectedLogbook.skill_dipelajari.length > 0 ? (
+                    selectedLogbook.skill_dipelajari.map((skill) => (
+                      <Badge key={skill} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground/60">-</p>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
 
-          <DialogFooter>
-            <Button onClick={() => setShowViewDialog(false)}>Tutup</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+              {selectedLogbook?.kendala_dihadapi && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Kendala
+                  </p>
+                  <p className="text-sm mt-1">
+                    {selectedLogbook.kendala_dihadapi}
+                  </p>
+                </div>
+              )}
+
+              {selectedLogbook?.refleksi && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Refleksi
+                  </p>
+                  <p className="text-sm mt-1">{selectedLogbook.refleksi}</p>
+                </div>
+              )}
+
+              {selectedLogbook?.nilai != null && (
+                <div className="p-3 bg-success/10 rounded-lg border border-success/30">
+                  <p className="text-sm font-medium text-success mb-1">
+                    Nilai: {selectedLogbook.nilai}
+                  </p>
+                </div>
+              )}
+
+              {selectedLogbook?.dosen_feedback && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <p className="mb-1 text-sm font-medium text-primary">
+                    Feedback Dosen:
+                  </p>
+                  <p className="text-sm text-primary">
+                    {selectedLogbook.dosen_feedback}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button onClick={() => setShowViewDialog(false)}>Tutup</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </OfflineAwareContent>
   );
 }
