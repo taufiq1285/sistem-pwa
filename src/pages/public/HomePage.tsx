@@ -2,1576 +2,706 @@
  * Landing Page – Sistem Praktikum PWA
  * Akademi Kebidanan Mega Buana
  *
- * Design  : ui-ux-pro-max (nextlevelbuilder) — Educational App #10
- * Style   : Feature-Rich Showcase + Claymorphism + Micro-interactions
- * Colors  : Indigo #4F46E5 + Orange #F97316
- * Fonts   : Outfit (heading) + Work Sans (body) — Geometric Modern
- *
- * Anti-template layers added:
- *  ① App UI Mockup (3-D browser frame with live dashboard preview)
- *  ② Scroll-reveal animations  (IntersectionObserver, no library)
- *  ③ Animated number counters  (requestAnimationFrame)
- *  ④ Marquee feature ticker    (CSS @keyframes, pause-on-hover)
- *  ⑤ SVG wave section dividers (dynamic, not flat borders)
- *  ⑥ Editorial quote section   (big typography, left-accent border)
- *  ⑦ Staggered card animations (data-delay 1-5)
+ * Redesign: Aurora glassmorphism + Crimson Pro editorial typography
+ * - Aurora animated background (uses existing .aurora-bg CSS classes)
+ * - Glassmorphism cards (.glass-panel from index.css)
+ * - Crimson Pro display font (.akbid-font-display from index.css)
+ * - Fluid typography with clamp()
+ * - Maroon #7B1D3A as brand color
  */
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import akbidLogo from "@/assets/akbid-logo-asli.png";
-import { ButtonEnhanced } from "@/components/ui/button-enhanced";
 import {
-  ArrowRight,
-  Bell,
-  BookOpen,
-  Calendar,
-  CheckCircle2,
-  ClipboardCheck,
-  ClipboardList,
-  Download,
-  FlaskConical,
-  GraduationCap,
-  BarChart3,
-  Lock,
-  MapPin,
-  Shield,
-  Smartphone,
-  Users,
-  Wifi,
-  Zap,
+  ArrowRight, Bell, BookOpen, Brain, Calendar, CheckCircle,
+  ClipboardList, FileText, FlaskConical, GraduationCap,
+  BarChart2, Menu, Settings, Shield, Smartphone,
+  Stethoscope, Wifi, WifiOff, Wrench, X,
 } from "lucide-react";
 
-/* ─── Design Tokens (ui-ux-pro-max Educational App palette) ──── */
-const C = {
-  primary: "#4F46E5",
-  secondary: "#818CF8",
-  cta: "#F97316",
-  ctaDark: "#EA580C",
-  bg: "#EEF2FF",
-  surface: "#FFFFFF",
-  alt: "#F8FAFC",
-  dark: "#1E1B4B",
-  body: "#374151",
-  muted: "#6B7280",
-  border: "#E0E7FF",
-  success: "#059669",
-  purple: "#7C3AED",
-} as const;
+// ─── Data ─────────────────────────────────────────────────────────────────
 
-/* ─── SVG Wave Divider ─────────────────────────────────────────── */
-function WaveDivider({ from, to }: { from: string; to: string }) {
-  return (
-    <div style={{ display: "block", background: to, lineHeight: 0 }}>
-      <svg
-        viewBox="0 0 1440 72"
-        preserveAspectRatio="none"
-        style={{
-          display: "block",
-          width: "100%",
-          height: "72px",
-          background: from,
-        }}
-      >
-        <path
-          d="M0,36 C240,72 480,0 720,36 C960,72 1200,0 1440,36 L1440,0 L0,0 Z"
-          fill={to}
-        />
-      </svg>
-    </div>
-  );
-}
-
-/* ─── Animated Counter (requestAnimationFrame) ─────────────────── */
-function CountUp({
-  target,
-  suffix = "",
-  duration = 1500,
-  active,
-}: {
-  target: number;
-  suffix?: string;
-  duration?: number;
-  active: boolean;
-}) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    let start: number | null = null;
-    const step = (ts: number) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setVal(Math.round(eased * target));
-      if (p < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [active, target, duration]);
-  return (
-    <>
-      {val}
-      {suffix}
-    </>
-  );
-}
-
-/* ─── App UI Mockup ────────────────────────────────────────────── */
-function AppMockup() {
-  const schedule = [
-    { label: "Praktikum Anatomi", time: "08:00–10:00", color: C.primary },
-    { label: "Logbook Midwifery", time: "10:30–12:00", color: C.cta },
-    { label: "Evaluasi Laboratorium", time: "13:00–15:00", color: C.purple },
-  ];
-  const stats = [
-    { v: "12", l: "Jadwal", c: C.primary, bg: "#EEF2FF" },
-    { v: "3", l: "Tugas", c: C.cta, bg: "#FFF7ED" },
-    { v: "98%", l: "Kehadiran", c: C.success, bg: "#F0FDF4" },
-  ];
-
-  return (
-    <div className="relative" style={{ perspective: "1200px" }}>
-      {/* ── Browser frame ─────────────────────────────────────── */}
-      <div
-        style={{
-          borderRadius: "14px",
-          overflow: "hidden",
-          border: `2px solid ${C.border}`,
-          boxShadow:
-            "0 32px 80px rgba(79,70,229,0.18), 0 8px 24px rgba(0,0,0,0.10)",
-          transform: "rotateY(-6deg) rotateX(2deg)",
-          transformStyle: "preserve-3d",
-          background: C.surface,
-        }}
-      >
-        {/* Browser chrome */}
-        <div
-          style={{
-            background: "#F1F5F9",
-            borderBottom: "1px solid #E2E8F0",
-            padding: "10px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
-          <div style={{ display: "flex", gap: "5px" }}>
-            {["#FF5F57", "#FFBD2E", "#28CA41"].map((c) => (
-              <span
-                key={c}
-                style={{
-                  width: 9,
-                  height: 9,
-                  borderRadius: "50%",
-                  background: c,
-                  display: "block",
-                }}
-              />
-            ))}
-          </div>
-          <div
-            style={{
-              flex: 1,
-              background: "white",
-              border: "1px solid #E2E8F0",
-              borderRadius: "6px",
-              padding: "3px 10px",
-              fontSize: "10px",
-              color: "#94A3B8",
-              textAlign: "center",
-              maxWidth: "200px",
-              margin: "0 auto",
-            }}
-          >
-            sistem-praktikum.akbid.ac.id
-          </div>
-        </div>
-
-        {/* App layout */}
-        <div style={{ display: "flex", height: "300px", overflow: "hidden" }}>
-          {/* Sidebar */}
-          <div
-            style={{
-              width: "52px",
-              background: C.dark,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              padding: "14px 0",
-              gap: "14px",
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "8px",
-                background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: "3px",
-                  background: "rgba(255,255,255,0.9)",
-                }}
-              />
-            </div>
-            {[true, false, false, false, false].map((active, i) => (
-              <div
-                key={i}
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: "9px",
-                  background: active ? C.primary : "transparent",
-                  border: active
-                    ? "none"
-                    : "1.5px solid rgba(255,255,255,0.12)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: active ? 1 : 0.4,
-                }}
-              >
-                <div
-                  style={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: "3px",
-                    border: "1.5px solid white",
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Main content */}
-          <div
-            style={{
-              flex: 1,
-              background: "#F8FAFC",
-              padding: "14px",
-              overflow: "hidden",
-            }}
-          >
-            {/* Top bar */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "12px",
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    height: "9px",
-                    width: "110px",
-                    borderRadius: "4px",
-                    background: C.dark,
-                    marginBottom: "5px",
-                  }}
-                />
-                <div
-                  style={{
-                    height: "7px",
-                    width: "70px",
-                    borderRadius: "4px",
-                    background: "#CBD5E1",
-                  }}
-                />
-              </div>
-              <div
-                style={{
-                  height: "26px",
-                  width: "72px",
-                  borderRadius: "8px",
-                  background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
-                  opacity: 0.9,
-                }}
-              />
-            </div>
-            {/* Stat cards */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3,1fr)",
-                gap: "7px",
-                marginBottom: "12px",
-              }}
-            >
-              {stats.map((s) => (
-                <div
-                  key={s.l}
-                  style={{
-                    background: s.bg,
-                    border: `1.5px solid ${s.c}30`,
-                    borderRadius: "10px",
-                    padding: "8px 10px",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 800,
-                      color: s.c,
-                      fontFamily: "'Outfit', sans-serif",
-                      margin: 0,
-                    }}
-                  >
-                    {s.v}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "8px",
-                      color: C.muted,
-                      margin: 0,
-                      fontWeight: 500,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    {s.l}
-                  </p>
-                </div>
-              ))}
-            </div>
-            {/* Schedule card */}
-            <div
-              style={{
-                background: C.surface,
-                borderRadius: "10px",
-                border: `1.5px solid ${C.border}`,
-                padding: "10px 12px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "8px",
-                }}
-              >
-                <div
-                  style={{
-                    height: "8px",
-                    width: "90px",
-                    borderRadius: "3px",
-                    background: C.dark,
-                  }}
-                />
-                <div
-                  style={{
-                    height: "6px",
-                    width: "40px",
-                    borderRadius: "3px",
-                    background: "#CBD5E1",
-                  }}
-                />
-              </div>
-              {schedule.map((row, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "7px 0",
-                    borderBottom: i < 2 ? "1px solid #F1F5F9" : "none",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "4px",
-                      height: "32px",
-                      borderRadius: "2px",
-                      background: row.color,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        height: "7px",
-                        width: "100px",
-                        borderRadius: "3px",
-                        background: "#1E293B",
-                        marginBottom: "4px",
-                      }}
-                    />
-                    <div
-                      style={{
-                        height: "6px",
-                        width: "60px",
-                        borderRadius: "3px",
-                        background: "#CBD5E1",
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "8px",
-                      color: row.color,
-                      fontWeight: 600,
-                      padding: "2px 6px",
-                      background: `${row.color}15`,
-                      borderRadius: "4px",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {row.time}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Floating: saved notification */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: "-14px",
-          left: "-18px",
-          background: "white",
-          borderRadius: "14px",
-          padding: "8px 14px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-          border: `2px solid ${C.border}`,
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          minWidth: "175px",
-          animation: "float 3s ease-in-out infinite",
-        }}
-      >
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: C.success,
-            flexShrink: 0,
-            display: "block",
-            animation: "float 2s ease-in-out infinite",
-          }}
-        />
-        <span style={{ fontSize: "11px", color: C.body, fontWeight: 600 }}>
-          Logbook berhasil disimpan
-        </span>
-      </div>
-
-      {/* Floating: PWA badge */}
-      <div
-        style={{
-          position: "absolute",
-          top: "-14px",
-          right: "-14px",
-          background: `linear-gradient(135deg, ${C.cta}, ${C.ctaDark})`,
-          borderRadius: "12px",
-          padding: "7px 14px",
-          boxShadow: "0 6px 16px rgba(249,115,22,0.40)",
-          animation: "float 4s ease-in-out infinite 1s",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "11px",
-            color: "white",
-            fontWeight: 700,
-            letterSpacing: "0.05em",
-          }}
-        >
-          ✦ PWA Ready
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Marquee Ticker ───────────────────────────────────────────── */
-const MARQUEE_ITEMS = [
-  { icon: <Calendar className="h-4 w-4" />, text: "Jadwal Praktikum" },
-  { icon: <BookOpen className="h-4 w-4" />, text: "Logbook Digital" },
-  { icon: <ClipboardCheck className="h-4 w-4" />, text: "Presensi Otomatis" },
-  { icon: <BarChart3 className="h-4 w-4" />, text: "Penilaian Real-time" },
-  { icon: <Bell className="h-4 w-4" />, text: "Notifikasi Push" },
-  { icon: <Smartphone className="h-4 w-4" />, text: "Installable PWA" },
-  { icon: <Lock className="h-4 w-4" />, text: "RBAC Security" },
-  { icon: <Zap className="h-4 w-4" />, text: "Offline Mode" },
-  { icon: <Download className="h-4 w-4" />, text: "Export Laporan" },
+const MODULES = [
+  { icon: Calendar,      title: "Jadwal Praktikum",  desc: "Penjadwalan otomatis dengan notifikasi pengingat untuk semua peran.",       cls: "bg-rose-100/80 text-rose-700" },
+  { icon: BookOpen,      title: "Logbook Digital",   desc: "Pencatatan kegiatan digital, mudah diisi dan tersimpan aman di cloud.",     cls: "bg-amber-100/80 text-amber-700" },
+  { icon: ClipboardList, title: "Presensi",           desc: "Rekam kehadiran mahasiswa dan dosen secara real-time dan akurat.",           cls: "bg-blue-100/80 text-blue-700" },
+  { icon: FileText,      title: "Materi & Bank Soal", desc: "Distribusi materi ajar dan bank soal langsung ke mahasiswa.",               cls: "bg-purple-100/80 text-purple-700" },
+  { icon: BarChart2,     title: "Tugas & Penilaian",  desc: "Pengumpulan tugas dan penilaian terstruktur dengan laporan otomatis.",      cls: "bg-green-100/80 text-green-700" },
+  { icon: Brain,         title: "Kuis Online",        desc: "Ujian digital dengan penilaian otomatis dan rekap hasil instan.",           cls: "bg-indigo-100/80 text-indigo-700" },
+  { icon: Wrench,        title: "Peminjaman Alat",    desc: "Pengajuan dan persetujuan peminjaman peralatan lab secara digital.",        cls: "bg-orange-100/80 text-orange-700" },
+  { icon: Bell,          title: "Notifikasi Pintar",  desc: "Push notification otomatis untuk setiap pembaruan penting.",               cls: "bg-teal-100/80 text-teal-700" },
 ];
 
-function MarqueeTicker() {
-  const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
+const ROLES = [
+  {
+    icon: GraduationCap, role: "Mahasiswa", gradient: "from-rose-500 to-rose-700",
+    desc: "Akses jadwal, logbook, presensi, dan nilai dari satu platform.",
+    features: ["Lihat & konfirmasi jadwal", "Isi logbook digital harian", "Presensi satu ketuk", "Ikuti kuis & unduh materi", "Pantau nilai real-time"],
+  },
+  {
+    icon: Stethoscope, role: "Dosen", gradient: "from-violet-500 to-violet-700",
+    desc: "Kelola sesi praktikum, evaluasi mahasiswa, dan pantau progres.",
+    features: ["Buat & kelola jadwal", "Verifikasi logbook mahasiswa", "Input & publish nilai", "Buat kuis & bank soal", "Ajukan peminjaman alat"],
+  },
+  {
+    icon: FlaskConical, role: "Laboran", gradient: "from-teal-500 to-teal-700",
+    desc: "Pantau penggunaan lab, inventaris alat, dan koordinasi dosen.",
+    features: ["Monitoring jadwal lab", "Manajemen inventaris", "Proses peminjaman alat", "Laporan kondisi lab", "Notifikasi ketersediaan"],
+  },
+  {
+    icon: Settings, role: "Administrator", gradient: "from-slate-600 to-slate-800",
+    desc: "Kelola seluruh sistem: pengguna, kelas, mata kuliah, laboratorium.",
+    features: ["Manajemen pengguna & peran", "Kelola kelas & mata kuliah", "Manajemen lab & alat", "Monitoring sinkronisasi", "Laporan & analitik"],
+  },
+];
+
+const FLOW = [
+  { step: "01", title: "Perencanaan",  desc: "Admin menyusun jadwal praktikum dan mendistribusikan ke semua pengguna." },
+  { step: "02", title: "Pelaksanaan",  desc: "Mahasiswa presensi, mengisi logbook, dan mengakses materi secara digital." },
+  { step: "03", title: "Evaluasi",     desc: "Dosen menilai logbook, memberi feedback, dan menginput nilai akhir." },
+  { step: "04", title: "Sinkronisasi", desc: "Semua data tersimpan dan tersinkronisasi antar perangkat otomatis." },
+];
+
+const TICKER = [
+  "✦ Jadwal Praktikum","✦ Logbook Digital","✦ Presensi Otomatis",
+  "✦ Kuis Online","✦ Peminjaman Alat","✦ Bank Soal",
+  "✦ Notifikasi Push","✦ PWA Installable","✦ Offline Ready",
+  "✦ Manajemen Lab","✦ Sync Real-time","✦ Export Laporan",
+];
+
+// ─── useCounter hook ──────────────────────────────────────────────────────
+
+function useCounter(target: number, duration = 1800) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !started.current) {
+        started.current = true;
+        const t0 = performance.now();
+        const tick = (now: number) => {
+          const p = Math.min((now - t0) / duration, 1);
+          setCount(Math.floor(p * target));
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [target, duration]);
+
+  return { count, ref };
+}
+
+// ─── StatItem — own component so hook is called at top level ─────────────
+
+function StatItem({ value, suffix, label }: { value: number; suffix: string; label: string }) {
+  const { count, ref } = useCounter(value);
   return (
-    <div
-      style={{
-        background: C.dark,
-        overflow: "hidden",
-        padding: "11px 0",
-        borderTop: `3px solid ${C.primary}`,
-        borderBottom: `1px solid rgba(255,255,255,0.06)`,
-      }}
+    <div className="text-center py-4 md:py-0">
+      <p
+        className="akbid-font-display font-bold leading-none"
+        style={{
+          fontSize: "clamp(2.5rem, 5vw, 3.75rem)",
+          background: "linear-gradient(135deg, #7B1D3A, #9B2448)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}
+      >
+        <span ref={ref}>{count}</span>{suffix}
+      </p>
+      <p className="text-xs text-[var(--color-text-muted)] mt-2 uppercase tracking-widest">{label}</p>
+    </div>
+  );
+}
+
+// ─── Navbar ───────────────────────────────────────────────────────────────
+
+function NavBar() {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", h);
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+
+  return (
+    <nav
+      className="fixed top-0 inset-x-0 z-50 transition-all duration-300"
+      style={scrolled ? { background: "rgba(248,250,252,0.88)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.5)", boxShadow: "0 1px 12px rgba(15,23,42,0.06)" } : {}}
     >
-      <div className="marquee-track">
-        {doubled.map((item, i) => (
-          <div
-            key={i}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "0 28px",
-              color: "rgba(255,255,255,0.55)",
-              fontSize: "13px",
-              fontWeight: 600,
-              fontFamily: "'Outfit', sans-serif",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <span style={{ color: C.secondary }}>{item.icon}</span>
-            {item.text}
-            {(i + 1) % MARQUEE_ITEMS.length === 0 && (
-              <span
-                style={{
-                  marginLeft: "12px",
-                  color: C.primary,
-                  fontSize: "16px",
-                  lineHeight: 1,
-                }}
-              >
-                ◆
-              </span>
+      <div className="app-container h-16 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden" style={{ background: "linear-gradient(135deg,#7B1D3A,#4a0f22)" }}>
+            {akbidLogo ? (
+              <img src={akbidLogo} alt="AKBID" className="w-7 h-7 object-contain" />
+            ) : (
+              <FlaskConical className="w-4 h-4 text-white" />
             )}
           </div>
+          <div>
+            <span className="akbid-font-display font-bold text-[13px] text-[var(--color-text-primary)] leading-none block tracking-tight">Sistem Praktikum</span>
+            <span className="text-[10px] text-[var(--color-text-muted)] leading-none">AKBID Mega Buana</span>
+          </div>
+        </div>
+
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-7">
+          {["Fitur", "Alur Kerja", "Peran"].map((l) => (
+            <a key={l} href="#" className="text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">{l}</a>
+          ))}
+        </div>
+
+        <div className="hidden md:flex items-center gap-3">
+          <Link to="/login" className="text-sm font-semibold text-[var(--color-text-primary)] hover:text-[#7B1D3A] transition-colors">
+            Masuk
+          </Link>
+          <Link
+            to="/register"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-sm font-semibold rounded-xl shadow-sm hover:opacity-90 transition-opacity"
+            style={{ background: "linear-gradient(135deg,#7B1D3A,#9B2448)" }}
+          >
+            Daftar <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <button className="md:hidden p-2 text-[var(--color-text-primary)]" onClick={() => setOpen(!open)}>
+          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden overflow-hidden"
+            style={{ background: "rgba(248,250,252,0.95)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.5)" }}
+          >
+            <div className="app-container py-4 flex flex-col gap-4">
+              {["Fitur", "Alur Kerja", "Peran"].map((l) => (
+                <a key={l} href="#" className="text-sm font-medium text-[var(--color-text-primary)]">{l}</a>
+              ))}
+              <div className="flex gap-3 pt-2">
+                <Link to="/login" className="flex-1 text-center px-4 py-2.5 border border-[var(--color-border)] text-[var(--color-text-primary)] text-sm font-semibold rounded-xl">Masuk</Link>
+                <Link to="/register" className="flex-1 text-center px-4 py-2.5 text-white text-sm font-semibold rounded-xl" style={{ background: "linear-gradient(135deg,#7B1D3A,#9B2448)" }}>Daftar</Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
+  );
+}
+
+// ─── Hero ─────────────────────────────────────────────────────────────────
+
+function Hero() {
+  return (
+    <section className="relative pt-32 pb-20 px-4 overflow-hidden">
+      {/* Decorative giant word */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+        <span
+          className="akbid-font-display font-bold italic text-[var(--color-text-primary)] whitespace-nowrap"
+          style={{ fontSize: "clamp(8rem,22vw,18rem)", opacity: 0.025, lineHeight: 1 }}
+        >
+          Praktikum
+        </span>
+      </div>
+
+      <div className="app-container relative grid lg:grid-cols-2 gap-14 items-center">
+        {/* Left */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
+          <span
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-[11px] font-bold rounded-full uppercase tracking-[0.2em] mb-7"
+            style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.6)", color: "#7B1D3A" }}
+          >
+            <Smartphone className="w-3 h-3" /> PWA · Offline Ready
+          </span>
+
+          <h1
+            className="akbid-font-display font-bold leading-[1.05] tracking-tight text-[var(--color-text-primary)] mb-6"
+            style={{ fontSize: "clamp(2.6rem,5vw,4.25rem)" }}
+          >
+            Kelola Praktikum<br />
+            Lebih Mudah,{" "}
+            <span style={{ background: "linear-gradient(135deg,#7B1D3A,#c0394f)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              Lebih Digital.
+            </span>
+          </h1>
+
+          <p className="text-[1.0625rem] text-[var(--color-text-secondary)] leading-[1.75] mb-8 max-w-[430px]">
+            Platform manajemen praktikum kebidanan yang menghubungkan mahasiswa, dosen, dan laboran dalam satu sistem terintegrasi — bekerja bahkan tanpa internet.
+          </p>
+
+          <div className="flex flex-wrap gap-3 mb-8">
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 px-6 py-3 text-white font-semibold rounded-xl text-[15px] hover:opacity-90 transition-opacity"
+              style={{ background: "linear-gradient(135deg,#7B1D3A,#9B2448)", boxShadow: "0 4px 16px rgba(123,29,58,0.3)" }}
+            >
+              Masuk ke Sistem <ArrowRight className="w-4 h-4" />
+            </Link>
+            <a
+              href="#fitur"
+              className="inline-flex items-center gap-2 px-6 py-3 font-semibold rounded-xl text-[15px] text-[var(--color-text-primary)] hover:opacity-90 transition-all"
+              style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.6)" }}
+            >
+              Lihat Fitur
+            </a>
+          </div>
+
+          <div className="flex flex-wrap gap-5 text-[13px] text-[var(--color-text-muted)]">
+            {["Akun dibuat oleh Admin", "Installable sebagai aplikasi", "Bisa dipakai offline"].map((t, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#7B1D3A" }} /> {t}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Right — App mockup */}
+        <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15 }} className="relative">
+          <div className="glass-panel rounded-2xl overflow-hidden">
+            {/* Browser chrome */}
+            <div className="px-4 py-3 flex items-center gap-2" style={{ background: "linear-gradient(to right,#0F172A,#1E293B,#7B1D3A)" }}>
+              <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+              <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+              <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
+              <span className="ml-3 text-[11px] font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>sistem-praktikum.akbid-megabuana.ac.id</span>
+            </div>
+            {/* Dashboard */}
+            <div className="p-5" style={{ background: "rgba(255,255,255,0.45)" }}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[11px] text-[var(--color-text-muted)]">Selamat datang,</p>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">Siti Nurhaliza · Mahasiswa</p>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
+                  <Wifi className="w-2.5 h-2.5" /> Online
+                </span>
+              </div>
+
+              <div className="rounded-xl p-3 mb-3" style={{ background: "rgba(123,29,58,0.06)", border: "1px solid rgba(123,29,58,0.1)" }}>
+                <p className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: "#7B1D3A" }}>Jadwal Hari Ini</p>
+                {[
+                  { time: "08:00", title: "Praktikum Asuhan Kebidanan I", room: "Lab A" },
+                  { time: "13:00", title: "Praktikum Keterampilan Dasar", room: "Lab B" },
+                ].map((s, i) => (
+                  <div key={i} className={`flex items-center gap-3 py-2 ${i === 0 ? "border-b" : ""}`} style={i === 0 ? { borderColor: "rgba(123,29,58,0.1)" } : {}}>
+                    <span className="text-[10px] font-mono font-bold w-10" style={{ color: "#7B1D3A" }}>{s.time}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium text-[var(--color-text-primary)] truncate">{s.title}</p>
+                      <p className="text-[10px] text-[var(--color-text-muted)]">{s.room}</p>
+                    </div>
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#7B1D3A" }} />
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {[["Logbook","12/15","bg-rose-50 text-rose-700"],["Presensi","94%","bg-green-50 text-green-700"],["Nilai","A-","bg-violet-50 text-violet-700"]].map(([l,v,c],i) => (
+                  <div key={i} className={`${c} rounded-lg p-2 text-center`}>
+                    <p className="text-sm font-bold akbid-font-display">{v}</p>
+                    <p className="text-[10px]">{l}</p>
+                  </div>
+                ))}
+              </div>
+
+              <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                className="flex items-center gap-2 text-white rounded-lg px-3 py-2"
+                style={{ background: "linear-gradient(135deg,#7B1D3A,#9B2448)" }}
+              >
+                <Bell className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="text-[11px] font-medium">Logbook Praktikum berhasil disimpan ✓</span>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Floating badges */}
+          {[
+            { Icon: Smartphone, text: "PWA Ready",    cls: "absolute -top-4 -right-4", dy: [0,6,0] as [number,number,number], delay: 0.5 },
+            { Icon: WifiOff,    text: "Offline Mode", cls: "absolute -bottom-4 -left-4", dy: [0,-5,0] as [number,number,number], delay: 1 },
+          ].map(({ Icon, text, cls, dy, delay }, i) => (
+            <motion.div key={i}
+              animate={{ y: dy }}
+              transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: "easeInOut", delay }}
+              className={`${cls} glass-panel-strong rounded-xl px-3 py-2 flex items-center gap-2`}
+            >
+              <Icon className="w-4 h-4" style={{ color: "#7B1D3A" }} />
+              <span className="text-xs font-semibold text-[var(--color-text-primary)]">{text}</span>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Stats bar */}
+      <div className="app-container mt-20">
+        <div className="glass-panel rounded-2xl px-8 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-y-2 md:divide-y-0 md:divide-x divide-[var(--color-border)]">
+            <StatItem value={4}   suffix=""   label="Peran Pengguna" />
+            <StatItem value={8}   suffix="+"  label="Modul Aktif" />
+            <StatItem value={100} suffix="%"  label="Berbasis Digital" />
+            <StatItem value={24}  suffix="/7" label="Online & Offline" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Ticker ───────────────────────────────────────────────────────────────
+
+function Ticker() {
+  return (
+    <div
+      className="relative overflow-hidden py-4 my-10"
+      style={{ background: "linear-gradient(to right,rgba(123,29,58,0.88),rgba(74,15,34,0.88),rgba(123,29,58,0.88))", backdropFilter: "blur(8px)", borderTop: "1px solid rgba(255,255,255,0.15)", borderBottom: "1px solid rgba(255,255,255,0.15)" }}
+    >
+      <div className="marquee-track gap-10">
+        {[...TICKER, ...TICKER].map((item, i) => (
+          <span key={i} className="text-sm font-semibold whitespace-nowrap tracking-wide" style={{ color: "rgba(255,255,255,0.75)" }}>{item}</span>
         ))}
       </div>
     </div>
   );
 }
 
-/* ─── Main Page Component ──────────────────────────────────────── */
-export function HomePage() {
-  const statsRef = useRef<HTMLDivElement>(null);
-  const [statsActive, setStatsActive] = useState(false);
+// ─── Modules ──────────────────────────────────────────────────────────────
 
-  /* Scroll-reveal: one IntersectionObserver for all [data-reveal] */
-  useEffect(() => {
-    const elements = document.querySelectorAll("[data-reveal]");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("revealed");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12 },
-    );
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
-  /* Counter trigger */
-  useEffect(() => {
-    const el = statsRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setStatsActive(true);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.5 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  /* ── Data (logic unchanged) ─────────────────────────────────── */
-  const modules = [
-    {
-      no: "01",
-      title: "Jadwal Praktikum",
-      desc: "Penjadwalan sesi lab lintas kelas, dosen, dan laboran secara terpusat.",
-      tag: "Jadwal",
-      icon: <Calendar className="h-6 w-6" style={{ color: C.primary }} />,
-      bg: "#EEF2FF",
-      border: "#C7D2FE",
-    },
-    {
-      no: "02",
-      title: "Logbook Digital",
-      desc: "Dokumentasi kegiatan praktikum, mudah diisi mahasiswa dan direview dosen.",
-      tag: "Dokumentasi",
-      icon: <BookOpen className="h-6 w-6" style={{ color: C.cta }} />,
-      bg: "#FFF7ED",
-      border: "#FED7AA",
-    },
-    {
-      no: "03",
-      title: "Presensi dan Kehadiran",
-      desc: "Kehadiran tercatat cepat dan tersinkronisasi otomatis ke semua pihak.",
-      tag: "Kehadiran",
-      icon: <ClipboardCheck className="h-6 w-6" style={{ color: C.success }} />,
-      bg: "#F0FDF4",
-      border: "#BBF7D0",
-    },
-    {
-      no: "04",
-      title: "Materi dan Bank Soal",
-      desc: "Dosen upload materi dan kelola bank soal untuk evaluasi berkelanjutan.",
-      tag: "Akademik",
-      icon: <BarChart3 className="h-6 w-6" style={{ color: C.purple }} />,
-      bg: "#F5F3FF",
-      border: "#DDD6FE",
-    },
-    {
-      no: "05",
-      title: "Tugas dan Penilaian",
-      desc: "Pre-test, post-test, dan laporan tugas dalam satu alur penilaian terintegrasi.",
-      tag: "Evaluasi",
-      icon: <ClipboardList className="h-6 w-6" style={{ color: "#0891B2" }} />,
-      bg: "#ECFEFF",
-      border: "#A5F3FC",
-    },
-    {
-      no: "06",
-      title: "Notifikasi Real-time",
-      desc: "Informasi jadwal, tugas, dan pengumuman tersampaikan tepat waktu ke semua peran.",
-      tag: "Komunikasi",
-      icon: <Bell className="h-6 w-6" style={{ color: C.cta }} />,
-      bg: "#FFF7ED",
-      border: "#FED7AA",
-    },
-  ];
-
-  const flow = [
-    {
-      no: "01",
-      title: "Perencanaan",
-      desc: "Dosen dan laboran menyiapkan jadwal, ruang, dan kebutuhan alat laboratorium.",
-      color: C.primary,
-      bg: "#EEF2FF",
-    },
-    {
-      no: "02",
-      title: "Pelaksanaan",
-      desc: "Mahasiswa menjalankan praktikum, mengisi presensi dan logbook secara langsung.",
-      color: C.cta,
-      bg: "#FFF7ED",
-    },
-    {
-      no: "03",
-      title: "Evaluasi",
-      desc: "Dosen review logbook, memberi penilaian, dan umpan balik secara terstruktur.",
-      color: C.purple,
-      bg: "#F5F3FF",
-    },
-    {
-      no: "04",
-      title: "Sinkronisasi",
-      desc: "Data tersimpan dan tersinkron aman ke server saat koneksi internet tersedia.",
-      color: C.success,
-      bg: "#F0FDF4",
-    },
-  ];
-
-  const roles = [
-    {
-      label: "Mahasiswa",
-      title: "Pelajar",
-      icon: <GraduationCap className="h-7 w-7 text-white" />,
-      color: C.primary,
-      features: [
-        "Akses jadwal praktikum",
-        "Isi dan lihat logbook digital",
-        "Kerjakan tugas dan lihat nilai",
-        "Presensi otomatis",
-        "Unduh materi praktikum",
-      ],
-    },
-    {
-      label: "Dosen",
-      title: "Pengajar",
-      icon: <BookOpen className="h-7 w-7 text-white" />,
-      color: C.cta,
-      features: [
-        "Kelola jadwal dan tugas",
-        "Review dan nilai logbook",
-        "Buat dan kelola bank soal",
-        "Pantau kehadiran kelas",
-        "Upload materi evaluasi",
-      ],
-    },
-    {
-      label: "Laboran",
-      title: "Teknisi Lab",
-      icon: <FlaskConical className="h-7 w-7 text-white" />,
-      color: C.purple,
-      features: [
-        "Kelola inventaris alat",
-        "Persetujuan peminjaman",
-        "Manajemen laboratorium",
-        "Laporan operasional harian",
-        "Koordinasi jadwal lab",
-      ],
-    },
-  ];
-
-  /* ── JSX ────────────────────────────────────────────────────── */
+function Modules() {
   return (
-    <div
-      className="min-h-screen akbid-font-body overflow-x-hidden"
-      style={{ backgroundColor: C.bg, color: C.body }}
-    >
-      {/* ── NAVBAR ─────────────────────────────────────────────── */}
-      <nav
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          backgroundColor: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(20px)",
-          borderBottom: `1px solid ${C.border}`,
-          boxShadow: "0 1px 16px rgba(79,70,229,0.08)",
-        }}
-      >
-        <div className="mx-auto flex h-[66px] max-w-[1100px] items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-3 cursor-pointer">
-            <div
-              style={{
-                display: "flex",
-                height: 40,
-                width: 40,
-                flexShrink: 0,
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: "14px",
-                background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
-                boxShadow: `0 4px 14px rgba(79,70,229,0.32)`,
-              }}
-            >
-              <img
-                src={akbidLogo}
-                alt="Logo"
-                className="h-7 w-7 object-contain"
-              />
-            </div>
-            <div>
-              <p
-                className="text-[15px] font-semibold leading-tight"
-                style={{ fontFamily: "'Outfit', sans-serif", color: C.dark }}
-              >
-                Akademi Kebidanan Mega Buana
-              </p>
-              <p
-                className="text-[11px] uppercase tracking-widest"
-                style={{ color: C.muted }}
-              >
-                Sistem Informasi Praktikum
-              </p>
-            </div>
-            <span
-              className="hidden md:inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white"
-              style={{
-                background: `linear-gradient(90deg, ${C.primary}, ${C.secondary})`,
-              }}
-            >
-              PWA
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <Link to="/login">
-              <ButtonEnhanced
-                size="sm"
-                className="cursor-pointer font-semibold transition-all duration-200 hover:scale-[1.03]"
-                style={{
-                  background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
-                  color: "#fff",
-                  border: "none",
-                  boxShadow: `0 4px 14px rgba(79,70,229,0.35)`,
-                }}
-              >
-                Masuk
-              </ButtonEnhanced>
-            </Link>
-            <Link to="/register">
-              <ButtonEnhanced
-                size="sm"
-                variant="outline"
-                className="cursor-pointer font-semibold transition-colors duration-200 hover:bg-indigo-50"
-                style={{ borderColor: C.border, color: C.primary }}
-              >
-                Daftar
-              </ButtonEnhanced>
-            </Link>
-          </div>
+    <section id="fitur" className="py-28 px-4">
+      <div className="app-container">
+        <div className="mb-16 max-w-2xl">
+          <span className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: "#7B1D3A" }}>— Modul Sistem</span>
+          <h2
+            className="akbid-font-display font-bold text-[var(--color-text-primary)] mt-4 leading-[1.1] tracking-tight"
+            style={{ fontSize: "clamp(2rem,4vw,3.25rem)" }}
+          >
+            Semua yang dibutuhkan<br />
+            <em className="not-italic font-normal text-[var(--color-text-secondary)]" style={{ fontSize: "0.72em" }}>
+              untuk praktikum kebidanan modern.
+            </em>
+          </h2>
         </div>
-      </nav>
-
-      {/* ── HERO ───────────────────────────────────────────────── */}
-      <main id="main-content">
-      <section
-        className="relative overflow-hidden"
-        style={{
-          backgroundColor: C.bg,
-          minHeight: "90vh",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        {/* Ambient blobs */}
-        <div
-          className="pointer-events-none absolute right-0 top-0 rounded-full"
-          style={{
-            width: 600,
-            height: 600,
-            opacity: 0.22,
-            background: `radial-gradient(circle, ${C.primary}, transparent 70%)`,
-            filter: "blur(80px)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute -left-32 bottom-0 rounded-full"
-          style={{
-            width: 400,
-            height: 400,
-            opacity: 0.14,
-            background: `radial-gradient(circle, ${C.cta}, transparent 70%)`,
-            filter: "blur(80px)",
-          }}
-        />
-
-        <div
-          className="relative mx-auto grid max-w-[1100px] grid-cols-1 gap-12 px-4 py-16 sm:px-6 lg:gap-10 lg:py-20"
-          style={{
-            width: "100%",
-            gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-          }}
-        >
-          <div className="grid grid-cols-1 gap-12 lg:gap-10 lg:grid-cols-[1.2fr_1fr]">
-            {/* Left: Copy */}
-            <div className="flex flex-col justify-center" data-reveal>
-              {/* Eyebrow */}
-              <div
-                className="mb-6 inline-flex w-fit items-center gap-2 rounded-full px-4 py-2"
-                style={{
-                  background: `linear-gradient(90deg, rgba(79,70,229,0.10), rgba(129,140,248,0.06))`,
-                  border: `1px solid ${C.border}`,
-                }}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {MODULES.map((m, i) => {
+            const Icon = m.icon;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.055 }}
+                className="glass-panel rounded-xl p-5 h-full interactive-card"
               >
-                <span
-                  className="h-2 w-2 animate-pulse rounded-full"
-                  style={{ backgroundColor: C.primary }}
-                />
-                <span
-                  className="text-[12px] font-semibold uppercase tracking-widest"
-                  style={{
-                    color: C.primary,
-                    fontFamily: "'Outfit', sans-serif",
-                  }}
-                >
-                  Sistem Informasi Praktikum · AKBID Mega Buana
-                </span>
-              </div>
-
-              {/* Headline */}
-              <h1
-                className="mb-5"
-                style={{
-                  fontFamily: "'Outfit', sans-serif",
-                  color: C.dark,
-                  fontSize: "clamp(42px, 5vw, 68px)",
-                  fontWeight: 800,
-                  lineHeight: 1.03,
-                }}
-              >
-                Kelola Praktikum
-                <br />
-                <span
-                  style={{
-                    background: `linear-gradient(135deg, ${C.primary} 0%, ${C.cta} 100%)`,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  Lebih Mudah.
-                </span>
-              </h1>
-
-              <p
-                className="mb-3 text-[20px] font-medium"
-                style={{ fontFamily: "'Outfit', sans-serif", color: C.muted }}
-              >
-                Satu platform, semua yang dibutuhkan.
-              </p>
-
-              <p
-                className="mb-8 max-w-[460px] text-[16px] leading-[1.8]"
-                style={{ color: C.body }}
-              >
-                Platform berbasis web untuk jadwal, logbook, tugas, presensi,
-                dan pengelolaan laboratorium yang dirancang khusus untuk AKBID
-                Mega Buana.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-4">
-                <Link to="/login">
-                  <ButtonEnhanced
-                    className="group cursor-pointer px-7 py-3 text-[15px] font-bold text-white transition-all duration-200 hover:scale-[1.04]"
-                    style={{
-                      background: `linear-gradient(135deg, ${C.cta}, ${C.ctaDark})`,
-                      boxShadow: `0 6px 20px rgba(249,115,22,0.40)`,
-                      border: "none",
-                    }}
-                  >
-                    Masuk ke Sistem
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </ButtonEnhanced>
-                </Link>
-                <span
-                  className="cursor-default text-[14px] underline underline-offset-4"
-                  style={{ color: C.muted }}
-                >
-                  Belum punya akun? Hubungi admin
-                </span>
-              </div>
-
-              <div className="mt-10 flex flex-wrap items-center gap-6">
-                {[
-                  {
-                    icon: <Shield className="h-4 w-4" />,
-                    label: "RBAC Security",
-                    color: C.primary,
-                  },
-                  {
-                    icon: <Wifi className="h-4 w-4" />,
-                    label: "Offline Ready",
-                    color: C.success,
-                  },
-                  {
-                    icon: <Smartphone className="h-4 w-4" />,
-                    label: "Installable PWA",
-                    color: C.cta,
-                  },
-                ].map((b) => (
-                  <div
-                    key={b.label}
-                    className="flex items-center gap-1.5"
-                    style={{ color: C.muted }}
-                  >
-                    <span style={{ color: b.color }}>{b.icon}</span>
-                    <span className="text-[13px] font-medium">{b.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: Stats + Mockup */}
-            <div
-              className="hidden lg:flex flex-col gap-5"
-              data-reveal
-              data-delay="2"
-            >
-              {/* Animated stats bar */}
-              <div
-                ref={statsRef}
-                className="overflow-hidden rounded-3xl"
-                style={{
-                  border: `3px solid ${C.border}`,
-                  background: C.surface,
-                  boxShadow: `6px 6px 0px rgba(79,70,229,0.10)`,
-                }}
-              >
-                <div className="grid grid-cols-3">
-                  {[
-                    { target: 4, suffix: "", label: "Peran", color: C.primary },
-                    { target: 7, suffix: "+", label: "Modul", color: C.cta },
-                    {
-                      target: 100,
-                      suffix: "%",
-                      label: "Digital",
-                      color: C.success,
-                    },
-                  ].map((s, i) => (
-                    <div
-                      key={s.label}
-                      className="px-4 py-5 text-center"
-                      style={{
-                        borderRight: i < 2 ? `1px solid ${C.border}` : "none",
-                      }}
-                    >
-                      <p
-                        className="text-[34px] font-extrabold leading-none"
-                        style={{
-                          fontFamily: "'Outfit', sans-serif",
-                          color: s.color,
-                        }}
-                      >
-                        <CountUp
-                          target={s.target}
-                          suffix={s.suffix}
-                          active={statsActive}
-                        />
-                      </p>
-                      <p
-                        className="mt-1 text-[11px] font-semibold uppercase tracking-widest"
-                        style={{ color: C.muted }}
-                      >
-                        {s.label}
-                      </p>
-                    </div>
-                  ))}
+                <div className={`w-10 h-10 rounded-lg ${m.cls} flex items-center justify-center mb-4`}>
+                  <Icon className="w-5 h-5" />
                 </div>
-                <div
-                  className="px-4 py-2 text-center text-[11px]"
-                  style={{ color: C.muted, borderTop: `1px solid ${C.border}` }}
-                >
-                  Akademi Kebidanan Mega Buana · Sistem Terintegrasi
-                </div>
-              </div>
-
-              {/* 3-D App mockup */}
-              <AppMockup />
-            </div>
-          </div>
+                <h3 className="akbid-font-display font-bold text-[var(--color-text-primary)] mb-1.5 text-[1.075rem] leading-tight">{m.title}</h3>
+                <p className="text-[13px] text-[var(--color-text-muted)] leading-relaxed">{m.desc}</p>
+              </motion.div>
+            );
+          })}
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* ── MARQUEE ────────────────────────────────────────────── */}
-      <MarqueeTicker />
+// ─── Flow ─────────────────────────────────────────────────────────────────
 
-      {/* ── VALUE STRIP ────────────────────────────────────────── */}
-      <section style={{ background: C.primary }}>
-        <div className="mx-auto grid max-w-[1100px] grid-cols-1 sm:grid-cols-3 px-4 sm:px-6">
-          {[
-            {
-              icon: <CheckCircle2 className="h-5 w-5 text-white" />,
-              t: "Data Tersinkron",
-              s: "Semua aktivitas tercatat real-time",
-            },
-            {
-              icon: <Shield className="h-5 w-5 text-white" />,
-              t: "Akses Berbasis Peran",
-              s: "Setiap pengguna lihat yang relevan",
-            },
-            {
-              icon: <Smartphone className="h-5 w-5 text-white" />,
-              t: "Bisa Diinstal di HP",
-              s: "PWA tanpa perlu Play Store",
-            },
-          ].map((item, idx) => (
-            <div
-              key={item.t}
-              className={`flex items-center gap-4 px-4 py-5 ${idx < 2 ? "border-b sm:border-b-0 sm:border-r border-indigo-400/30" : ""}`}
+function FlowSection() {
+  return (
+    <section id="alur" className="py-28 px-4 relative overflow-hidden">
+      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,rgba(15,23,42,0.97),rgba(30,41,59,0.97),rgba(123,29,58,0.82))" }} />
+      {/* Decorative large text */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+        <span className="akbid-font-display font-bold italic text-white whitespace-nowrap" style={{ fontSize: "clamp(6rem,18vw,15rem)", opacity: 0.03, lineHeight: 1 }}>Alur</span>
+      </div>
+
+      <div className="app-container relative">
+        <div className="mb-16">
+          <span className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: "rgba(252,165,165,0.8)" }}>— Alur Kerja</span>
+          <h2
+            className="akbid-font-display font-bold text-white mt-4 leading-[1.1] tracking-tight"
+            style={{ fontSize: "clamp(2rem,4vw,3.25rem)" }}
+          >
+            Dari perencanaan<br />
+            <em className="not-italic font-normal" style={{ fontSize: "0.75em", color: "rgba(255,255,255,0.5)" }}>hingga evaluasi dan sinkronisasi.</em>
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-4 gap-8 relative">
+          <div className="hidden md:block absolute top-8 left-[12%] right-[12%] h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
+          {FLOW.map((f, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
-                {item.icon}
-              </span>
-              <div>
-                <p
-                  className="text-[14px] font-bold text-white"
-                  style={{ fontFamily: "'Outfit', sans-serif" }}
-                >
-                  {item.t}
-                </p>
-                <p className="text-[13px] text-indigo-200">{item.s}</p>
-              </div>
-            </div>
+              <div className="akbid-font-display font-bold text-white leading-none mb-2 select-none" style={{ fontSize: "clamp(3rem,5vw,5rem)", opacity: 0.12 }}>{f.step}</div>
+              <div className="w-px h-6 mb-4" style={{ background: "rgba(255,255,255,0.2)" }} />
+              <h3 className="akbid-font-display font-bold text-white mb-2 text-xl">{f.title}</h3>
+              <p className="text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>{f.desc}</p>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* Wave → modules */}
-      <WaveDivider from={C.primary} to={C.alt} />
+// ─── Quote ────────────────────────────────────────────────────────────────
 
-      {/* ── MODULES ────────────────────────────────────────────── */}
-      <section className="px-4 pb-20 sm:px-6" style={{ background: C.alt }}>
-        <div className="mx-auto max-w-[1100px]">
-          <div className="mb-12" data-reveal>
-            <span
-              className="mb-3 inline-flex rounded-full px-4 py-1.5 text-[12px] font-bold uppercase tracking-widest"
-              style={{ background: `${C.primary}15`, color: C.primary }}
-            >
-              Modul Utama
-            </span>
-            <h2
-              className="text-[38px] font-extrabold leading-tight sm:text-[44px]"
-              style={{ fontFamily: "'Outfit', sans-serif", color: C.dark }}
-            >
-              Semua kebutuhan praktikum,
-              <br />
-              <span style={{ color: C.primary }}>dalam satu sistem.</span>
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {modules.map((m, i) => (
-              <div
-                key={m.no}
-                data-reveal
-                data-delay={String((i % 3) + 1)}
-                className="group cursor-default rounded-3xl p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
-                style={{
-                  background: m.bg,
-                  border: `3px solid ${m.border}`,
-                  boxShadow: `5px 5px 0px ${m.border}`,
-                }}
-              >
-                <p
-                  className="mb-4 text-[52px] font-extrabold leading-none opacity-10"
-                  style={{ fontFamily: "'Outfit', sans-serif", color: C.dark }}
-                >
-                  {m.no}
-                </p>
-                <div
-                  className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl"
-                  style={{
-                    background: C.surface,
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-                  }}
-                >
-                  {m.icon}
-                </div>
-                <h3
-                  className="mb-2 text-[18px] font-bold"
-                  style={{ fontFamily: "'Outfit', sans-serif", color: C.dark }}
-                >
-                  {m.title}
-                </h3>
-                <p
-                  className="mb-4 text-[14px] leading-[1.7]"
-                  style={{ color: C.body }}
-                >
-                  {m.desc}
-                </p>
-                <span
-                  className="inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider"
-                  style={{
-                    background: C.surface,
-                    color: C.muted,
-                    border: `1.5px solid ${m.border}`,
-                  }}
-                >
-                  {m.tag}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Wave → flow */}
-      <WaveDivider from={C.alt} to={C.bg} />
-
-      {/* ── FLOW ───────────────────────────────────────────────── */}
-      <section className="px-4 pb-20 sm:px-6" style={{ background: C.bg }}>
-        <div className="mx-auto max-w-[1100px]">
-          <div className="mb-12" data-reveal>
-            <span
-              className="mb-3 inline-flex rounded-full px-4 py-1.5 text-[12px] font-bold uppercase tracking-widest"
-              style={{ background: `${C.cta}15`, color: C.cta }}
-            >
-              Alur Praktikum
-            </span>
-            <h2
-              className="text-[38px] font-extrabold leading-tight sm:text-[44px]"
-              style={{ fontFamily: "'Outfit', sans-serif", color: C.dark }}
-            >
-              Dari perencanaan{" "}
-              <span style={{ color: C.cta }}>hingga evaluasi.</span>
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-            {flow.map((f, i) => (
-              <div
-                key={f.no}
-                data-reveal
-                data-delay={String(i + 1)}
-                className="rounded-3xl p-5 transition-all duration-200 hover:-translate-y-1"
-                style={{
-                  background: f.bg,
-                  border: `3px solid ${f.color}30`,
-                  boxShadow: `5px 5px 0px ${f.color}18`,
-                }}
-              >
-                <div
-                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl text-[14px] font-extrabold text-white"
-                  style={{
-                    background: f.color,
-                    boxShadow: `0 4px 14px ${f.color}40`,
-                    fontFamily: "'Outfit', sans-serif",
-                  }}
-                >
-                  {f.no}
-                </div>
-                <p
-                  className="mb-0.5 text-[11px] font-bold uppercase tracking-widest"
-                  style={{ color: f.color }}
-                >
-                  Tahap {f.no}
-                </p>
-                <h3
-                  className="mb-2 text-[18px] font-bold"
-                  style={{ fontFamily: "'Outfit', sans-serif", color: C.dark }}
-                >
-                  {f.title}
-                </h3>
-                <p
-                  className="text-[14px] leading-[1.7]"
-                  style={{ color: C.body }}
-                >
-                  {f.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── QUOTE (editorial section) ──────────────────────────── */}
-      <section data-reveal style={{ background: C.dark, padding: "80px 24px" }}>
-        <div className="mx-auto max-w-[860px]">
-          {/* Blockquote */}
+function Quote() {
+  return (
+    <section className="py-28 px-4">
+      <div className="app-container max-w-4xl mx-auto">
+        <div className="glass-panel rounded-2xl px-10 py-14 relative overflow-hidden">
+          {/* Giant decorative quote mark */}
           <div
-            style={{
-              borderLeft: `6px solid ${C.cta}`,
-              paddingLeft: "36px",
-            }}
+            className="absolute top-4 left-8 akbid-font-display font-bold leading-none select-none pointer-events-none"
+            style={{ fontSize: "clamp(6rem,12vw,10rem)", color: "#7B1D3A", opacity: 0.1, lineHeight: 1 }}
+          >"</div>
+          <div className="relative">
+            <p
+              className="akbid-font-display italic text-[var(--color-text-primary)] leading-[1.5] mb-8"
+              style={{ fontSize: "clamp(1.4rem,2.8vw,2.1rem)" }}
+            >
+              Dari logbook manual yang mudah hilang, ke sistem digital yang tersinkronisasi — praktikum kebidanan seharusnya seefisien ilmunya.
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#7B1D3A,#9B2448)" }}>
+                <GraduationCap className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">Tim Pengembang</p>
+                <p className="text-[12px] text-[var(--color-text-muted)]">AKBID Mega Buana</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Roles ────────────────────────────────────────────────────────────────
+
+function RolesSection() {
+  return (
+    <section id="peran" className="py-28 px-4">
+      <div className="app-container">
+        <div className="text-center mb-16">
+          <span className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: "#7B1D3A" }}>— Peran Pengguna</span>
+          <h2
+            className="akbid-font-display font-bold mt-4 text-[var(--color-text-primary)] leading-[1.1] tracking-tight"
+            style={{ fontSize: "clamp(2rem,4vw,3.25rem)" }}
           >
-            <p
-              style={{
-                color: C.secondary,
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: "12px",
-                fontWeight: 700,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                marginBottom: "16px",
-              }}
-            >
-              Mengapa Platform Ini?
-            </p>
-            <blockquote
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: "clamp(22px, 3vw, 36px)",
-                fontWeight: 700,
-                color: "white",
-                lineHeight: 1.38,
-                margin: 0,
-              }}
-            >
-              "Dari logbook manual ke sistem digital — satu platform untuk semua
-              kebutuhan praktikum kebidanan, dari perencanaan hingga evaluasi."
-            </blockquote>
-            <p
-              style={{
-                marginTop: "20px",
-                color: "rgba(255,255,255,0.35)",
-                fontSize: "14px",
-                fontWeight: 600,
-              }}
-            >
-              — Sistem Informasi Praktikum, AKBID Mega Buana
-            </p>
-          </div>
-
-          {/* Mini stats row */}
-          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {[
-              { v: "100%", l: "Data terdigitalisasi", c: C.secondary },
-              { v: "4 Peran", l: "Pengguna terintegrasi", c: C.cta },
-              { v: "Offline", l: "Bisa diakses tanpa internet", c: C.success },
-            ].map((s) => (
-              <div
-                key={s.l}
-                style={{ borderTop: `2px solid ${s.c}45`, paddingTop: "16px" }}
-              >
-                <p
-                  style={{
-                    fontFamily: "'Outfit', sans-serif",
-                    fontSize: "28px",
-                    fontWeight: 800,
-                    color: s.c,
-                    margin: 0,
-                  }}
-                >
-                  {s.v}
-                </p>
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: "rgba(255,255,255,0.40)",
-                    margin: 0,
-                  }}
-                >
-                  {s.l}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Wave → roles */}
-      <WaveDivider from={C.dark} to={C.alt} />
-
-      {/* ── ROLES ──────────────────────────────────────────────── */}
-      <section className="px-4 pb-20 sm:px-6" style={{ background: C.alt }}>
-        <div className="mx-auto max-w-[1100px]">
-          <div className="mb-12" data-reveal>
-            <span
-              className="mb-3 inline-flex rounded-full px-4 py-1.5 text-[12px] font-bold uppercase tracking-widest"
-              style={{ background: `${C.purple}15`, color: C.purple }}
-            >
-              Untuk Siapa?
+            Satu platform,{" "}
+            <span style={{ background: "linear-gradient(135deg,#7B1D3A,#c0394f)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              empat peran utama.
             </span>
-            <h2
-              className="text-[38px] font-extrabold leading-tight sm:text-[44px]"
-              style={{ fontFamily: "'Outfit', sans-serif", color: C.dark }}
-            >
-              Dibuat untuk <span style={{ color: C.purple }}>semua peran.</span>
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {roles.map((r, i) => (
-              <div
-                key={r.label}
-                data-reveal
-                data-delay={String(i + 1)}
-                className="overflow-hidden rounded-3xl transition-all duration-200 hover:-translate-y-1"
-                style={{
-                  background: C.surface,
-                  border: `3px solid ${r.color}25`,
-                  boxShadow: `6px 6px 0px ${r.color}12`,
-                }}
-              >
-                <div
-                  className="px-6 py-5"
-                  style={{
-                    background: `linear-gradient(135deg, ${r.color}10, ${r.color}04)`,
-                    borderBottom: `2px solid ${r.color}18`,
-                  }}
-                >
-                  <div
-                    className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl"
-                    style={{
-                      background: r.color,
-                      boxShadow: `0 4px 14px ${r.color}40`,
-                    }}
-                  >
-                    {r.icon}
-                  </div>
-                  <span
-                    className="inline-flex rounded-full px-3 py-1 text-[12px] font-bold"
-                    style={{
-                      background: `${r.color}15`,
-                      color: r.color,
-                      border: `1.5px solid ${r.color}30`,
-                    }}
-                  >
-                    {r.label}
-                  </span>
-                  <h3
-                    className="mt-2 text-[22px] font-bold"
-                    style={{
-                      fontFamily: "'Outfit', sans-serif",
-                      color: C.dark,
-                    }}
-                  >
-                    {r.title}
-                  </h3>
-                </div>
-                <div className="px-6 py-4">
-                  {r.features.map((ft) => (
-                    <div
-                      key={ft}
-                      className="flex items-center gap-3 border-b py-2.5 last:border-b-0"
-                      style={{ borderColor: "#F1F5F9" }}
-                    >
-                      <CheckCircle2
-                        className="h-4 w-4 shrink-0"
-                        style={{ color: r.color }}
-                      />
-                      <span className="text-[14px]" style={{ color: C.body }}>
-                        {ft}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          </h2>
+          <p className="text-[15px] text-[var(--color-text-secondary)] mt-4 max-w-xl mx-auto leading-relaxed">
+            Setiap pengguna mendapatkan tampilan dan fitur yang disesuaikan dengan perannya.
+          </p>
         </div>
-      </section>
 
-      {/* Wave → CTA */}
-      <WaveDivider from={C.alt} to={C.primary} />
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {ROLES.map((r, i) => {
+            const Icon = r.icon;
+            return (
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="glass-panel rounded-xl overflow-hidden h-full interactive-card"
+              >
+                <div className={`bg-gradient-to-br ${r.gradient} px-5 pt-6 pb-10`}>
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "rgba(255,255,255,0.2)" }}>
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="akbid-font-display text-2xl font-bold text-white mb-1 tracking-tight">{r.role}</h3>
+                  <p className="text-[12.5px] leading-snug" style={{ color: "rgba(255,255,255,0.72)" }}>{r.desc}</p>
+                </div>
+                <div className="px-5 py-4 -mt-4 rounded-t-2xl" style={{ background: "rgba(255,255,255,0.55)" }}>
+                  <ul className="space-y-2.5">
+                    {r.features.map((f, j) => (
+                      <li key={j} className="flex items-start gap-2">
+                        <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#7B1D3A" }} />
+                        <span className="text-[13px] text-[var(--color-text-secondary)] leading-snug">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-      {/* ── CTA ────────────────────────────────────────────────── */}
-      <section
-        className="relative overflow-hidden px-4 py-20 sm:px-6"
-        style={{
-          background: `linear-gradient(135deg, ${C.primary} 0%, #6D28D9 100%)`,
-        }}
-      >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, #fff 1.5px, transparent 1.5px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute right-0 top-0 rounded-full opacity-20"
-          style={{
-            width: 320,
-            height: 320,
-            background: `radial-gradient(circle, ${C.cta}, transparent 70%)`,
-            filter: "blur(60px)",
-          }}
-        />
+// ─── CTA ──────────────────────────────────────────────────────────────────
 
-        <div className="relative mx-auto max-w-[640px] text-center" data-reveal>
-          <span className="mb-5 inline-flex rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-[12px] font-bold uppercase tracking-widest text-white">
-            Mulai Menggunakan
+function CtaBanner() {
+  return (
+    <section className="py-24 px-4">
+      <div className="app-container max-w-4xl mx-auto relative overflow-hidden rounded-2xl">
+        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,#0F172A,#1E293B,#7B1D3A)" }} />
+        <div className="absolute top-0 right-0 w-80 h-80 rounded-full -translate-y-1/2 translate-x-1/2" style={{ background: "rgba(255,255,255,0.04)" }} />
+        {/* Decorative text */}
+        <div className="absolute bottom-0 left-10 akbid-font-display font-bold italic leading-none select-none pointer-events-none" style={{ fontSize: "clamp(5rem,12vw,9rem)", color: "rgba(255,255,255,0.04)" }}>Mulai</div>
+
+        <div className="relative px-8 py-16 text-center">
+          <span
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-white text-[11px] font-bold rounded-full uppercase tracking-[0.2em] mb-6"
+            style={{ background: "rgba(255,255,255,0.1)" }}
+          >
+            <Shield className="w-3 h-3" /> Akun dibuat oleh Administrator
           </span>
           <h2
-            className="mb-4 text-[42px] font-extrabold leading-tight text-white sm:text-[50px]"
-            style={{ fontFamily: "'Outfit', sans-serif" }}
+            className="akbid-font-display font-bold text-white mb-5 leading-[1.1] tracking-tight"
+            style={{ fontSize: "clamp(2rem,4.5vw,3.25rem)" }}
           >
-            Siap untuk praktikum
-            <br />
-            <span className="opacity-75">yang lebih terorganisir?</span>
+            Siap memulai praktikum<br />yang lebih terorganisir?
           </h2>
-          <p className="mb-8 text-[15px] leading-[1.75] text-white/70">
-            Sistem ini dikelola institusi. Akun diberikan oleh admin AKBID Mega
-            Buana. Hubungi administrator untuk mendapatkan akses.
+          <p className="text-[15px] mb-9 max-w-md mx-auto leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+            Hubungi administrator kampus Anda untuk mendapatkan akun dan mulai gunakan sistem praktikum digital AKBID Mega Buana.
           </p>
-          <Link to="/login">
-            <ButtonEnhanced
-              className="group cursor-pointer px-10 py-3.5 text-[15px] font-bold text-white transition-all duration-200 hover:scale-[1.04]"
-              style={{
-                background: `linear-gradient(135deg, ${C.cta}, ${C.ctaDark})`,
-                border: "none",
-                boxShadow: "0 8px 28px rgba(249,115,22,0.50)",
-              }}
+          <div className="flex flex-wrap gap-3 justify-center">
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white font-semibold rounded-xl text-[15px] hover:opacity-90 transition-colors"
+              style={{ color: "#7B1D3A" }}
             >
-              Masuk ke Sistem
-              <ArrowRight className="ml-2 inline h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </ButtonEnhanced>
-          </Link>
-          <p className="mt-4 text-[13px] text-white/40">
-            Belum punya akun? Hubungi admin kampus untuk pendaftaran.
-          </p>
+              Masuk ke Sistem <ArrowRight className="w-4 h-4" />
+            </Link>
+            <a
+              href="mailto:admin@akbid-megabuana.ac.id"
+              className="inline-flex items-center gap-2 px-6 py-3 font-semibold rounded-xl text-white text-[15px] hover:opacity-80 transition-colors"
+              style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)" }}
+            >
+              Hubungi Admin
+            </a>
+          </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* ── FOOTER ─────────────────────────────────────────────── */}
-      </main>
+// ─── Footer ───────────────────────────────────────────────────────────────
 
-      <footer
-        className="px-4 pb-8 pt-12 sm:px-6"
-        style={{ background: C.dark, borderTop: `4px solid ${C.primary}` }}
-      >
-        <div className="mx-auto max-w-[1100px]">
-          <div
-            className="mb-8 grid grid-cols-1 gap-8 border-b pb-8 sm:grid-cols-[1.5fr_1fr]"
-            style={{ borderColor: "rgba(255,255,255,0.08)" }}
-          >
-            <div>
-              <div className="mb-4 flex items-center gap-3">
-                <div
-                  style={{
-                    display: "flex",
-                    height: 40,
-                    width: 40,
-                    flexShrink: 0,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "14px",
-                    background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
-                    boxShadow: `0 4px 14px rgba(79,70,229,0.40)`,
-                  }}
-                >
-                  <img
-                    src={akbidLogo}
-                    alt="Logo"
-                    className="h-7 w-7 object-contain"
-                  />
-                </div>
-                <div>
-                  <p
-                    className="text-[15px] font-semibold text-white/80"
-                    style={{ fontFamily: "'Outfit', sans-serif" }}
-                  >
-                    Akademi Kebidanan Mega Buana
-                  </p>
-                  <p className="text-[11px] uppercase tracking-widest text-white/30">
-                    Sistem Informasi Praktikum
-                  </p>
-                </div>
-              </div>
-              <p className="max-w-[320px] text-[14px] leading-[1.8] text-white/35">
-                Platform digital untuk mendukung pembelajaran praktikum
-                kebidanan yang efisien dan terstruktur di AKBID Mega Buana.
-              </p>
+function Footer() {
+  return (
+    <footer className="py-12 px-4" style={{ background: "rgba(255,255,255,0.3)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(255,255,255,0.3)" }}>
+      <div className="app-container grid md:grid-cols-4 gap-10">
+        <div className="md:col-span-2">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden" style={{ background: "linear-gradient(135deg,#7B1D3A,#4a0f22)" }}>
+              {akbidLogo ? (
+                <img src={akbidLogo} alt="AKBID" className="w-7 h-7 object-contain" />
+              ) : (
+                <FlaskConical className="w-4 h-4 text-white" />
+              )}
             </div>
-
             <div>
-              <p className="mb-4 text-[12px] font-bold uppercase tracking-widest text-white/25">
-                Informasi Institusi
-              </p>
-              <div className="space-y-3 text-[14px] text-white/35">
-                <div className="flex items-start gap-2">
-                  <MapPin
-                    className="mt-[2px] h-3.5 w-3.5 shrink-0"
-                    style={{ color: C.cta }}
-                  />
-                  Akademi Kebidanan Mega Buana, Indonesia
-                </div>
-                <div className="flex items-start gap-2">
-                  <Users
-                    className="mt-[2px] h-3.5 w-3.5 shrink-0"
-                    style={{ color: C.cta }}
-                  />
-                  Mahasiswa · Dosen · Laboran · Admin
-                </div>
-                <div className="flex items-start gap-2">
-                  <Smartphone
-                    className="mt-[2px] h-3.5 w-3.5 shrink-0"
-                    style={{ color: C.cta }}
-                  />
-                  Dapat diinstal sebagai PWA di perangkat mobile
-                </div>
-              </div>
+              <span className="akbid-font-display font-bold text-[13px] text-[var(--color-text-primary)] leading-none block">Sistem Praktikum PWA</span>
+              <span className="text-[10px] text-[var(--color-text-muted)]">AKBID Mega Buana</span>
             </div>
           </div>
-
-          <p className="text-center text-[13px] text-white/15">
-            &copy; {new Date().getFullYear()} Akademi Kebidanan Mega Buana. All
-            rights reserved.
+          <p className="text-[13px] text-[var(--color-text-muted)] leading-relaxed max-w-xs mb-4">
+            Platform digital untuk mendukung kegiatan praktikum kebidanan secara efisien dan terstruktur.
           </p>
+          <span className="flex items-center gap-2 text-[12px] text-[var(--color-text-muted)]">
+            <Smartphone className="w-3.5 h-3.5" style={{ color: "#7B1D3A" }} /> Installable sebagai aplikasi mobile
+          </span>
         </div>
-      </footer>
+
+        <div>
+          <p className="text-[11px] uppercase tracking-widest font-bold text-[var(--color-text-primary)] mb-4">Modul</p>
+          <ul className="space-y-2">
+            {["Jadwal Praktikum","Logbook Digital","Presensi","Bank Soal","Penilaian","Kuis Online","Peminjaman Alat","Notifikasi"].map((l) => (
+              <li key={l}><a href="#" className="text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">{l}</a></li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <p className="text-[11px] uppercase tracking-widest font-bold text-[var(--color-text-primary)] mb-4">Pengguna</p>
+          <ul className="space-y-2 mb-6">
+            {["Mahasiswa","Dosen","Laboran","Administrator"].map((l) => (
+              <li key={l}><a href="#" className="text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">{l}</a></li>
+            ))}
+          </ul>
+          <p className="text-[11px] uppercase tracking-widest font-bold text-[var(--color-text-primary)] mb-4">Informasi</p>
+          <ul className="space-y-2">
+            {["Tentang Sistem","Panduan Pengguna","Kontak"].map((l) => (
+              <li key={l}><a href="#" className="text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">{l}</a></li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="app-container mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-[12px] text-[var(--color-text-muted)]" style={{ borderTop: "1px solid rgba(255,255,255,0.3)" }}>
+        <span>© 2026 Sistem Praktikum PWA — AKBID Mega Buana. Seluruh hak dilindungi.</span>
+        <span className="flex items-center gap-1.5">
+          <WifiOff className="w-3 h-3" style={{ color: "#7B1D3A" }} /> Tersedia dalam mode offline
+        </span>
+      </div>
+    </footer>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────
+
+export function HomePage() {
+  return (
+    <div className="min-h-screen relative overflow-x-hidden" style={{ background: "var(--color-bg-secondary)" }}>
+      {/* Aurora background — uses existing CSS classes from index.css */}
+      <div className="aurora-bg">
+        <div className="aurora-orb aurora-orb-1" />
+        <div className="aurora-orb aurora-orb-2" />
+        <div className="aurora-orb aurora-orb-3" />
+        <div className="aurora-orb aurora-orb-4" />
+      </div>
+
+      <div className="relative z-10">
+        <NavBar />
+        <main>
+          <Hero />
+          <Ticker />
+          <Modules />
+          <FlowSection />
+          <Quote />
+          <RolesSection />
+          <CtaBanner />
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }
+
+export default HomePage;
