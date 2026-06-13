@@ -36,11 +36,20 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <title>Sistem Praktikum - Akademi Kebidanan Mega Buana</title>
-    <!-- Preload critical resources -->
+
+    <!-- Fonts — preconnect first for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!--
+      Plus Jakarta Sans  — body & UI text
+      Crimson Pro        — display headings (auth brand panel, landing page)
+    -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <!-- App container -->
@@ -128,8 +137,6 @@
 
     <!-- Service Worker Migration (Production-Safe) -->
     <script>
-      // One-time migration from old SW versions
-      // Only runs once per user using localStorage flag
       (function() {
         'use strict';
 
@@ -141,7 +148,6 @@
           navigator.serviceWorker.getRegistrations()
             .then(function(registrations) {
               if (registrations.length === 0) {
-                // No SW to migrate
                 localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
                 return;
               }
@@ -150,22 +156,16 @@
                 console.log('[SW Migration] Found ' + registrations.length + ' Service Worker(s) to check');
               }
 
-              // Check each SW version before unregistering
               var needsCleanup = false;
               var checkPromises = registrations.map(function(reg) {
                 return new Promise(function(resolve) {
-                  if (!reg.active) {
-                    resolve(false);
-                    return;
-                  }
+                  if (!reg.active) { resolve(false); return; }
 
-                  // Check version via message
                   var channel = new MessageChannel();
                   reg.active.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
 
                   channel.port1.onmessage = function(event) {
                     var version = event.data && event.data.version;
-                    // Unregister if old version
                     if (version !== TARGET_SW_VERSION) {
                       if (debugSwMigration) console.log('[SW Migration] Old version detected:', version);
                       resolve(true);
@@ -174,7 +174,6 @@
                     }
                   };
 
-                  // Old service workers may not answer GET_VERSION.
                   setTimeout(function() {
                     if (debugSwMigration) console.log('[SW Migration] No version response, cleanup needed');
                     resolve(true);
@@ -186,29 +185,21 @@
                 needsCleanup = results.some(function(r) { return r; });
 
                 if (!needsCleanup) {
-                  // Current SW is already v1.0.2, no cleanup needed
                   localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
                   if (debugSwMigration) console.log('[SW Migration] Current version OK, no migration needed');
                   return;
                 }
 
-                // Cleanup needed - backup auth session first
                 var authBackup = null;
                 try {
                   var authKey = Object.keys(localStorage).find(function(key) {
                     return key.startsWith('sb-') && key.includes('-auth-token');
                   });
                   if (authKey) {
-                    authBackup = {
-                      key: authKey,
-                      value: localStorage.getItem(authKey)
-                    };
+                    authBackup = { key: authKey, value: localStorage.getItem(authKey) };
                   }
-                } catch (err) {
-                  // Silent fail
-                }
+                } catch (err) {}
 
-                // Unregister old SWs
                 var unregisterPromises = registrations.map(function(reg) {
                   return reg.unregister();
                 });
@@ -229,37 +220,21 @@
                 }
 
                 Promise.all(unregisterPromises)
+                  .then(function() { return cacheCleanup; })
                   .then(function() {
-                    return cacheCleanup;
-                  })
-                  .then(function() {
-                    // Restore auth
                     if (authBackup && authBackup.value) {
-                      try {
-                        localStorage.setItem(authBackup.key, authBackup.value);
-                      } catch (err) {
-                        // Silent fail
-                      }
+                      try { localStorage.setItem(authBackup.key, authBackup.value); } catch (err) {}
                     }
-
-                    // âœ… Mark migration complete BEFORE reload agar tidak loop jika reload cepat
                     localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
-
-                    if (debugSwMigration) console.log('[SW Migration] âœ… Migration complete, reloading...');
-
-                    // Reload once
-                    setTimeout(function() {
-                      window.location.reload();
-                    }, 500);
+                    if (debugSwMigration) console.log('[SW Migration] Migration complete, reloading...');
+                    setTimeout(function() { window.location.reload(); }, 500);
                   })
                   .catch(function() {
-                    // Gagal unregister pun tetap set flag agar tidak loop
                     localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
                   });
               });
             })
-            .catch(function(error) {
-              // Mark as migrated to avoid infinite loop on error
+            .catch(function() {
               localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
             });
         }
